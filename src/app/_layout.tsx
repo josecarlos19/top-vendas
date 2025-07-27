@@ -1,11 +1,18 @@
 import { initializeDatabase } from "@/database/db";
-import { Slot } from "expo-router";
+import { Stack } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-export default function Layout() {
+export default function RootLayout() {
   return (
-    <SQLiteProvider databaseName="top-vendas.db" onInit={initializeDatabase}>
-      <Slot />
-    </SQLiteProvider>
+    <SafeAreaProvider>
+      <SQLiteProvider databaseName="top-vendas.db" onInit={initializeDatabase}>
+        <StatusBar style="dark" backgroundColor="#ffffff" />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(drawer)" />
+        </Stack>
+      </SQLiteProvider>
+    </SafeAreaProvider>
   );
 }
