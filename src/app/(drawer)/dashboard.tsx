@@ -4,91 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-
-const { width } = Dimensions.get("window");
-
-interface StatCardProps {
-  title: string;
-  value: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  backgroundColor: string;
-}
-
-function StatCard({
-  title,
-  value,
-  icon,
-  color,
-  backgroundColor,
-}: StatCardProps) {
-  return (
-    <View style={[styles.statCard, { backgroundColor }]}>
-      <View style={styles.statHeader}>
-        <View style={[styles.statIcon, { backgroundColor: color + "20" }]}>
-          <Ionicons name={icon} size={24} color={color} />
-        </View>
-      </View>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{title}</Text>
-    </View>
-  );
-}
-
-interface QuickActionProps {
-  title: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  route: string;
-}
-
-function QuickAction({ title, icon, color, route }: QuickActionProps) {
-  return (
-    <TouchableOpacity
-      style={styles.actionButton}
-      onPress={() => router.push(route as any)}
-    >
-      <View style={[styles.actionIcon, { backgroundColor: color + "15" }]}>
-        <Ionicons name={icon} size={24} color={color} />
-      </View>
-      <Text style={styles.actionText}>{title}</Text>
-    </TouchableOpacity>
-  );
-}
-
-interface ActivityItemProps {
-  title: string;
-  time: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  iconColor: string;
-  iconBg: string;
-}
-
-function ActivityItem({
-  title,
-  time,
-  icon,
-  iconColor,
-  iconBg,
-}: ActivityItemProps) {
-  return (
-    <View style={styles.activityItem}>
-      <View style={[styles.activityIcon, { backgroundColor: iconBg }]}>
-        <Ionicons name={icon} size={16} color={iconColor} />
-      </View>
-      <View style={styles.activityContent}>
-        <Text style={styles.activityTitle}>{title}</Text>
-        <Text style={styles.activityTime}>{time}</Text>
-      </View>
-    </View>
-  );
-}
+import StatCard from "@/components/StatCard";
+import QuickAction from "@/components/QuickActions";
+import ActivityItem from "@/components/ActivityItem";
 
 export default function Dashboard() {
   const stats = [
@@ -182,7 +103,6 @@ export default function Dashboard() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Welcome Section */}
       <LinearGradient
         colors={["#667eea", "#764ba2"]}
         style={styles.welcomeSection}
@@ -195,14 +115,12 @@ export default function Dashboard() {
         </Text>
       </LinearGradient>
 
-      {/* Stats Grid */}
       <View style={styles.statsGrid}>
         {stats.map((stat, index) => (
           <StatCard key={index} {...stat} />
         ))}
       </View>
 
-      {/* Quick Actions */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>⚡ Ações Rápidas</Text>
         <View style={styles.actionsGrid}>
@@ -212,7 +130,6 @@ export default function Dashboard() {
         </View>
       </View>
 
-      {/* Recent Activities */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>📋 Atividades Recentes</Text>
         <View style={styles.activitiesCard}>
@@ -222,7 +139,6 @@ export default function Dashboard() {
         </View>
       </View>
 
-      {/* Revenue Chart Placeholder */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>📈 Vendas dos Últimos 7 Dias</Text>
         <View style={styles.chartPlaceholder}>
@@ -232,7 +148,6 @@ export default function Dashboard() {
         </View>
       </View>
 
-      {/* Bottom Spacing */}
       <View style={styles.bottomSpacing} />
     </ScrollView>
   );
@@ -265,38 +180,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 16,
   },
-  statCard: {
-    width: (width - 56) / 2,
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  statHeader: {
-    marginBottom: 12,
-  },
-  statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: "#64748b",
-    fontWeight: "500",
-  },
+
   section: {
     marginTop: 24,
     paddingHorizontal: 20,
@@ -312,32 +196,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 12,
   },
-  actionButton: {
-    width: (width - 56) / 2,
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  actionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-  },
-  actionText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#475569",
-    textAlign: "center",
-  },
+
   activitiesCard: {
     backgroundColor: "#ffffff",
     borderRadius: 16,
@@ -348,34 +207,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
-  activityItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
-  },
-  activityIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  activityContent: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#334155",
-    marginBottom: 2,
-  },
-  activityTime: {
-    fontSize: 12,
-    color: "#64748b",
-  },
+
   chartPlaceholder: {
     backgroundColor: "#ffffff",
     borderRadius: 16,
