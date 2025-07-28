@@ -1,23 +1,5 @@
 import { useSQLiteContext } from "expo-sqlite";
-import { BaseModelInterface } from "@/interfaces/models/baseModelInterface";
-
-export interface CategoryModel extends BaseModelInterface {
-  name?: string;
-  description?: string;
-  active?: number;
-}
-
-export interface CategoryStoreInterface extends BaseModelInterface {
-  name: string;
-  description?: string;
-}
-
-export interface CategoryUpdateInterface extends BaseModelInterface {
-  id: number;
-  name?: string;
-  description?: string;
-  active?: number;
-}
+import { CategoryModelInterface, CategorySearchInterface, CategoryStoreInterface, CategoryUpdateInterface } from "@/interfaces/models/categoryInterface";
 
 export function useCategoryDatabase() {
   const database = useSQLiteContext();
@@ -45,25 +27,80 @@ export function useCategoryDatabase() {
     }
   }
 
-  async function index() {
-    try {
-      const result = await database.getAllAsync(
-        "SELECT * FROM categories WHERE deleted_at IS NULL ORDER BY name ASC",
-      );
-      return result as CategoryModel[];
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      throw new Error("Failed to fetch categories");
-    }
-  }
+async function index(params?: CategorySearchInterface) {
+  try {
+    let query = "SELECT * FROM categories WHERE deleted_at IS NULL";
+    const queryParams: any[] = [];
 
+
+    if (params?.name) {
+      query += " AND name LIKE ?";
+      queryParams.push(`%${params.name}%`);
+    }
+
+    if (params?.description) {
+      query += " AND description LIKE ?";
+      queryParams.push(`%${params.description}%`);
+    }
+
+    if (params?.active !== undefined) {
+      query += " AND active = ?";
+      queryParams.push(params.active);
+    }
+
+    query += " ORDER BY name ASC";
+
+    if (params?.page && params?.perPage) {
+      const offset = (params.page - 1) * params.perPage;
+      query += " LIMIT ? OFFSET ?";
+      queryParams.push(params.perPage, offset);
+    }
+
+    const result = await database.getAllAsync(query, queryParams);
+    return result as CategoryModelInterface[];
+
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
+  }
+}
+
+async function count(params?: Omit<CategorySearchInterface, 'page' | 'perPage'>) {
+  try {
+    console.log({params});
+    let query = "SELECT COUNT(*) as total FROM categories WHERE deleted_at IS NULL";
+    const queryParams: any[] = [];
+
+    if (params?.name) {
+      query += " AND name LIKE ?";
+      queryParams.push(`%${params.name}%`);
+    }
+
+    if (params?.description) {
+      query += " AND description LIKE ?";
+      queryParams.push(`%${params.description}%`);
+    }
+
+    if (params?.active !== undefined) {
+      query += " AND active = ?";
+      queryParams.push(params.active);
+    }
+
+    const result = await database.getFirstAsync(query, queryParams) as { total: number };
+    return result.total;
+
+  } catch (error) {
+    console.error("Error counting categories:", error);
+    throw new Error("Failed to count categories");
+  }
+}
   async function show(id: number) {
     try {
       const result = await database.getFirstAsync(
         "SELECT * FROM categories WHERE id = ? AND deleted_at IS NULL",
         [id],
       );
-      return result as CategoryModel | null;
+      return result as CategoryModelInterface | null;
     } catch (error) {
       console.error("Error fetching category:", error);
       throw new Error("Failed to fetch category");
@@ -129,5 +166,5 @@ export function useCategoryDatabase() {
     }
   }
 
-  return { store, index, show, update, remove, toggleActive };
+  return { store, index, count, show, update, remove, toggleActive };
 }
