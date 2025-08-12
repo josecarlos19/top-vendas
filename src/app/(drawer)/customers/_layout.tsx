@@ -22,22 +22,7 @@ export default function CustomersLayout() {
         }}
       />
 
-      <Stack.Screen
-        name="create"
-        options={{
-          title: "Novo(a) Cliente",
-          presentation: "modal",
-        }}
-      />
-
-      <Stack.Screen
-        name="[id]"
-        options={{
-          title: "Editar Cliente",
-          presentation: "modal",
-          headerShown: true,
-        }}
-      />
+    
     </Stack>
   );
 }

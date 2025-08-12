@@ -55,6 +55,26 @@ export default function RootLayout() {
               headerTitleStyle: { fontWeight: "600" },
             }}
           />
+          <Stack.Screen
+            name="products/create"
+            options={{
+              presentation: 'modal',
+              title: "Novo Produto",
+              headerStyle: { backgroundColor: "#667eea" },
+              headerTintColor: "#ffffff",
+              headerTitleStyle: { fontWeight: "600" },
+            }}
+          />
+          <Stack.Screen
+            name="products/[id]/edit"
+            options={{
+              presentation: 'modal',
+              title: "Editar Produto",
+              headerStyle: { backgroundColor: "#667eea" },
+              headerTintColor: "#ffffff",
+              headerTitleStyle: { fontWeight: "600" },
+            }}
+          />
         </Stack>
       </SQLiteProvider>
     </SafeAreaProvider>

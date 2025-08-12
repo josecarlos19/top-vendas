@@ -1,12 +1,9 @@
 import { Stack } from "expo-router";
 
-export default function CategoriesLayout() {
+export default function CustomersLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: {
-          backgroundColor: "#ffffff",
-        },
         headerTitleStyle: {
           fontWeight: "600",
           fontSize: 18,
@@ -19,7 +16,7 @@ export default function CategoriesLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Categorias",
+          title: "Produtos",
           headerRight: () => null,
           headerShown: false,
         }}

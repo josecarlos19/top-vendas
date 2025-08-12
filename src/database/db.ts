@@ -34,5 +34,26 @@ export async function initializeDatabase(db: SQLiteDatabase) {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );`,
     );
+    await db.execAsync(
+      `CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        barcode TEXT,
+        reference TEXT,
+        description TEXT,
+        cost_price INTEGER,
+        sale_price INTEGER,
+        wholesale_price INTEGER,
+        current_stock INTEGER,
+        minimum_stock INTEGER,
+        category_id INTEGER,
+        supplier TEXT,
+        active INTEGER NOT NULL DEFAULT 1,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (category_id) REFERENCES categories(id)
+      );`,
+    );
   });
 }
