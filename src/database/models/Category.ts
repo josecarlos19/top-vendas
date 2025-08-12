@@ -67,7 +67,6 @@ async function index(params?: CategorySearchInterface) {
 
 async function count(params?: Omit<CategorySearchInterface, 'page' | 'perPage'>) {
   try {
-    console.log({params});
     let query = "SELECT COUNT(*) as total FROM categories WHERE deleted_at IS NULL";
     const queryParams: any[] = [];
 
