@@ -48,19 +48,19 @@ export default function Dashboard() {
       title: "Nova Venda",
       icon: "card-outline" as keyof typeof Ionicons.glyphMap,
       color: "#667eea",
-      route: "/(drawer)/sales/create",
+      route: "/sales/create",
     },
     {
       title: "Novo Produto",
       icon: "add-circle-outline" as keyof typeof Ionicons.glyphMap,
       color: "#06b6d4",
-      route: "/(drawer)/products/create",
+      route: "/products/create",
     },
     {
       title: "Novo Cliente",
       icon: "person-add-outline" as keyof typeof Ionicons.glyphMap,
       color: "#10b981",
-      route: "/(drawer)/clients/create",
+      route: "/customers/create",
     },
     {
       title: "Relatórios",
@@ -102,54 +102,56 @@ export default function Dashboard() {
   ];
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <LinearGradient
-        colors={["#667eea", "#764ba2"]}
-        style={styles.welcomeSection}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <Text style={styles.welcomeTitle}>Bem-vindo de volta! 👋</Text>
-        <Text style={styles.welcomeSubtitle}>
-          Aqui está um resumo do seu negócio hoje
-        </Text>
-      </LinearGradient>
+    <View style={styles.container}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <LinearGradient
+          colors={["#667eea", "#764ba2"]}
+          style={styles.welcomeSection}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Text style={styles.welcomeTitle}>Bem-vindo de volta! 👋</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Aqui está um resumo do seu negócio hoje
+          </Text>
+        </LinearGradient>
 
-      <View style={styles.statsGrid}>
-        {stats.map((stat, index) => (
-          <StatCard key={index} {...stat} />
-        ))}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>⚡ Ações Rápidas</Text>
-        <View style={styles.actionsGrid}>
-          {quickActions.map((action, index) => (
-            <QuickAction key={index} {...action} />
+        <View style={styles.statsGrid}>
+          {stats.map((stat, index) => (
+            <StatCard key={index} {...stat} />
           ))}
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📋 Atividades Recentes</Text>
-        <View style={styles.activitiesCard}>
-          {recentActivities.map((activity, index) => (
-            <ActivityItem key={index} {...activity} />
-          ))}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>⚡ Ações Rápidas</Text>
+          <View style={styles.actionsGrid}>
+            {quickActions.map((action, index) => (
+              <QuickAction key={index} {...action} />
+            ))}
+          </View>
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📈 Vendas dos Últimos 7 Dias</Text>
-        <View style={styles.chartPlaceholder}>
-          <Ionicons name="analytics-outline" size={48} color="#94a3b8" />
-          <Text style={styles.chartText}>Gráfico de vendas</Text>
-          <Text style={styles.chartSubtext}>Em breve</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📋 Atividades Recentes</Text>
+          <View style={styles.activitiesCard}>
+            {recentActivities.map((activity, index) => (
+              <ActivityItem key={index} {...activity} />
+            ))}
+          </View>
         </View>
-      </View>
 
-      <View style={styles.bottomSpacing} />
-    </ScrollView>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📈 Vendas dos Últimos 7 Dias</Text>
+          <View style={styles.chartPlaceholder}>
+            <Ionicons name="analytics-outline" size={48} color="#94a3b8" />
+            <Text style={styles.chartText}>Gráfico de vendas</Text>
+            <Text style={styles.chartSubtext}>Em breve</Text>
+          </View>
+        </View>
+
+        <View style={styles.bottomSpacing} />
+      </ScrollView>
+    </View>
   );
 }
 
@@ -157,6 +159,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8fafc",
+  },
+  content: {
+    flex: 1,
   },
   welcomeSection: {
     margin: 20,
@@ -180,7 +185,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 16,
   },
-
   section: {
     marginTop: 24,
     paddingHorizontal: 20,
@@ -196,7 +200,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 12,
   },
-
   activitiesCard: {
     backgroundColor: "#ffffff",
     borderRadius: 16,
@@ -207,7 +210,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
-
   chartPlaceholder: {
     backgroundColor: "#ffffff",
     borderRadius: 16,

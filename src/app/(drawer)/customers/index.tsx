@@ -141,7 +141,7 @@ export default function CustomersList() {
   };
 
   const handleEdit = (customer: Customer) => {
-    router.push(`/(drawer)/customers/${customer.id}` as any);
+    router.push(`/customers/${customer.id}/edit`);
   };
 
   const handleDelete = async (id: number) => {
@@ -217,7 +217,7 @@ export default function CustomersList() {
       {!searchText && (
         <TouchableOpacity
           style={styles.createFirstButton}
-          onPress={() => router.push("/(drawer)/customers/create")}
+          onPress={() => router.push("/customers/create")}
         >
           <Text style={styles.createFirstButtonText}>Cadastrar primeiro cliente</Text>
         </TouchableOpacity>
@@ -285,7 +285,7 @@ export default function CustomersList() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push("/(drawer)/customers/create")}
+        onPress={() => router.push("/customers/create")}
       >
         <Ionicons name="add" size={24} color="#ffffff" />
       </TouchableOpacity>

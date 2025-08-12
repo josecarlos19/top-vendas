@@ -403,7 +403,6 @@ export default function EditCustomer() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header Section */}
         <View style={styles.headerSection}>
           <View style={styles.iconContainer}>
             <Ionicons name="person-outline" size={48} color="#FF6B35" />
@@ -414,9 +413,7 @@ export default function EditCustomer() {
           </Text>
         </View>
 
-        {/* Form Section */}
         <View style={styles.formSection}>
-          {/* Dados Básicos */}
           <View style={styles.sectionHeader}>
             <Ionicons name="person-outline" size={20} color="#FF6B35" />
             <Text style={styles.sectionTitle}>Dados Básicos</Text>
@@ -502,7 +499,6 @@ export default function EditCustomer() {
             />
           </View>
 
-          {/* Contato */}
           <View style={styles.sectionHeader}>
             <Ionicons name="call-outline" size={20} color="#FF6B35" />
             <Text style={styles.sectionTitle}>Contato</Text>
@@ -534,7 +530,6 @@ export default function EditCustomer() {
             </View>
           </View>
 
-          {/* Endereço */}
           <View style={styles.sectionHeader}>
             <Ionicons name="location-outline" size={20} color="#FF6B35" />
             <Text style={styles.sectionTitle}>Endereço</Text>
@@ -612,7 +607,6 @@ export default function EditCustomer() {
             />
           </View>
 
-          {/* Observações */}
           <View style={styles.sectionHeader}>
             <Ionicons name="document-text-outline" size={20} color="#FF6B35" />
             <Text style={styles.sectionTitle}>Observações</Text>

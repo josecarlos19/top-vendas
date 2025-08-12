@@ -121,7 +121,7 @@ export default function CategoriesList() {
   };
 
   const handleEdit = (category: Category) => {
-    router.push(`/(drawer)/categories/${category.id}`);
+    router.push(`/categories/${category.id}/edit`);
   };
 
   const handleDelete = async (id: number) => {
@@ -227,7 +227,7 @@ export default function CategoriesList() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push("/(drawer)/categories/create")}
+        onPress={() => router.push("/categories/create")}
       >
         <Ionicons name="add" size={24} color="#ffffff" />
       </TouchableOpacity>

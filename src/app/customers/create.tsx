@@ -269,7 +269,6 @@ export default function CreateCustomer() {
         </View>
 
         <View style={styles.formSection}>
-          {/* Dados Básicos */}
           <View style={styles.sectionHeader}>
             <Ionicons name="person-outline" size={20} color="#FF6B35" />
             <Text style={styles.sectionTitle}>Dados Básicos</Text>
@@ -349,7 +348,6 @@ export default function CreateCustomer() {
             />
           </View>
 
-          {/* Contato */}
           <View style={styles.sectionHeader}>
             <Ionicons name="call-outline" size={20} color="#FF6B35" />
             <Text style={styles.sectionTitle}>Contato</Text>
@@ -381,7 +379,6 @@ export default function CreateCustomer() {
             </View>
           </View>
 
-          {/* Endereço */}
           <View style={styles.sectionHeader}>
             <Ionicons name="location-outline" size={20} color="#FF6B35" />
             <Text style={styles.sectionTitle}>Endereço</Text>
@@ -459,7 +456,6 @@ export default function CreateCustomer() {
             />
           </View>
 
-          {/* Observações */}
           <View style={styles.sectionHeader}>
             <Ionicons name="document-text-outline" size={20} color="#FF6B35" />
             <Text style={styles.sectionTitle}>Observações</Text>

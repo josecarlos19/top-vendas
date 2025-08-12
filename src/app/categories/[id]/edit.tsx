@@ -187,7 +187,6 @@ export default function EditCategory() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header Section */}
         <View style={styles.headerSection}>
           <View style={styles.iconContainer}>
             <Ionicons name="pencil-outline" size={48} color="#FF6B35" />
@@ -198,7 +197,6 @@ export default function EditCategory() {
           </Text>
         </View>
 
-        {/* Form Section */}
         <View style={styles.formSection}>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>name da Categoria *</Text>
