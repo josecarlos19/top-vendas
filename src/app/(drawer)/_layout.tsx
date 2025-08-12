@@ -24,6 +24,11 @@ function CustomDrawerContent(props: any) {
       route: "/(drawer)/categories",
       icon: "folder-outline" as keyof typeof Ionicons.glyphMap,
     },
+    {
+      name: "Clientes",
+      route: "/(drawer)/customers",
+      icon: "people-outline" as keyof typeof Ionicons.glyphMap,
+    }
   ];
 
   return (
@@ -117,6 +122,17 @@ export default function DrawerLayout() {
           options={{
             title: "Categorias",
             headerTitle: "Categorias",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="folder-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        <Drawer.Screen
+          name="customers"
+          options={{
+            title: "Clientes",
+            headerTitle: "Clientes",
             drawerIcon: ({ color, size }) => (
               <Ionicons name="folder-outline" size={size} color={color} />
             ),
