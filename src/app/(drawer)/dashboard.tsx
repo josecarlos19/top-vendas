@@ -9,7 +9,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import StatCard from "@/components/StatCard";
 import QuickAction from "@/components/QuickActions";
-import ActivityItem from "@/components/ActivityItem";
 
 export default function Dashboard() {
   const stats = [
@@ -127,15 +126,6 @@ export default function Dashboard() {
           <View style={styles.actionsGrid}>
             {quickActions.map((action, index) => (
               <QuickAction key={index} {...action} />
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📋 Atividades Recentes</Text>
-          <View style={styles.activitiesCard}>
-            {recentActivities.map((activity, index) => (
-              <ActivityItem key={index} {...activity} />
             ))}
           </View>
         </View>
