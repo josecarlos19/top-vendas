@@ -33,18 +33,15 @@ export default function CreateCustomer() {
   const customerDatabase = useCustomerDatabase();
 
   const formatDocument = (text: string, type: string) => {
-    // Remove todos os caracteres não numéricos
     const numbers = text.replace(/\D/g, '');
 
     if (type === "CPF") {
-      // Limita a 11 dígitos e formata CPF
       const limitedNumbers = numbers.slice(0, 11);
       if (limitedNumbers.length <= 3) return limitedNumbers;
       if (limitedNumbers.length <= 6) return limitedNumbers.replace(/(\d{3})(\d+)/, '$1.$2');
       if (limitedNumbers.length <= 9) return limitedNumbers.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
       return limitedNumbers.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, '$1.$2.$3-$4');
     } else {
-      // Limita a 14 dígitos e formata CNPJ
       const limitedNumbers = numbers.slice(0, 14);
       if (limitedNumbers.length <= 2) return limitedNumbers;
       if (limitedNumbers.length <= 5) return limitedNumbers.replace(/(\d{2})(\d+)/, '$1.$2');
@@ -73,13 +70,13 @@ export default function CreateCustomer() {
   };
 
   const validateEmail = (email: string) => {
-    if (!email.trim()) return true; // Email é opcional agora
+    if (!email.trim()) return true;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
   const validateDocument = (doc: string, type: string) => {
-    if (!doc.trim()) return true; // Documento é opcional agora
+    if (!doc.trim()) return true;
     const numbers = doc.replace(/\D/g, '');
     if (type === "CPF") {
       return numbers.length === 11;
@@ -115,7 +112,6 @@ export default function CreateCustomer() {
         return;
       }
 
-      // Preenche os campos automaticamente
       setAddress(data.logradouro || "");
       setNeighborhood(data.bairro || "");
       setCity(data.localidade || "");
@@ -138,7 +134,6 @@ export default function CreateCustomer() {
     const formatted = formatZipCode(text);
     setZipCode(formatted);
 
-    // Busca automaticamente quando o CEP estiver completo
     const cleanCep = text.replace(/\D/g, '');
     if (cleanCep.length === 8) {
       fetchAddressFromCep(formatted);
@@ -146,20 +141,17 @@ export default function CreateCustomer() {
   };
 
   async function handleStore() {
-    // Validação principal - apenas nome é obrigatório
     if (!name.trim()) {
       Alert.alert("Erro", "Por favor, preencha o nome do cliente.");
       return;
     }
 
-    // Validação de documento - se preenchido, deve estar correto
     if (document.trim() && !validateDocument(document, documentType)) {
       const expectedLength = documentType === "CPF" ? "11" : "14";
       Alert.alert("Erro", `${documentType} deve ter ${expectedLength} dígitos.`);
       return;
     }
 
-    // Validação de email - se preenchido, deve estar correto
     if (email.trim() && !validateEmail(email)) {
       Alert.alert("Erro", "Por favor, insira um email válido.");
       return;
@@ -167,7 +159,6 @@ export default function CreateCustomer() {
 
     setIsLoading(true);
     try {
-      // Verifica se já existe cliente com este email (apenas se email foi informado)
       if (email.trim()) {
         const existingByEmail = await customerDatabase.findByEmail(email.trim());
         if (existingByEmail) {
@@ -176,7 +167,6 @@ export default function CreateCustomer() {
         }
       }
 
-      // Verifica se já existe cliente com este documento (apenas se documento foi informado)
       if (document.trim()) {
         const cleanDocument = getCleanDocument(document);
         const existingByDocument = await customerDatabase.findByDocument(cleanDocument);
@@ -241,7 +231,6 @@ export default function CreateCustomer() {
     }
   };
 
-  // Agora apenas o nome é obrigatório
   const isFormValid = name.trim() &&
     validateDocument(document, documentType) &&
     validateEmail(email);

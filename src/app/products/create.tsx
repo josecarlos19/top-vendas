@@ -57,12 +57,10 @@ export default function CreateProduct() {
   };
 
   const formatCurrency = (text: string) => {
-    // Remove tudo exceto números
     const numbers = text.replace(/\D/g, '');
 
     if (numbers === '') return '';
 
-    // Converte para formato monetário (centavos para reais)
     const value = parseInt(numbers) / 100;
 
     return value.toLocaleString('pt-BR', {
@@ -72,13 +70,11 @@ export default function CreateProduct() {
   };
 
   const formatNumber = (text: string) => {
-    // Remove tudo exceto números
     return text.replace(/\D/g, '');
   };
 
   const getCurrencyValue = (formattedValue: string): number => {
     if (!formattedValue) return 0;
-    // Remove R$, espaços e pontos, substitui vírgula por ponto
     const cleanValue = formattedValue
       .replace(/[R$\s.]/g, '')
       .replace(',', '.');
@@ -102,16 +98,6 @@ export default function CreateProduct() {
       return false;
     }
 
-    // Validar se já existe produto com mesmo código de barras (se preenchido)
-    if (barcode.trim()) {
-      // Esta validação será feita no backend
-    }
-
-    // Validar se já existe produto com mesma referência (se preenchida)
-    if (reference.trim()) {
-      // Esta validação será feita no backend
-    }
-
     return true;
   };
 
@@ -120,7 +106,6 @@ export default function CreateProduct() {
 
     setIsLoading(true);
     try {
-      // Verificar se já existe produto com este código de barras
       if (barcode.trim()) {
         const existingByBarcode = await productDatabase.findByBarcode(barcode.trim());
         if (existingByBarcode) {
@@ -129,7 +114,6 @@ export default function CreateProduct() {
         }
       }
 
-      // Verificar se já existe produto com esta referência
       if (reference.trim()) {
         const existingByReference = await productDatabase.findByReference(reference.trim());
         if (existingByReference) {
@@ -138,7 +122,6 @@ export default function CreateProduct() {
         }
       }
 
-      // Converter valores monetários para centavos (inteiros)
       const costPriceValue = costPrice ? Math.round(getCurrencyValue(costPrice) * 100) : undefined;
       const salePriceValue = Math.round(getCurrencyValue(salePrice) * 100);
       const wholesalePriceValue = wholesalePrice ? Math.round(getCurrencyValue(wholesalePrice) * 100) : undefined;

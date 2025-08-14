@@ -41,7 +41,6 @@ export default function CreateCategory() {
           {
             text: "OK",
             onPress: () => {
-              // Voltar para a lista de categorias
               router.back();
             },
           },

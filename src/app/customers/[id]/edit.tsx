@@ -191,13 +191,13 @@ export default function EditCustomer() {
   };
 
   const validateEmail = (email: string) => {
-    if (!email.trim()) return true; // Email é opcional agora
+    if (!email.trim()) return true;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
   const validateDocument = (doc: string, type: string) => {
-    if (!doc.trim()) return true; // Documento é opcional agora
+    if (!doc.trim()) return true;
     const numbers = doc.replace(/\D/g, '');
     if (type === "CPF") {
       return numbers.length === 11;
@@ -211,20 +211,17 @@ export default function EditCustomer() {
   };
 
   const handleUpdate = async () => {
-    // Validação principal - apenas nome é obrigatório
     if (!name.trim()) {
       Alert.alert("Erro", "Por favor, preencha o nome do cliente.");
       return;
     }
 
-    // Validação de documento - se preenchido, deve estar correto
     if (document.trim() && !validateDocument(document, documentType)) {
       const expectedLength = documentType === "CPF" ? "11" : "14";
       Alert.alert("Erro", `${documentType} deve ter ${expectedLength} dígitos.`);
       return;
     }
 
-    // Validação de email - se preenchido, deve estar correto
     if (email.trim() && !validateEmail(email)) {
       Alert.alert("Erro", "Por favor, insira um email válido.");
       return;
@@ -234,7 +231,6 @@ export default function EditCustomer() {
 
     setIsSaving(true);
     try {
-      // Verifica se já existe cliente com este email (apenas se email foi informado)
       if (email.trim()) {
         const existingByEmail = await customerDatabase.findByEmail(email.trim());
         if (existingByEmail && existingByEmail.id !== customer.id) {
@@ -243,7 +239,6 @@ export default function EditCustomer() {
         }
       }
 
-      // Verifica se já existe cliente com este documento (apenas se documento foi informado)
       if (document.trim()) {
         const cleanDocument = getCleanValue(document);
         const existingByDocument = await customerDatabase.findByDocument(cleanDocument);
@@ -387,7 +382,6 @@ export default function EditCustomer() {
     );
   }
 
-  // Agora apenas o nome é obrigatório
   const isFormValid = name.trim() &&
     validateDocument(document, documentType) &&
     validateEmail(email);
