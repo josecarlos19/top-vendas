@@ -69,37 +69,6 @@ export default function Dashboard() {
     },
   ];
 
-  const recentActivities = [
-    {
-      title: "Venda #1234 finalizada",
-      time: "há 5 minutos",
-      icon: "checkmark-circle-outline" as keyof typeof Ionicons.glyphMap,
-      iconColor: "#22c55e",
-      iconBg: "#dcfce7",
-    },
-    {
-      title: "Novo cliente cadastrado",
-      time: "há 12 minutos",
-      icon: "person-add-outline" as keyof typeof Ionicons.glyphMap,
-      iconColor: "#3b82f6",
-      iconBg: "#dbeafe",
-    },
-    {
-      title: "Estoque atualizado",
-      time: "há 1 hora",
-      icon: "refresh-outline" as keyof typeof Ionicons.glyphMap,
-      iconColor: "#f59e0b",
-      iconBg: "#fef3c7",
-    },
-    {
-      title: "Backup realizado",
-      time: "há 2 horas",
-      icon: "cloud-done-outline" as keyof typeof Ionicons.glyphMap,
-      iconColor: "#8b5cf6",
-      iconBg: "#ede9fe",
-    },
-  ];
-
   return (
     <View style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
