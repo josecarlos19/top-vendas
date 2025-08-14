@@ -92,14 +92,12 @@ erDiagram
 
     stock_movements {
         INTEGER id PK
+        INTEGER sale_id FK
         INTEGER product_id FK
         TEXT type
         INTEGER quantity
-        INTEGER previous_quantity
-        INTEGER current_quantity
         INTEGER unit_value
         INTEGER total_value
-        INTEGER sale_id FK
         TEXT notes
         TIMESTAMP deleted_at
         TIMESTAMP created_at
