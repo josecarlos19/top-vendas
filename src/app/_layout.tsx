@@ -8,7 +8,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SQLiteProvider databaseName="top-vendas.db" onInit={initializeDatabase}>
-        <StatusBar style="dark" backgroundColor="#ffffff" />
+        <StatusBar style="dark" />
         <Stack>
           <Stack.Screen
             name="(drawer)"
