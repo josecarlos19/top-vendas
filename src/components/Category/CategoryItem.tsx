@@ -39,8 +39,9 @@ export default function CategoryItem({
   };
 
   return (
-    <View
+    <TouchableOpacity
       style={[styles.categoryItem, !isActive && styles.categoryItemInactive]}
+      onPress={() => onEdit(category)}
     >
       <View style={styles.categoryHeader}>
         <View style={styles.categoryInfo}>
@@ -77,7 +78,7 @@ export default function CategoryItem({
           <Text style={styles.deleteButtonText}>Excluir</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 const styles = StyleSheet.create({
