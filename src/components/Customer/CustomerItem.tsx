@@ -31,14 +31,12 @@ interface CustomerItemProps {
   customer: Customer;
   onEdit: (customer: Customer) => void;
   onDelete: (id: number) => void;
-  onToggleActive: (id: number) => void;
 }
 
 export default function CustomerItem({
   customer,
   onEdit,
   onDelete,
-  onToggleActive,
 }: CustomerItemProps) {
   const formatDocument = (document: string, type: string) => {
     if (!document) return "";
@@ -114,9 +112,11 @@ export default function CustomerItem({
             ]}>
               {customer.name}
             </Text>
-            <Text style={styles.document}>
+            {customer.document ? (
+              <Text style={styles.document}>
               {customer.document_type}: {formatDocument(customer.document, customer.document_type)}
-            </Text>
+              </Text>
+            ) : null}
           </View>
         </View>
 
@@ -140,7 +140,7 @@ export default function CustomerItem({
       <View style={styles.details}>
         <View style={styles.detailRow}>
           <Ionicons name="mail-outline" size={16} color="#64748b" />
-          <Text style={styles.detailText}>{customer.email}</Text>
+          <Text style={styles.detailText}>{customer.email ? customer.email : 'Não informado'}</Text>
         </View>
 
         <View style={styles.detailRow}>

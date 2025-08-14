@@ -13,7 +13,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCustomerDatabase } from "@/database/models/Customer";
 import { Input } from "@/components/Input";
-// Removido import do Picker
 
 export default function CreateCustomer() {
   const [name, setName] = useState("");
@@ -74,11 +73,13 @@ export default function CreateCustomer() {
   };
 
   const validateEmail = (email: string) => {
+    if (!email.trim()) return true; // Email é opcional agora
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
   const validateDocument = (doc: string, type: string) => {
+    if (!doc.trim()) return true; // Documento é opcional agora
     const numbers = doc.replace(/\D/g, '');
     if (type === "CPF") {
       return numbers.length === 11;
@@ -145,57 +146,53 @@ export default function CreateCustomer() {
   };
 
   async function handleStore() {
-    // Validações
+    // Validação principal - apenas nome é obrigatório
     if (!name.trim()) {
       Alert.alert("Erro", "Por favor, preencha o nome do cliente.");
       return;
     }
 
-    if (!document.trim()) {
-      Alert.alert("Erro", "Por favor, preencha o documento do cliente.");
-      return;
-    }
-
-    if (!validateDocument(document, documentType)) {
+    // Validação de documento - se preenchido, deve estar correto
+    if (document.trim() && !validateDocument(document, documentType)) {
       const expectedLength = documentType === "CPF" ? "11" : "14";
       Alert.alert("Erro", `${documentType} deve ter ${expectedLength} dígitos.`);
       return;
     }
 
-    if (!email.trim()) {
-      Alert.alert("Erro", "Por favor, preencha o email do cliente.");
-      return;
-    }
-
-    if (!validateEmail(email)) {
+    // Validação de email - se preenchido, deve estar correto
+    if (email.trim() && !validateEmail(email)) {
       Alert.alert("Erro", "Por favor, insira um email válido.");
       return;
     }
 
     setIsLoading(true);
     try {
-      // Verifica se já existe cliente com este email
-      const existingByEmail = await customerDatabase.findByEmail(email.trim());
-      if (existingByEmail) {
-        Alert.alert("Erro", "Já existe um cliente cadastrado com este email.");
-        return;
+      // Verifica se já existe cliente com este email (apenas se email foi informado)
+      if (email.trim()) {
+        const existingByEmail = await customerDatabase.findByEmail(email.trim());
+        if (existingByEmail) {
+          Alert.alert("Erro", "Já existe um cliente cadastrado com este email.");
+          return;
+        }
       }
 
-      // Verifica se já existe cliente com este documento
-      const cleanDocument = getCleanDocument(document);
-      const existingByDocument = await customerDatabase.findByDocument(cleanDocument);
-      if (existingByDocument) {
-        Alert.alert("Erro", "Já existe um cliente cadastrado com este documento.");
-        return;
+      // Verifica se já existe cliente com este documento (apenas se documento foi informado)
+      if (document.trim()) {
+        const cleanDocument = getCleanDocument(document);
+        const existingByDocument = await customerDatabase.findByDocument(cleanDocument);
+        if (existingByDocument) {
+          Alert.alert("Erro", "Já existe um cliente cadastrado com este documento.");
+          return;
+        }
       }
 
       await customerDatabase.store({
         name: name.trim(),
-        document: cleanDocument,
-        document_type: documentType,
+        document: document.trim() ? getCleanDocument(document) : undefined,
+        document_type: document.trim() ? documentType : undefined,
         phone: phone.trim() ? getCleanPhone(phone) : undefined,
         mobile: mobile.trim() ? getCleanPhone(mobile) : undefined,
-        email: email.trim(),
+        email: email.trim() || undefined,
         address: address.trim() || undefined,
         neighborhood: neighborhood.trim() || undefined,
         city: city.trim() || undefined,
@@ -244,8 +241,10 @@ export default function CreateCustomer() {
     }
   };
 
-  const isFormValid = name.trim() && document.trim() && email.trim() &&
-    validateDocument(document, documentType) && validateEmail(email);
+  // Agora apenas o nome é obrigatório
+  const isFormValid = name.trim() &&
+    validateDocument(document, documentType) &&
+    validateEmail(email);
 
   return (
     <KeyboardAvoidingView
@@ -287,7 +286,7 @@ export default function CreateCustomer() {
 
           <View style={styles.row}>
             <View style={styles.pickerGroup}>
-              <Text style={styles.label}>Tipo de Documento *</Text>
+              <Text style={styles.label}>Tipo de Documento</Text>
               <View style={styles.documentTypeContainer}>
                 <TouchableOpacity
                   style={[
@@ -323,7 +322,7 @@ export default function CreateCustomer() {
             </View>
 
             <View style={styles.inputHalf}>
-              <Text style={styles.label}>{documentType} *</Text>
+              <Text style={styles.label}>{documentType}</Text>
               <Input
                 placeholder={documentType === "CPF" ? "000.000.000-00" : "00.000.000/0000-00"}
                 value={document}
@@ -336,9 +335,9 @@ export default function CreateCustomer() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email *</Text>
+            <Text style={styles.label}>Email</Text>
             <Input
-              placeholder="email@exemplo.com"
+              placeholder="email@exemplo.com (opcional)"
               value={email}
               onChangeText={setEmail}
               editable={!isLoading}
@@ -477,7 +476,7 @@ export default function CreateCustomer() {
           <View style={styles.infoCard}>
             <Ionicons name="information-circle-outline" size={20} color="#3b82f6" />
             <Text style={styles.infoText}>
-              Os campos marcados com * são obrigatórios. O email e documento devem ser únicos no sistema.
+              Apenas o nome é obrigatório. Se informar email ou documento, eles devem ser únicos no sistema.
               {'\n\n'}💡 Digite o CEP para preenchimento automático do endereço.
             </Text>
           </View>

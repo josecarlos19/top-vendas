@@ -14,11 +14,11 @@ export function useCustomerDatabase() {
     try {
       const result = await statement.executeAsync(
         params.name,
-        params.document,
-        params.document_type,
+        params.document || null,
+        params.document_type || null,
         params.phone || null,
         params.mobile || null,
-        params.email,
+        params.email || null,
         params.address || null,
         params.neighborhood || null,
         params.city || null,

@@ -18,11 +18,11 @@ export interface CustomerModelInterface extends BaseModelInterface {
 
 export interface CustomerStoreInterface extends BaseModelInterface {
   name: string;
-  document: string;
-  document_type: string;
+  document?: string;
+  document_type?: string;
   phone?: string;
   mobile?: string;
-  email: string;
+  email?: string;
   address?: string;
   neighborhood?: string;
   city?: string;
