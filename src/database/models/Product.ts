@@ -1,52 +1,9 @@
 import { useSQLiteContext } from "expo-sqlite";
 import { ProductModelInterface, ProductSearchInterface, ProductStoreInterface, ProductUpdateInterface } from "@/interfaces/models/productInterface";
+import { storeStockMovement, updateInitialStockMovement } from "../utils/stockMovementUtils";
 
 export function useProductDatabase() {
   const database = useSQLiteContext();
-
-  async function store(params: ProductStoreInterface) {
-    const statement = await database.prepareAsync(
-      `INSERT INTO products (
-        name, barcode, reference, description, cost_price, sale_price,
-        wholesale_price, current_stock, minimum_stock, category_id, supplier
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    );
-    try {
-      const result = await statement.executeAsync(
-        params.name,
-        params.barcode || null,
-        params.reference || null,
-        params.description || null,
-        params.cost_price || null,
-        params.sale_price,
-        params.wholesale_price || null,
-        params.current_stock || 0,
-        params.minimum_stock || 0,
-        params.category_id || null,
-        params.supplier || null,
-      );
-      const id = result.lastInsertRowId.toString();
-      return {
-        id,
-        name: params.name,
-        barcode: params.barcode,
-        reference: params.reference,
-        description: params.description,
-        cost_price: params.cost_price,
-        sale_price: params.sale_price,
-        wholesale_price: params.wholesale_price,
-        current_stock: params.current_stock,
-        minimum_stock: params.minimum_stock,
-        category_id: params.category_id,
-        supplier: params.supplier,
-      };
-    } catch (error) {
-      console.error("Error storing product:", error);
-      throw new Error("Failed to store product");
-    } finally {
-      await statement.finalizeAsync();
-    }
-  }
 
   async function index(params?: ProductSearchInterface) {
     try {
@@ -74,7 +31,7 @@ export function useProductDatabase() {
       }
 
       if (params?.low_stock) {
-        query += " AND p.current_stock <= p.minimum_stock";
+        query += " AND p.initial_stock <= p.minimum_stock";
       }
 
       query += " ORDER BY p.name ASC";
@@ -115,7 +72,7 @@ export function useProductDatabase() {
       }
 
       if (params?.low_stock) {
-        query += " AND current_stock <= minimum_stock";
+        query += " AND initial_stock <= minimum_stock";
       }
 
       const result = await database.getFirstAsync(query, queryParams) as { total: number };
@@ -143,11 +100,67 @@ export function useProductDatabase() {
     }
   }
 
+
+  async function store(params: ProductStoreInterface) {
+    console.log(params);
+    const statement = await database.prepareAsync(
+      `INSERT INTO products (
+        name, barcode, reference, description, cost_price, sale_price,
+        wholesale_price, initial_stock, minimum_stock, category_id, supplier
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    try {
+      const result = await statement.executeAsync(
+        params.name,
+        params.barcode || null,
+        params.reference || null,
+        params.description || null,
+        params.cost_price || null,
+        params.sale_price,
+        params.wholesale_price || null,
+        params.initial_stock || 0,
+        params.minimum_stock || 0,
+        params.category_id || null,
+        params.supplier || null,
+      );
+      const id = result.lastInsertRowId.toString();
+
+      await storeStockMovement(database, {
+        sale_id: null,
+        product_id: parseInt(id, 10),
+        type: "stock_in",
+        quantity: params.initial_stock || 0,
+        unit_value: params.sale_price || 0,
+        total_value: (params.initial_stock || 0) * (params.sale_price || 0),
+      });
+
+      return {
+        id,
+        name: params.name,
+        barcode: params.barcode,
+        reference: params.reference,
+        description: params.description,
+        cost_price: params.cost_price,
+        sale_price: params.sale_price,
+        wholesale_price: params.wholesale_price,
+        initial_stock: params.initial_stock,
+        minimum_stock: params.minimum_stock,
+        category_id: params.category_id,
+        supplier: params.supplier,
+      };
+    } catch (error) {
+      console.error("Error storing product:", error);
+      throw new Error("Failed to store product");
+    } finally {
+      await statement.finalizeAsync();
+    }
+  }
+
   async function update(params: ProductUpdateInterface) {
     const statement = await database.prepareAsync(
       `UPDATE products SET
         name = ?, barcode = ?, reference = ?, description = ?, cost_price = ?,
-        sale_price = ?, wholesale_price = ?, current_stock = ?, minimum_stock = ?,
+        sale_price = ?, wholesale_price = ?, initial_stock = ?, minimum_stock = ?,
         category_id = ?, supplier = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND deleted_at IS NULL`,
     );
@@ -160,12 +173,20 @@ export function useProductDatabase() {
         params.cost_price || null,
         params.sale_price || 0,
         params.wholesale_price || null,
-        params.current_stock || 0,
+        params.initial_stock || 0,
         params.minimum_stock || 0,
         params.category_id || null,
         params.supplier || null,
         params.id,
       );
+
+      await updateInitialStockMovement(database, {
+        product_id: params.id,
+        quantity: params.initial_stock,
+        unit_value: params.sale_price,
+        total_value: (params.initial_stock || 0) * (params.sale_price || 0),
+      })
+
       return await show(params.id);
     } catch (error) {
       console.error("Error updating product:", error);
@@ -243,7 +264,7 @@ export function useProductDatabase() {
 
   async function updateStock(id: number, newStock: number) {
     const statement = await database.prepareAsync(
-      "UPDATE products SET current_stock = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL",
+      "UPDATE products SET initial_stock = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL",
     );
     try {
       await statement.executeAsync(newStock, id);
@@ -262,7 +283,7 @@ export function useProductDatabase() {
         `SELECT p.*, c.name as category_name
          FROM products p
          LEFT JOIN categories c ON p.category_id = c.id
-         WHERE p.deleted_at IS NULL AND p.active = 1 AND p.current_stock <= p.minimum_stock
+         WHERE p.deleted_at IS NULL AND p.active = 1 AND p.initial_stock <= p.minimum_stock
          ORDER BY p.name ASC`,
       );
       return result as (ProductModelInterface & { category_name?: string })[];

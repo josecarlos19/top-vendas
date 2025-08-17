@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import { useProductDatabase } from "@/database/models/Product";
 import { useCategoryDatabase } from "@/database/models/Category";
 import { Input } from "@/components/Input";
+import formatCurrency from "@/components/utils/formatCurrency";
 
 interface Category {
   id: number;
@@ -56,18 +57,6 @@ export default function CreateProduct() {
     }
   };
 
-  const formatCurrency = (text: string) => {
-    const numbers = text.replace(/\D/g, '');
-
-    if (numbers === '') return '';
-
-    const value = parseInt(numbers) / 100;
-
-    return value.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    });
-  };
 
   const formatNumber = (text: string) => {
     return text.replace(/\D/g, '');
@@ -134,7 +123,7 @@ export default function CreateProduct() {
         cost_price: costPriceValue,
         sale_price: salePriceValue,
         wholesale_price: wholesalePriceValue,
-        current_stock: currentStock ? parseInt(currentStock) : 0,
+        initial_stock: currentStock ? parseInt(currentStock) : 0,
         minimum_stock: minimumStock ? parseInt(minimumStock) : 0,
         category_id: categoryId,
         supplier: supplier.trim() || undefined,
@@ -208,7 +197,6 @@ export default function CreateProduct() {
         </View>
 
         <View style={styles.formSection}>
-          {/* Informações Básicas */}
           <View style={styles.sectionHeader}>
             <Ionicons name="information-circle-outline" size={20} color="#FF6B35" />
             <Text style={styles.sectionTitle}>Informações Básicas</Text>

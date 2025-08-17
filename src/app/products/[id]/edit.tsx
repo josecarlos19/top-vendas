@@ -15,6 +15,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useProductDatabase } from "@/database/models/Product";
 import { useCategoryDatabase } from "@/database/models/Category";
 import { Input } from "@/components/Input";
+import formatCurrency from "@/components/utils/formatCurrency";
 
 interface Category {
   id: number;
@@ -30,7 +31,7 @@ interface Product {
   cost_price?: number;
   sale_price: number;
   wholesale_price?: number;
-  current_stock: number;
+  initial_stock: number;
   minimum_stock: number;
   category_id?: number;
   supplier?: string;
@@ -85,10 +86,10 @@ export default function EditProduct() {
       setBarcode(foundProduct.barcode || "");
       setReference(foundProduct.reference || "");
       setDescription(foundProduct.description || "");
-      setCostPrice(foundProduct.cost_price ? formatCurrency((foundProduct.cost_price / 100).toString()) : "");
-      setSalePrice(formatCurrency((foundProduct.sale_price / 100).toString()));
-      setWholesalePrice(foundProduct.wholesale_price ? formatCurrency((foundProduct.wholesale_price / 100).toString()) : "");
-      setCurrentStock(foundProduct.current_stock.toString());
+      setCostPrice(foundProduct.cost_price ? formatCurrency(foundProduct.cost_price.toString()) : "");
+      setSalePrice(formatCurrency(foundProduct.sale_price.toString()));
+      setWholesalePrice(foundProduct.wholesale_price ? formatCurrency(foundProduct.wholesale_price.toString()) : "");
+      setCurrentStock(foundProduct.initial_stock.toString());
       setMinimumStock(foundProduct.minimum_stock.toString());
       setCategoryId(foundProduct.category_id);
       setSupplier(foundProduct.supplier || "");
@@ -110,17 +111,6 @@ export default function EditProduct() {
     } catch (error) {
       console.error("Error loading categories:", error);
     }
-  };
-
-  const formatCurrency = (text: string) => {
-    const numbers = text.replace(/\D/g, '');
-    if (numbers === '') return '';
-    const value = parseInt(numbers) / 100;
-
-    return value.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    });
   };
 
   const formatNumber = (text: string) => {
@@ -189,7 +179,7 @@ export default function EditProduct() {
         cost_price: costPriceValue,
         sale_price: salePriceValue,
         wholesale_price: wholesalePriceValue,
-        current_stock: currentStock ? parseInt(currentStock) : 0,
+        initial_stock: currentStock ? parseInt(currentStock) : 0,
         minimum_stock: minimumStock ? parseInt(minimumStock) : 0,
         category_id: categoryId,
         supplier: supplier.trim() || undefined,
@@ -271,7 +261,7 @@ export default function EditProduct() {
       getCurrencyValue(costPrice) !== (product.cost_price ? product.cost_price / 100 : 0) ||
       getCurrencyValue(salePrice) !== (product.sale_price / 100) ||
       getCurrencyValue(wholesalePrice) !== (product.wholesale_price ? product.wholesale_price / 100 : 0) ||
-      parseInt(currentStock || "0") !== product.current_stock ||
+      parseInt(currentStock || "0") !== product.initial_stock ||
       parseInt(minimumStock || "0") !== product.minimum_stock ||
       categoryId !== product.category_id ||
       supplier !== (product.supplier || "");

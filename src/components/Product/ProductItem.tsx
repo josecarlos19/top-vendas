@@ -17,7 +17,7 @@ export interface Product {
   cost_price?: number;
   sale_price: number;
   wholesale_price?: number;
-  current_stock: number;
+  initial_stock: number;
   minimum_stock: number;
   category_id?: number;
   category_name?: string;
@@ -45,7 +45,7 @@ export default function ProductItem({
     return `R$ ${(price / 100).toFixed(2).replace(".", ",")}`;
   };
 
-  const isLowStock = product.current_stock <= product.minimum_stock;
+  const isLowStock = product.initial_stock <= product.minimum_stock;
   const isActive = product.active === 1;
 
   const handleDelete = () => {
@@ -140,7 +140,7 @@ export default function ProductItem({
             styles.detailText,
             isLowStock && styles.lowStockText
           ]}>
-            Estoque: {product.current_stock}
+            Estoque: {product.initial_stock}
             {product.minimum_stock > 0 && ` (Mín: ${product.minimum_stock})`}
           </Text>
           {isLowStock && (

@@ -44,7 +44,7 @@ export async function initializeDatabase(db: SQLiteDatabase) {
         cost_price INTEGER,
         sale_price INTEGER,
         wholesale_price INTEGER,
-        current_stock INTEGER,
+        initial_stock INTEGER,
         minimum_stock INTEGER,
         category_id INTEGER,
         supplier TEXT,
@@ -107,7 +107,7 @@ export async function initializeDatabase(db: SQLiteDatabase) {
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS stock_movements (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sale_id INTEGER,
+        sale_id INTEGER NULL,
         product_id INTEGER,
         type TEXT,
         quantity INTEGER,
