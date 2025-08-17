@@ -8,33 +8,33 @@ export function useProductDatabase() {
   async function index(params?: ProductSearchInterface) {
     try {
       let query = `
-        SELECT p.*, c.name as category_name
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        WHERE p.deleted_at IS NULL
+        SELECT products.*, categories.name
+        FROM products
+        LEFT JOIN categories ON products.category_id = categories.id
+        WHERE products.deleted_at IS NULL
       `;
       const queryParams: any[] = [];
 
       if (params?.q) {
-        query += " AND (p.name LIKE ? OR p.barcode LIKE ? OR p.reference LIKE ?)";
+        query += " AND (products.name LIKE ? OR products.barcode LIKE ? OR products.reference LIKE ?)";
         queryParams.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
       }
 
       if (params?.category_id) {
-        query += " AND p.category_id = ?";
+        query += " AND products.category_id = ?";
         queryParams.push(params.category_id);
       }
 
       if (params?.active !== undefined) {
-        query += " AND p.active = ?";
+        query += " AND products.active = ?";
         queryParams.push(params.active);
       }
 
       if (params?.low_stock) {
-        query += " AND p.initial_stock <= p.minimum_stock";
+        query += " AND products.initial_stock <= products.minimum_stock";
       }
 
-      query += " ORDER BY p.name ASC";
+      query += " ORDER BY products.name ASC";
 
       if (params?.page && params?.perPage) {
         const offset = (params.page - 1) * params.perPage;
@@ -43,7 +43,7 @@ export function useProductDatabase() {
       }
 
       const result = await database.getAllAsync(query, queryParams);
-      return result as (ProductModelInterface & { category_name?: string })[];
+      return result as (ProductModelInterface & { name?: string })[];
 
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -53,7 +53,7 @@ export function useProductDatabase() {
 
   async function count(params?: Omit<ProductSearchInterface, 'page' | 'perPage'>) {
     try {
-      let query = "SELECT COUNT(*) as total FROM products WHERE deleted_at IS NULL";
+      let query = "SELECT COUNT(*) FROM products WHERE deleted_at IS NULL";
       const queryParams: any[] = [];
 
       if (params?.q) {
@@ -75,8 +75,8 @@ export function useProductDatabase() {
         query += " AND initial_stock <= minimum_stock";
       }
 
-      const result = await database.getFirstAsync(query, queryParams) as { total: number };
-      return result.total;
+      const result = await database.getFirstAsync(query, queryParams) as { [key: string]: number };
+      return Object.values(result)[0];
 
     } catch (error) {
       console.error("Error counting products:", error);
@@ -87,19 +87,18 @@ export function useProductDatabase() {
   async function show(id: number) {
     try {
       const result = await database.getFirstAsync(
-        `SELECT p.*, c.name as category_name
-         FROM products p
-         LEFT JOIN categories c ON p.category_id = c.id
-         WHERE p.id = ? AND p.deleted_at IS NULL`,
+        `SELECT products.*, categories.name
+         FROM products
+         LEFT JOIN categories ON products.category_id = categories.id
+         WHERE products.id = ? AND products.deleted_at IS NULL`,
         [id],
       );
-      return result as (ProductModelInterface & { category_name?: string }) | null;
+      return result as (ProductModelInterface & { name?: string }) | null;
     } catch (error) {
       console.error("Error fetching product:", error);
       throw new Error("Failed to fetch product");
     }
   }
-
 
   async function store(params: ProductStoreInterface) {
     console.log(params);
@@ -280,13 +279,13 @@ export function useProductDatabase() {
   async function getLowStockProducts() {
     try {
       const result = await database.getAllAsync(
-        `SELECT p.*, c.name as category_name
-         FROM products p
-         LEFT JOIN categories c ON p.category_id = c.id
-         WHERE p.deleted_at IS NULL AND p.active = 1 AND p.initial_stock <= p.minimum_stock
-         ORDER BY p.name ASC`,
+        `SELECT products.*, categories.name
+         FROM products
+         LEFT JOIN categories ON products.category_id = categories.id
+         WHERE products.deleted_at IS NULL AND products.active = 1 AND products.initial_stock <= products.minimum_stock
+         ORDER BY products.name ASC`,
       );
-      return result as (ProductModelInterface & { category_name?: string })[];
+      return result as (ProductModelInterface & { name?: string })[];
     } catch (error) {
       console.error("Error fetching low stock products:", error);
       throw new Error("Failed to fetch low stock products");

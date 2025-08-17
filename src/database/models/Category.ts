@@ -32,7 +32,6 @@ async function index(params?: CategorySearchInterface) {
     let query = "SELECT * FROM categories WHERE deleted_at IS NULL";
     const queryParams: any[] = [];
 
-
     if (params?.name) {
       query += " AND name LIKE ?";
       queryParams.push(`%${params.name}%`);
@@ -67,7 +66,7 @@ async function index(params?: CategorySearchInterface) {
 
 async function count(params?: Omit<CategorySearchInterface, 'page' | 'perPage'>) {
   try {
-    let query = "SELECT COUNT(*) as total FROM categories WHERE deleted_at IS NULL";
+    let query = "SELECT COUNT(*) FROM categories WHERE deleted_at IS NULL";
     const queryParams: any[] = [];
 
     if (params?.name) {
@@ -85,14 +84,15 @@ async function count(params?: Omit<CategorySearchInterface, 'page' | 'perPage'>)
       queryParams.push(params.active);
     }
 
-    const result = await database.getFirstAsync(query, queryParams) as { total: number };
-    return result.total;
+    const result = await database.getFirstAsync(query, queryParams) as { [key: string]: number };
+    return Object.values(result)[0];
 
   } catch (error) {
     console.error("Error counting categories:", error);
     throw new Error("Failed to count categories");
   }
 }
+
   async function show(id: number) {
     try {
       const result = await database.getFirstAsync(

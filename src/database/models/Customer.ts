@@ -79,7 +79,7 @@ export function useCustomerDatabase() {
 
 async function count(params?: Omit<CustomerSearchInterface, 'page' | 'perPage'>) {
   try {
-    let query = "SELECT COUNT(*) as total FROM customers WHERE deleted_at IS NULL";
+    let query = "SELECT COUNT(*) FROM customers WHERE deleted_at IS NULL";
     const queryParams: any[] = [];
 
     if (params?.q) {
@@ -87,8 +87,8 @@ async function count(params?: Omit<CustomerSearchInterface, 'page' | 'perPage'>)
       queryParams.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
     }
 
-    const result = await database.getFirstAsync(query, queryParams) as { total: number };
-    return result.total;
+    const result = await database.getFirstAsync(query, queryParams) as { [key: string]: number };
+    return Object.values(result)[0];
 
   } catch (error) {
     console.error("Error counting customers:", error);
