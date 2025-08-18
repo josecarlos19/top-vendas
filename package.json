@@ -18,6 +18,7 @@
     "@react-navigation/native": "^7.1.6",
     "expo": "~53.0.20",
     "expo-font": "~13.3.2",
+    "expo-linear-gradient": "~14.1.5",
     "expo-linking": "~7.1.7",
     "expo-router": "~5.1.4",
     "expo-splash-screen": "~0.30.10",
@@ -25,6 +26,8 @@
     "expo-status-bar": "~2.2.3",
     "expo-system-ui": "~5.0.10",
     "expo-web-browser": "~14.2.0",
+    "luxon": "^3.7.1",
+    "prettier": "^3.6.2",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
@@ -32,11 +35,11 @@
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
-    "react-native-web": "~0.20.0",
-    "expo-linear-gradient": "~14.1.5"
+    "react-native-web": "~0.20.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@types/luxon": "^3.7.1",
     "@types/react": "~19.0.10",
     "jest": "^29.2.1",
     "jest-expo": "~53.0.9",
