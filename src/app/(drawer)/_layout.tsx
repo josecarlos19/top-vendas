@@ -34,6 +34,11 @@ function CustomDrawerContent(props: any) {
       route: "/(drawer)/products",
       icon: "pricetag-outline" as keyof typeof Ionicons.glyphMap,
     },
+    {
+      name: "Vendas",
+      route: "/(drawer)/sales",
+      icon: "cart-outline" as keyof typeof Ionicons.glyphMap,
+    }
   ];
 
   return (

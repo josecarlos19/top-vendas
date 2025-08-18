@@ -11,6 +11,7 @@ export interface ProductModelInterface extends BaseModelInterface {
   wholesale_price?: number;
   initial_stock?: number;
   minimum_stock?: number;
+  current_stock?: number;
   category_id?: number;
   supplier?: string;
   active?: number;

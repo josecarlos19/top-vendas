@@ -8,7 +8,7 @@ export function useProductDatabase() {
   async function index(params?: ProductSearchInterface) {
     try {
       let query = `
-        SELECT products.*, categories.name
+        SELECT products.*, categories.name as category_name
         FROM products
         LEFT JOIN categories ON products.category_id = categories.id
         WHERE products.deleted_at IS NULL
@@ -101,7 +101,6 @@ export function useProductDatabase() {
   }
 
   async function store(params: ProductStoreInterface) {
-    console.log(params);
     const statement = await database.prepareAsync(
       `INSERT INTO products (
         name, barcode, reference, description, cost_price, sale_price,

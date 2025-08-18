@@ -1,4 +1,4 @@
-import { type SQLiteDatabase } from "expo-sqlite";
+import { type SQLiteDatabase } from 'expo-sqlite';
 
 export async function initializeDatabase(db: SQLiteDatabase) {
   await db.withTransactionAsync(async () => {
@@ -21,7 +21,7 @@ export async function initializeDatabase(db: SQLiteDatabase) {
         deleted_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );`,
+      );`
     );
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS categories (
@@ -32,7 +32,7 @@ export async function initializeDatabase(db: SQLiteDatabase) {
         deleted_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );`,
+      );`
     );
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS products (
@@ -53,16 +53,15 @@ export async function initializeDatabase(db: SQLiteDatabase) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (category_id) REFERENCES categories(id)
-      );`,
+      );`
     );
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS sales (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sale_number TEXT,
         customer_id INTEGER,
         subtotal INTEGER,
         discount INTEGER,
-        total_amount INTEGER,
+        total INTEGER,
         payment_method TEXT,
         installments INTEGER,
         status TEXT,
@@ -72,7 +71,7 @@ export async function initializeDatabase(db: SQLiteDatabase) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (customer_id) REFERENCES customers(id)
-      );`,
+      );`
     );
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS sale_items (
@@ -81,19 +80,18 @@ export async function initializeDatabase(db: SQLiteDatabase) {
         product_id INTEGER,
         quantity INTEGER,
         unit_price INTEGER,
-        item_discount INTEGER,
         subtotal INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (sale_id) REFERENCES sales(id),
         FOREIGN KEY (product_id) REFERENCES products(id)
-      );`,
+      );`
     );
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS installments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         sale_id INTEGER,
-        installment_number INTEGER,
-        installment_amount INTEGER,
+        number INTEGER,
+        amount INTEGER,
         due_date DATE,
         payment_date DATE,
         paid_amount INTEGER,
@@ -102,7 +100,7 @@ export async function initializeDatabase(db: SQLiteDatabase) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (sale_id) REFERENCES sales(id)
-      );`,
+      );`
     );
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS stock_movements (
@@ -118,7 +116,7 @@ export async function initializeDatabase(db: SQLiteDatabase) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (sale_id) REFERENCES sales(id),
         FOREIGN KEY (product_id) REFERENCES products(id)
-      );`,
+      );`
     );
   });
 }
