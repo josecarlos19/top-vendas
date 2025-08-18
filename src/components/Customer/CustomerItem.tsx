@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -38,6 +37,46 @@ export default function CustomerItem({
   onEdit,
   onDelete,
 }: CustomerItemProps) {
+  const avatarColors = [
+    '#FF6B35',
+    '#4F46E5',
+    '#059669',
+    '#DC2626',
+    '#7C3AED',
+    '#EA580C',
+    '#065F46',
+    '#1E40AF',
+    '#BE185D',
+    '#0F766E',
+    '#7C2D12',
+    '#1E3A8A',
+    '#BE123C',
+    '#166534',
+    '#C2410C',
+    '#6B21A8',
+    '#0891B2',
+    '#B91C1C',
+    '#0D9488',
+    '#CA8A04',
+    '#9333EA',
+    '#15803D',
+    '#0369A1',
+    '#A21CAF',
+    '#EAB308',
+    '#DC2626',
+  ];
+
+  const getAvatarColor = (name: string) => {
+    const firstLetter = name.charAt(0).toUpperCase();
+    const letterIndex = firstLetter.charCodeAt(0) - 65;
+
+    if (letterIndex < 0 || letterIndex > 25) {
+      return '#FF6B35';
+    }
+
+    return avatarColors[letterIndex];
+  };
+
   const formatDocument = (document: string, type: string) => {
     if (!document) return "";
 
@@ -52,36 +91,7 @@ export default function CustomerItem({
     return document;
   };
 
-  const formatPhone = (phone?: string) => {
-    if (!phone) return "";
-
-    if (phone.length === 11) {
-      return phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-    }
-
-    if (phone.length === 10) {
-      return phone.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
-    }
-
-    return phone;
-  };
-
-  const getDisplayPhone = () => {
-    if (customer.mobile) {
-      return formatPhone(customer.mobile);
-    }
-    if (customer.phone) {
-      return formatPhone(customer.phone);
-    }
-    return "Não informado";
-  };
-
-  const getLocationText = () => {
-    const parts = [];
-    if (customer.city) parts.push(customer.city);
-    if (customer.state) parts.push(customer.state);
-    return parts.length > 0 ? parts.join(", ") : "Não informado";
-  };
+  const avatarBackgroundColor = customer.active ? getAvatarColor(customer.name) : '#94a3b8';
 
   return (
     <TouchableOpacity
@@ -96,6 +106,7 @@ export default function CustomerItem({
         <View style={styles.nameContainer}>
           <View style={[
             styles.avatar,
+            { backgroundColor: avatarBackgroundColor },
             !customer.active && styles.inactiveAvatar
           ]}>
             <Text style={[
@@ -114,7 +125,7 @@ export default function CustomerItem({
             </Text>
             {customer.document ? (
               <Text style={styles.document}>
-              {customer.document_type}: {formatDocument(customer.document, customer.document_type)}
+                {customer.document_type}: {formatDocument(customer.document, customer.document_type)}
               </Text>
             ) : null}
           </View>
@@ -134,23 +145,6 @@ export default function CustomerItem({
           >
             <Ionicons name="trash-outline" size={16} color="#ef4444" />
           </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={styles.details}>
-        <View style={styles.detailRow}>
-          <Ionicons name="mail-outline" size={16} color="#64748b" />
-          <Text style={styles.detailText}>{customer.email ? customer.email : 'Não informado'}</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <Ionicons name="call-outline" size={16} color="#64748b" />
-          <Text style={styles.detailText}>{getDisplayPhone()}</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <Ionicons name="location-outline" size={16} color="#64748b" />
-          <Text style={styles.detailText}>{getLocationText()}</Text>
         </View>
       </View>
 
@@ -194,7 +188,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 12,
   },
   nameContainer: {
     flex: 1,
@@ -205,7 +198,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#FF6B35",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
