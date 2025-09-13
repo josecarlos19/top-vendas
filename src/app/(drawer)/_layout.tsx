@@ -25,14 +25,14 @@ function CustomDrawerContent(props: any) {
       icon: "folder-outline" as keyof typeof Ionicons.glyphMap,
     },
     {
-      name: "Clientes",
-      route: "/(drawer)/customers",
-      icon: "people-outline" as keyof typeof Ionicons.glyphMap,
-    },
-    {
       name: "Produtos",
       route: "/(drawer)/products",
       icon: "pricetag-outline" as keyof typeof Ionicons.glyphMap,
+    },
+    {
+      name: "Clientes",
+      route: "/(drawer)/customers",
+      icon: "people-outline" as keyof typeof Ionicons.glyphMap,
     },
     {
       name: "Vendas",
