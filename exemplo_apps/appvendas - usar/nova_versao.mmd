@@ -54,7 +54,7 @@ erDiagram
         INTEGER customer_id FK
         INTEGER subtotal
         INTEGER discount
-        INTEGER total_amount
+        INTEGER total
         TEXT payment_method
         INTEGER installments
         TEXT status
@@ -79,7 +79,7 @@ erDiagram
     installments {
         INTEGER id PK
         INTEGER sale_id FK
-        INTEGER installment_number
+        INTEGER number
         INTEGER installment_amount
         DATE due_date
         DATE payment_date
