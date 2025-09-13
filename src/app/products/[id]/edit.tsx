@@ -510,7 +510,7 @@ export default function EditProduct() {
 
           <View style={styles.row}>
             <View style={styles.inputHalf}>
-              <Text style={styles.label}>Estoque Atual</Text>
+              <Text style={styles.label}>Estoque Inicial</Text>
               <Input
                 placeholder="0"
                 value={currentStock}
