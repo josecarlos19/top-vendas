@@ -30,7 +30,7 @@ export interface SaleStoreInterface extends BaseModelInterface {
     | 'debit_card'
     | 'pix'
     | 'bank_transfer';
-  installments?: number;
+  installments: number;
   status?: 'pending' | 'completed' | 'cancelled';
   sale_date?: Date;
   notes?: string;
@@ -40,21 +40,9 @@ export interface SaleStoreInterface extends BaseModelInterface {
 
 export interface SaleUpdateInterface extends BaseModelInterface {
   id: number;
-  customer_id?: number;
-  subtotal?: number;
-  discount?: number;
-  total?: number;
-  payment_method?:
-    | 'cash'
-    | 'credit_card'
-    | 'debit_card'
-    | 'pix'
-    | 'bank_transfer';
-  installments?: number;
   status?: 'pending' | 'completed' | 'cancelled';
-  sale_date?: Date;
   notes?: string;
-  itens: SaleItemStoreInterface[];
+  first_due_date?: Date;
 }
 
 export interface SaleSearchInterface {

@@ -18,7 +18,8 @@ import { useCustomerDatabase } from "@/database/models/Customer";
 import { useProductDatabase } from "@/database/models/Product";
 import { Input } from "@/components/Input";
 import formatCurrency from "@/components/utils/formatCurrency";
-
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { DateTime } from "luxon";
 interface Customer {
   id: number;
   name: string;
@@ -67,6 +68,9 @@ export default function CreateSale() {
   const [showPaymentPicker, setShowPaymentPicker] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
+  const [firstDueDate, setFirstDueDate] = useState(new Date());
+  const [firstDueDatePlusOneMonth, setFirstDueDatePlusOneMonth] = useState(DateTime.now().plus({ months: 1 }).toJSDate());
+  const [showFirstDuePicker, setShowFirstDuePicker] = useState(false);
 
   const saleDatabase = useSaleDatabase();
   const customerDatabase = useCustomerDatabase();
@@ -76,6 +80,16 @@ export default function CreateSale() {
     loadCustomers();
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    if (paymentMethod === "installment") {
+      const nextMonth = new Date(saleDate);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      setFirstDueDate(nextMonth);
+    } else {
+      setFirstDueDate(saleDate);
+    }
+  }, [paymentMethod, saleDate]);
 
   const loadCustomers = async () => {
     try {
@@ -250,7 +264,7 @@ export default function CreateSale() {
           unit_price: item.unit_price,
           subtotal: item.subtotal,
         })),
-        first_due_date: installmentCount > 1 ? new Date(saleDate.getTime() + 30 * 24 * 60 * 60 * 1000) : saleDate,
+        first_due_date: firstDueDate,
       });
 
       Alert.alert(
@@ -289,7 +303,7 @@ export default function CreateSale() {
   };
 
   const getSelectedCustomerName = () => {
-    if (!customerId) return "Selecionar cliente (opcional)";
+    if (!customerId) return "Selecionar cliente";
     const customer = customers.find(c => c.id === customerId);
     return customer ? customer.name : "Cliente não encontrado";
   };
@@ -408,16 +422,6 @@ export default function CreateSale() {
                   style={styles.searchInput}
                 />
                 <ScrollView style={styles.optionsList} nestedScrollEnabled>
-                  <TouchableOpacity
-                    style={styles.option}
-                    onPress={() => {
-                      setCustomerId(undefined);
-                      setShowCustomerPicker(false);
-                      setCustomerSearch("");
-                    }}
-                  >
-                    <Text style={styles.optionText}>Venda sem cliente</Text>
-                  </TouchableOpacity>
                   {filteredCustomers.map((customer) => (
                     <TouchableOpacity
                       key={customer.id}
@@ -583,6 +587,34 @@ export default function CreateSale() {
               />
             </View>
           )}
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{paymentMethod === 'installment' ? 'Data do Primeiro Vencimento' : 'Data do Pagamento'}</Text>
+            <TouchableOpacity
+              style={styles.selector}
+              onPress={() => setShowFirstDuePicker(true)}
+              disabled={isLoading}
+            >
+              <Text style={styles.selectorText}>
+                {firstDueDate.toLocaleDateString("pt-BR")}
+              </Text>
+              <Ionicons name="calendar-outline" size={20} color="#64748b" />
+            </TouchableOpacity>
+
+            {showFirstDuePicker && (
+              <DateTimePicker
+                value={paymentMethod === 'installment' ? firstDueDatePlusOneMonth : firstDueDate}
+                mode="date"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={(event, date) => {
+                  setShowFirstDuePicker(false);
+                  if (date) setFirstDueDate(date);
+                }}
+              />
+            )}
+          </View>
+
+
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Desconto</Text>

@@ -7,76 +7,10 @@ import {
 } from '@/interfaces/models/saleInterface';
 import { DateTime } from 'luxon';
 import { destroyStockMovementsBySaleId } from '../utils/stockMovementUtils';
+import { InstallmentItemInterface } from '@/interfaces/models/installmentInterface';
 
 export function useSaleDatabase() {
   const database = useSQLiteContext();
-
-  async function store(params: SaleStoreInterface) {
-    return await database.withTransactionAsync(async () => {
-      try {
-        const saleStatement = await database.prepareAsync(
-          `INSERT INTO sales (
-            customer_id, subtotal, discount, total_amount,
-            payment_method, installments, status, sale_date, notes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        );
-
-        const saleResult = await saleStatement.executeAsync(
-          params.customer_id,
-          params.subtotal,
-          params.discount || 0,
-          params.total,
-          params.payment_method,
-          params.installments || 1,
-          params.status || 'pending',
-          params.sale_date
-            ? params.sale_date.toISOString()
-            : new Date().toISOString(),
-          params.notes || null
-        );
-
-        await saleStatement.finalizeAsync();
-        const saleId = saleResult.lastInsertRowId;
-
-        if (params.itens && params.itens.length > 0) {
-          const itemStatement = await database.prepareAsync(
-            `INSERT INTO sale_items (
-              sale_id, product_id, quantity, unit_price, subtotal
-            ) VALUES (?, ?, ?, ?, ?)`
-          );
-
-          for (const item of params.itens) {
-            await itemStatement.executeAsync(
-              saleId,
-              item.product_id,
-              item.quantity,
-              item.unit_price,
-              item.subtotal
-            );
-
-            const stockStatement = await database.prepareAsync(
-              `INSERT INTO stock_movements (
-              sale_id, product_id, type, quantity, unit_value, total_value, notes
-              ) VALUES (?, ?, 'sale', ?, ?, ?, 'Venda')`
-            );
-            await stockStatement.executeAsync(
-              saleId,
-              item.product_id,
-              -item.quantity,
-              item.unit_price,
-              item.subtotal
-            );
-            await stockStatement.finalizeAsync();
-          }
-
-          await itemStatement.finalizeAsync();
-        }
-      } catch (error) {
-        console.error('Error storing sale:', error);
-        throw new Error('Failed to store sale');
-      }
-    });
-  }
 
   async function index(params?: SaleSearchInterface) {
     try {
@@ -185,9 +119,11 @@ export function useSaleDatabase() {
           sales.*,
           customers.name as customer_name,
           customers.email as customer_email,
-          customers.phone as customer_phone
+          customers.phone as customer_phone,
+          min(installments.due_date) as first_due_date
         FROM sales
         LEFT JOIN customers ON sales.customer_id = customers.id
+        JOIN installments ON installments.sale_id = sales.id
         WHERE sales.id = ? AND sales.deleted_at IS NULL`,
         [id]
       )) as
@@ -222,9 +158,26 @@ export function useSaleDatabase() {
         [id]
       );
 
+      const installments = await database.getAllAsync(
+        `SELECT
+          id,
+          number,
+          amount,
+          due_date,
+          payment_date,
+          paid_amount,
+          status,
+          notes
+        FROM installments
+        WHERE sale_id = ?
+        ORDER BY number`,
+        [id]
+      );
+
       return {
         ...sale,
         items,
+        installments,
       };
     } catch (error) {
       console.error('Error fetching sale:', error);
@@ -232,33 +185,139 @@ export function useSaleDatabase() {
     }
   }
 
+  async function store(params: SaleStoreInterface) {
+    return await database.withTransactionAsync(async () => {
+      try {
+        const saleStatement = await database.prepareAsync(
+          `INSERT INTO sales (
+            customer_id, subtotal, discount, total,
+            payment_method, installments, status, sale_date, notes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        );
+
+        const saleResult = await saleStatement.executeAsync(
+          params.customer_id,
+          params.subtotal,
+          params.discount || 0,
+          params.total,
+          params.payment_method,
+          params.installments || 1,
+          params.status || 'pending',
+          params.sale_date
+            ? params.sale_date.toISOString()
+            : new Date().toISOString(),
+          params.notes || null
+        );
+
+        await saleStatement.finalizeAsync();
+        const saleId = saleResult.lastInsertRowId;
+
+        if (params.itens && params.itens.length > 0) {
+          const itemStatement = await database.prepareAsync(
+            `INSERT INTO sale_items (
+              sale_id, product_id, quantity, unit_price, subtotal
+            ) VALUES (?, ?, ?, ?, ?)`
+          );
+
+          for (const item of params.itens) {
+            await itemStatement.executeAsync(
+              saleId,
+              item.product_id,
+              item.quantity,
+              item.unit_price,
+              item.subtotal
+            );
+
+            const stockStatement = await database.prepareAsync(
+              `INSERT INTO stock_movements (
+              sale_id, product_id, type, quantity, unit_value, total_value, notes
+              ) VALUES (?, ?, 'sale', ?, ?, ?, 'Venda')`
+            );
+            await stockStatement.executeAsync(
+              saleId,
+              item.product_id,
+              -item.quantity,
+              item.unit_price,
+              item.subtotal
+            );
+            await stockStatement.finalizeAsync();
+          }
+          await itemStatement.finalizeAsync();
+
+          const installmentAmount = parseFloat(
+            (params.total / params.installments).toFixed(2)
+          );
+          const installments: InstallmentItemInterface[] = [];
+          const firstDueDate = DateTime.fromJSDate(params.first_due_date);
+
+          for (let i = 0; i < params.installments; i++) {
+            const dueDate = firstDueDate.plus({ months: i }).toISODate()!;
+            installments.push({
+              id: 0,
+              sale_id: saleId,
+              number: i + 1,
+              amount: installmentAmount,
+              due_date: i === 0 ? firstDueDate.toISODate()! : dueDate,
+              status: 'pending',
+            });
+          }
+          const installmentStatement = await database.prepareAsync(
+            `INSERT INTO installments (
+            sale_id, number, amount, due_date, status, notes
+          ) VALUES (?, ?, ?, ?, ?, ?)`
+          );
+
+          for (const installment of installments) {
+            await installmentStatement.executeAsync(
+              installment.sale_id,
+              installment.number,
+              installment.amount,
+              installment.due_date,
+              installment.status || 'pending',
+              installment.notes || null
+            );
+          }
+
+          await installmentStatement.finalizeAsync();
+        }
+      } catch (error) {
+        console.error('Error storing sale:', error);
+        throw new Error('Failed to store sale');
+      }
+    });
+  }
+
   async function update(params: SaleUpdateInterface) {
     return await database.withTransactionAsync(async () => {
       try {
         const currentSale = (await database.getFirstAsync(
-          'SELECT installments, sale_date FROM sales WHERE id = ? AND deleted_at IS NULL',
+          'SELECT installments FROM sales WHERE id = ? AND deleted_at IS NULL',
           [params.id]
-        )) as { installments: number; sale_date: string } | null;
+        )) as { installments: number } | null;
 
-        if (!params.installments || params.installments <= 1) {
-          const deleteInstallmentsStatement = await database.prepareAsync(
-            "DELETE FROM installments WHERE sale_id = ? AND status = 'pending'"
-          );
-          await deleteInstallmentsStatement.executeAsync(params.id);
-          await deleteInstallmentsStatement.finalizeAsync();
-        } else if (currentSale && params.sale_date) {
-          const oldSaleDate = new Date(currentSale.sale_date);
-          const newSaleDate = params.sale_date;
+        if (currentSale && params.first_due_date) {
+          const oldDueDateRaw = (await database.getFirstAsync(
+            'SELECT due_date FROM installments WHERE sale_id = ? AND number = 1 order BY id asc LIMIT 1',
+            [params.id]
+          )) as { due_date: string } | null;
+          const newSaleDate = params.first_due_date;
 
-          if (oldSaleDate.getTime() !== newSaleDate.getTime()) {
+          if (!oldDueDateRaw) {
+            throw new Error('No installments found for this sale');
+          }
+          const oldDueDate: Date = DateTime.fromISO(
+            oldDueDateRaw.due_date
+          ).toJSDate();
+
+          if (oldDueDate.getTime() !== newSaleDate.getTime()) {
             const pendingInstallments = (await database.getAllAsync(
-              "SELECT id, installment_number FROM installments WHERE sale_id = ? AND status = 'pending' ORDER BY installment_number",
+              "SELECT id, number FROM installments WHERE sale_id = ? AND status = 'pending' ORDER BY number",
               [params.id]
-            )) as { id: number; installment_number: number }[];
+            )) as { id: number; number: number }[];
 
             for (const installment of pendingInstallments) {
               const newDueDate = DateTime.fromJSDate(newSaleDate)
-                .plus({ months: installment.installment_number })
+                .plus({ months: installment.number })
                 .toISODate();
 
               const updateInstallmentStatement = await database.prepareAsync(
@@ -273,81 +332,21 @@ export function useSaleDatabase() {
           }
         }
 
-        const deleteItemsStatement = await database.prepareAsync(
-          'DELETE FROM sale_items WHERE sale_id = ?'
-        );
-        await deleteItemsStatement.executeAsync(params.id);
-        await deleteItemsStatement.finalizeAsync();
-
-        const deleteStockMovementsStatement = await database.prepareAsync(
-          'UPDATE stock_movements SET deleted_at = CURRENT_TIMESTAMP WHERE sale_id = ?'
-        );
-        await deleteStockMovementsStatement.executeAsync(params.id);
-        await deleteStockMovementsStatement.finalizeAsync();
-
         const saleStatement = await database.prepareAsync(
           `UPDATE sales SET
-            customer_id = COALESCE(?, customer_id),
-            subtotal = COALESCE(?, subtotal),
-            discount = COALESCE(?, discount),
-            total_amount = COALESCE(?, total_amount),
-            payment_method = COALESCE(?, payment_method),
-            installments = COALESCE(?, installments),
             status = COALESCE(?, status),
-            sale_date = COALESCE(?, sale_date),
             notes = COALESCE(?, notes),
             updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND deleted_at IS NULL`
         );
 
         await saleStatement.executeAsync(
-          params.customer_id || null,
-          params.subtotal || null,
-          params.discount || null,
-          params.total || null,
-          params.payment_method || null,
-          params.installments || null,
           params.status || null,
-          params.sale_date ? params.sale_date.toISOString() : null,
           params.notes || null,
           params.id
         );
 
         await saleStatement.finalizeAsync();
-
-        if (params.itens && params.itens.length > 0) {
-          const itemStatement = await database.prepareAsync(
-            `INSERT INTO sale_items (
-              sale_id, product_id, quantity, unit_price, subtotal
-            ) VALUES (?, ?, ?, ?, ?)`
-          );
-
-          for (const item of params.itens) {
-            await itemStatement.executeAsync(
-              params.id,
-              item.product_id,
-              item.quantity,
-              item.unit_price,
-              item.subtotal
-            );
-
-            const stockStatement = await database.prepareAsync(
-              `INSERT INTO stock_movements (
-              sale_id, product_id, type, quantity, unit_value, total_value, notes
-              ) VALUES (?, ?, 'sale', ?, ?, ?, 'Venda atualizada')`
-            );
-            await stockStatement.executeAsync(
-              params.id,
-              item.product_id,
-              -item.quantity,
-              item.unit_price,
-              item.subtotal
-            );
-            await stockStatement.finalizeAsync();
-          }
-
-          await itemStatement.finalizeAsync();
-        }
       } catch (error) {
         console.error('Error updating sale:', error);
         throw new Error('Failed to update sale');
