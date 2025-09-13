@@ -245,12 +245,6 @@ export default function CustomersList() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Clientes</Text>
-          <Text style={styles.headerSubtitle}>Gerencie seus clientes</Text>
-        </View>
-      </View>
 
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
