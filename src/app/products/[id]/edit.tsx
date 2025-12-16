@@ -552,14 +552,6 @@ export default function EditProduct() {
           </View>
 
           <View style={styles.infoSection}>
-            <View style={styles.infoCard}>
-              <Ionicons name="information-circle-outline" size={20} color="#3b82f6" />
-              <Text style={styles.infoText}>
-                Os campos marcados com * são obrigatórios. O código de barras e referência devem ser únicos no sistema.
-                {'\n\n'}💡 Os preços são salvos em centavos para maior precisão nos cálculos.
-              </Text>
-            </View>
-
             <View style={[styles.infoCard, styles.warningCard]}>
               <Ionicons name="warning-outline" size={20} color="#f59e0b" />
               <Text style={[styles.infoText, styles.warningText]}>

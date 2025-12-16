@@ -620,14 +620,6 @@ export default function EditCustomer() {
           </View>
 
           <View style={styles.infoSection}>
-            <View style={styles.infoCard}>
-              <Ionicons name="information-circle-outline" size={20} color="#3b82f6" />
-              <Text style={styles.infoText}>
-                Apenas o nome é obrigatório. Se informar email ou documento, eles devem ser únicos no sistema.
-                {'\n\n'}💡 Digite o CEP para preenchimento automático do endereço.
-              </Text>
-            </View>
-
             <View style={[styles.infoCard, styles.warningCard]}>
               <Ionicons name="warning-outline" size={20} color="#f59e0b" />
               <Text style={[styles.infoText, styles.warningText]}>

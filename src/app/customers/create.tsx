@@ -461,14 +461,6 @@ export default function CreateCustomer() {
               style={[styles.input, styles.textArea]}
             />
           </View>
-
-          <View style={styles.infoCard}>
-            <Ionicons name="information-circle-outline" size={20} color="#3b82f6" />
-            <Text style={styles.infoText}>
-              Apenas o nome é obrigatório. Se informar email ou documento, eles devem ser únicos no sistema.
-              {'\n\n'}💡 Digite o CEP para preenchimento automático do endereço.
-            </Text>
-          </View>
         </View>
 
         <View style={styles.actionButtons}>
