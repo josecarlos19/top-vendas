@@ -15,7 +15,7 @@ function CustomDrawerContent(props: any) {
 
   const menuItems = [
     {
-      name: "Dashboard",
+      name: "Home",
       route: "/(drawer)/dashboard",
       icon: "home-outline" as keyof typeof Ionicons.glyphMap,
     },
@@ -120,7 +120,7 @@ export default function DrawerLayout() {
           name="dashboard"
           options={{
             title: "Dashboard",
-            headerTitle: "Dashboard",
+            headerTitle: "Home",
             drawerIcon: ({ color, size }) => (
               <Ionicons name="home-outline" size={size} color={color} />
             ),
@@ -156,6 +156,17 @@ export default function DrawerLayout() {
             headerTitle: "Produtos",
             drawerIcon: ({ color, size }) => (
               <Ionicons name="pricetag-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        <Drawer.Screen
+          name="sales"
+          options={{
+            title: "Vendas",
+            headerTitle: "Vendas",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="cart-outline" size={size} color={color} />
             ),
           }}
         />
