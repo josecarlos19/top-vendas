@@ -9,6 +9,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { router, usePathname } from "expo-router";
+import { DrawerContentScrollView } from '@react-navigation/drawer';
 
 function CustomDrawerContent(props: any) {
   const pathname = usePathname();
@@ -41,6 +42,14 @@ function CustomDrawerContent(props: any) {
     }
   ];
 
+  const handleNavigation = (route: string) => {
+    props.navigation.closeDrawer();
+
+    setTimeout(() => {
+      router.replace(route as any);
+    }, 200);
+  };
+
   return (
     <SafeAreaView style={styles.drawerContainer}>
       <View style={styles.drawerHeader}>
@@ -55,8 +64,11 @@ function CustomDrawerContent(props: any) {
         </View>
       </View>
 
-
-      <View style={styles.drawerContent}>
+      <DrawerContentScrollView
+        {...props}
+        contentContainerStyle={styles.drawerContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.menuSection}>
           {menuItems.map((item) => {
             const isActive = pathname.startsWith(item.route);
@@ -65,7 +77,8 @@ function CustomDrawerContent(props: any) {
               <TouchableOpacity
                 key={item.route}
                 style={[styles.menuItem, isActive && styles.menuItemActive]}
-                onPress={() => router.push(item.route as any)}
+                onPress={() => handleNavigation(item.route)}
+                activeOpacity={0.7}
               >
                 <Ionicons
                   name={item.icon}
@@ -82,7 +95,7 @@ function CustomDrawerContent(props: any) {
             );
           })}
         </View>
-      </View>
+      </DrawerContentScrollView>
 
       <View style={styles.drawerFooter}>
         <Text style={styles.footerText}>Top Vendas App</Text>
@@ -114,6 +127,7 @@ export default function DrawerLayout() {
           },
           drawerType: "slide",
           overlayColor: "rgba(0,0,0,0.5)",
+          swipeEnabled: true,
         }}
       >
         <Drawer.Screen
@@ -144,7 +158,7 @@ export default function DrawerLayout() {
             title: "Clientes",
             headerTitle: "Clientes",
             drawerIcon: ({ color, size }) => (
-              <Ionicons name="folder-outline" size={size} color={color} />
+              <Ionicons name="people-outline" size={size} color={color} />
             ),
           }}
         />
@@ -218,7 +232,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   drawerContent: {
-    flex: 1,
+    flexGrow: 1,
   },
   menuSection: {
     paddingHorizontal: 10,
