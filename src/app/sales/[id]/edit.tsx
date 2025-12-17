@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
+  Modal,
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -19,6 +20,9 @@ import { useProductDatabase } from "@/database/models/Product";
 import { Input } from "@/components/Input";
 import formatCurrency from "@/components/utils/formatCurrency";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useInstallmentDatabase } from "@/database/models/Installment";
+
+type statusTypes = 'completed' | 'pending';
 
 interface Customer {
   id: number;
@@ -101,15 +105,19 @@ export default function EditSale() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
-  const [showProductPicker, setShowProductPicker] = useState(false);
   const [showPaymentPicker, setShowPaymentPicker] = useState(false);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const [firstDueDate, setFirstDueDate] = useState(new Date());
   const [showFirstDuePicker, setShowFirstDuePicker] = useState(false);
+  const [selectedInstallment, setSelectedInstallment] = useState<Installment | null>(null);
+  const [showInstallmentModal, setShowInstallmentModal] = useState(false);
+  const [paymentDate, setPaymentDate] = useState(new Date());
+  const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
 
   const saleDatabase = useSaleDatabase();
+  const installmentDatabase = useInstallmentDatabase();
   const customerDatabase = useCustomerDatabase();
   const productDatabase = useProductDatabase();
 
@@ -219,57 +227,38 @@ export default function EditSale() {
     return Math.max(0, getSubtotal() - getDiscountValue());
   };
 
-  const addProductToSale = (product: Product) => {
-    const existingItem = items.find(item => item.product_id === product.id);
+  const handleInstallment = async (status: statusTypes) => {
+    if (!selectedInstallment) {
+      return
+    };
 
-    if (existingItem) {
-      const newQuantity = existingItem.quantity + 1;
-      updateItemQuantity(product.id, newQuantity);
-    } else {
-      const newItem: SaleItem = {
-        product_id: product.id,
-        product_name: product.name,
-        quantity: 1,
-        unit_price: product.sale_price,
-        subtotal: product.sale_price,
-      };
-      setItems([...items, newItem]);
+    try {
+      await installmentDatabase.updateStatus({
+        id: selectedInstallment.id,
+        status,
+        payment_date: paymentDate.toISOString(),
+      });
+
+      Alert.alert("Sucesso", status === 'completed' ? "Pagamento registrado!" : "Pagamento revertido!");
+      setSale((prev) =>
+        prev
+          ? {
+            ...prev,
+            installments: prev.installments?.map((inst) =>
+              inst.id === selectedInstallment.id
+                ? { ...inst, status, payment_date: status === 'completed' ? paymentDate.toISOString() : undefined }
+                : inst
+            ),
+          }
+          : prev
+      );
+
+      setShowInstallmentModal(false);
+      await loadSale();
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível atualizar a parcela.");
     }
-    setShowProductPicker(false);
-  };
-
-  const updateItemQuantity = (productId: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeItem(productId);
-      return;
-    }
-
-    setItems(items.map(item =>
-      item.product_id === productId
-        ? {
-          ...item,
-          quantity: newQuantity,
-          subtotal: newQuantity * item.unit_price
-        }
-        : item
-    ));
-  };
-
-  const updateItemPrice = (productId: number, newPrice: number) => {
-    setItems(items.map(item =>
-      item.product_id === productId
-        ? {
-          ...item,
-          unit_price: newPrice,
-          subtotal: item.quantity * newPrice
-        }
-        : item
-    ));
-  };
-
-  const removeItem = (productId: number) => {
-    setItems(items.filter(item => item.product_id !== productId));
-  };
+  }
 
   const validateForm = () => {
     if (items.length === 0) {
@@ -387,6 +376,12 @@ export default function EditSale() {
     } else {
       router.back();
     }
+  };
+
+  const openInstallmentModal = (inst: Installment) => () => {
+    setSelectedInstallment(inst);
+    setPaymentDate(new Date());
+    setShowInstallmentModal(true);
   };
 
   const getSelectedCustomerName = () => {
@@ -676,12 +671,14 @@ export default function EditSale() {
             <View>
               <Text style={styles.label}>Parcelas</Text>
               {sale.installments.map((inst) => (
-                <View
+                <TouchableOpacity
                   key={inst.id}
                   style={[
                     styles.installmentItem,
-                    inst.status === 'paid' && styles.installmentPaid,
+                    inst.status === 'completed' && styles.installmentPaid,
                   ]}
+                  activeOpacity={0.7}
+                  onPress={openInstallmentModal(inst)}
                 >
                   <Text style={styles.installmentText}>
                     {inst.number}ª parcela — {formatCurrency(inst.amount.toString())}
@@ -692,14 +689,14 @@ export default function EditSale() {
                   <Text
                     style={[
                       styles.installmentStatus,
-                      inst.status === 'paid'
+                      inst.status === 'completed'
                         ? styles.installmentStatusPaid
                         : styles.installmentStatusPending,
                     ]}
                   >
-                    {inst.status === 'paid' ? 'Paga' : 'Pendente'}
+                    {inst.status === 'completed' ? 'Paga' : 'Pendente'}
                   </Text>
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}
@@ -834,6 +831,76 @@ export default function EditSale() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <Modal
+        visible={showInstallmentModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowInstallmentModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {selectedInstallment && (
+              <>
+                <Text style={styles.modalTitle}>
+                  {selectedInstallment.number}ª parcela
+                </Text>
+                <Text style={styles.modalAmount}>
+                  Valor: {formatCurrency(selectedInstallment.amount.toString())}
+                </Text>
+                <Text style={styles.modalDueDate}>
+                  Vencimento: {new Date(selectedInstallment.due_date).toLocaleDateString('pt-BR')}
+                </Text>
+
+                <Text style={styles.modalLabel}>Data de pagamento</Text>
+                <TouchableOpacity
+                  style={styles.dateSelector}
+                  onPress={() => setShowPaymentDatePicker(true)}
+                >
+                  <Text style={styles.dateText}>
+                    {paymentDate.toLocaleDateString("pt-BR")}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={20} color="#64748b" />
+                </TouchableOpacity>
+
+                {showPaymentDatePicker && (
+                  <DateTimePicker
+                    value={paymentDate}
+                    mode="date"
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
+                    onChange={(e, date) => {
+                      setShowPaymentDatePicker(false);
+                      if (date) setPaymentDate(date);
+                    }}
+                  />
+                )}
+
+                {selectedInstallment.status === "pending" ? (
+                  <TouchableOpacity
+                    style={styles.confirmButton}
+                    onPress={() => handleInstallment('completed')}
+                  >
+                    <Text style={styles.confirmButtonText}>Confirmar pagamento</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.revertButton}
+                    onPress={() => handleInstallment('pending')}
+                  >
+                    <Text style={styles.confirmButtonText}>Reverter pagamento</Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowInstallmentModal(false)}
+                >
+                  <Text style={styles.closeButtonText}>Fechar</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -1272,5 +1339,90 @@ const styles = StyleSheet.create({
   },
   installmentStatusPending: {
     color: '#f59e0b',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "85%",
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 20,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginBottom: 12,
+  },
+  modalAmount: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#22c55e",
+    marginBottom: 6,
+  },
+  modalDueDate: {
+    fontSize: 14,
+    color: "#64748b",
+    marginBottom: 16,
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  dateSelector: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  dateText: {
+    fontSize: 16,
+    color: "#1e293b",
+  },
+  confirmButton: {
+    backgroundColor: "#22c55e",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  revertButton: {
+    backgroundColor: "#f59e0b",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  confirmButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  modalPaidText: {
+    fontSize: 15,
+    color: "#22c55e",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  closeButton: {
+    backgroundColor: "#e2e8f0",
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  closeButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#1e293b",
   },
 });

@@ -4,8 +4,14 @@ export interface InstallmentItemInterface {
   number: number;
   amount: number;
   due_date: string;
-  payment_date?: string
-  paid_amount?: number
-  status: string | 'pending'
-  notes?: string
+  payment_date?: string;
+  paid_amount?: number;
+  status: string | 'pending';
+  notes?: string;
+}
+
+export interface InstallmenteStatusUpdateInterface {
+  id: number;
+  status: 'completed' | 'pending';
+  payment_date: string;
 }
