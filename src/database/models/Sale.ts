@@ -26,11 +26,10 @@ export function useSaleDatabase() {
 
       if (params?.q) {
         query += ` AND (
-          sales.sale_number LIKE ? OR
           customers.name LIKE ? OR
           sales.notes LIKE ?
         )`;
-        queryParams.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
+        queryParams.push(`%${params.q}%`, `%${params.q}%`);
       }
 
       query += ' ORDER BY sales.sale_date DESC, sales.created_at DESC';
@@ -95,11 +94,10 @@ export function useSaleDatabase() {
 
       if (params?.q) {
         query += ` AND (
-          sales.sale_number LIKE ? OR
           customers.name LIKE ? OR
           sales.notes LIKE ?
         )`;
-        queryParams.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
+        queryParams.push(`%${params.q}%`, `%${params.q}%`);
       }
 
       const result = (await database.getFirstAsync(query, queryParams)) as {
