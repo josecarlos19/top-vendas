@@ -255,7 +255,6 @@ export default function SalesList() {
     >
       <View style={styles.saleHeader}>
         <View style={styles.saleHeaderLeft}>
-          <Text style={styles.saleId}>#{item.id}</Text>
           <View style={[
             styles.statusBadge,
             { backgroundColor: getStatusBackgroundColor(item.status) }
@@ -383,13 +382,6 @@ export default function SalesList() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Vendas</Text>
-          <Text style={styles.headerSubtitle}>Gerencie suas vendas</Text>
-        </View>
-      </View>
-
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <Ionicons
@@ -400,7 +392,7 @@ export default function SalesList() {
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por cliente, observações..."
+            placeholder="Buscar por clientes"
             value={searchText}
             onChangeText={handleSearch}
             placeholderTextColor="#94a3b8"
