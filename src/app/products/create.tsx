@@ -87,6 +87,16 @@ export default function CreateProduct() {
       return false;
     }
 
+    if(!minimumStock || isNaN(parseInt(minimumStock))) {
+      Alert.alert("Erro", "O estoque mínimo deve ser um número válido.");
+      return false;
+    }
+
+    if(!currentStock || isNaN(parseInt(minimumStock))) {
+      Alert.alert("Erro", "O estoque inicial deve ser um número válido.");
+      return false;
+    }
+
     return true;
   };
 
@@ -322,32 +332,6 @@ export default function CreateProduct() {
               style={styles.input}
               keyboardType="numeric"
             />
-          </View>
-
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Preço de Custo</Text>
-              <Input
-                placeholder="R$ 0,00"
-                value={costPrice}
-                onChangeText={(text) => setCostPrice(formatCurrency(text))}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Preço Atacado</Text>
-              <Input
-                placeholder="R$ 0,00"
-                value={wholesalePrice}
-                onChangeText={(text) => setWholesalePrice(formatCurrency(text))}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType="numeric"
-              />
-            </View>
           </View>
 
           {/* Estoque */}
