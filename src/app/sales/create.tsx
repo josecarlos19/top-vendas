@@ -107,7 +107,7 @@ export default function CreateSale() {
 
   const loadProducts = async () => {
     try {
-      const productsData = await productDatabase.index();
+      const productsData = await productDatabase.index({ active: 1 });
       setProducts(productsData.map(product => ({
         id: product.id!,
         name: product.name!,
