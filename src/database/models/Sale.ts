@@ -344,6 +344,27 @@ export function useSaleDatabase() {
           params.id
         );
 
+        if(params.status === 'completed'){
+          const updateInstallmentsStatement = await database.prepareAsync(
+            `UPDATE installments SET
+              payment_date = CURRENT_DATE,
+              status = 'completed',
+              updated_at = CURRENT_TIMESTAMP
+            WHERE sale_id = ? AND status = 'pending'`
+          );
+          await updateInstallmentsStatement.executeAsync(params.id);
+          await updateInstallmentsStatement.finalizeAsync();
+        }
+
+        if(params.status === 'cancelled'){
+          await destroyStockMovementsBySaleId(database, params.id);
+          const deleteInstallmentsStatement = await database.prepareAsync(
+            `DELETE FROM installments WHERE sale_id = ?`
+          );
+          await deleteInstallmentsStatement.executeAsync(params.id);
+          await deleteInstallmentsStatement.finalizeAsync();
+        }
+
         await saleStatement.finalizeAsync();
       } catch (error) {
         console.error('Error updating sale:', error);
