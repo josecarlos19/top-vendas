@@ -1,5 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export interface Category {
   id: number;
@@ -16,45 +16,14 @@ interface CategoryItemProps {
   onDelete: (id: number) => void;
 }
 
-export default function CategoryItem({
-  category,
-  onEdit,
-  onDelete,
-}: CategoryItemProps) {
+export default function CategoryItem({ category }: CategoryItemProps) {
   const isActive = category.active === 1;
-
-  const handleDelete = () => {
-    Alert.alert(
-      'Confirmar Exclusão',
-      `Deseja realmente excluir a categoria "${category.name}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: () => onDelete(category.id),
-        },
-      ]
-    );
-  };
-
-  const handleEdit = (e?: any) => {
-    if (e) {
-      e.stopPropagation();
-    }
-    onEdit(category);
-  };
-
-  const handleDeletePress = (e: any) => {
-    e.stopPropagation();
-    handleDelete();
-  };
 
   return (
     <TouchableOpacity
       style={[styles.categoryItem, !isActive && styles.categoryItemInactive]}
-      onPress={handleEdit}
       activeOpacity={0.7}
+      onPress={() => router.push(`/categories/${category.id}/edit`)}
     >
       <View style={styles.categoryHeader}>
         <View style={styles.categoryInfo}>
@@ -72,24 +41,6 @@ export default function CategoryItem({
             </Text>
           )}
         </View>
-      </View>
-
-      <View style={styles.categoryActions}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.editButton]}
-          onPress={handleEdit}
-        >
-          <Ionicons name='pencil-outline' size={16} color='#3b82f6' />
-          <Text style={styles.editButtonText}>Editar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.deleteButton]}
-          onPress={handleDeletePress}
-        >
-          <Ionicons name='trash-outline' size={16} color='#ef4444' />
-          <Text style={styles.deleteButtonText}>Excluir</Text>
-        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -117,7 +68,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
   },
   categoryInfo: {
     flex: 1,
@@ -127,12 +77,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#1e293b',
-    marginBottom: 4,
   },
   categoryDescription: {
     fontSize: 14,
     color: '#64748b',
-    lineHeight: 20,
+    paddingTop: 4,
   },
   inactiveText: {
     color: '#94a3b8',
