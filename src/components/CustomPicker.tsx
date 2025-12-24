@@ -14,6 +14,7 @@ interface CustomPickerProps {
   options: PickerOption[];
   enabled?: boolean;
   placeholder?: string;
+  emptyOption?: boolean;
 }
 
 export default function CustomPicker({
@@ -23,12 +24,17 @@ export default function CustomPicker({
   options,
   enabled = true,
   placeholder = 'Selecione...',
+  emptyOption = true,
 }: CustomPickerProps) {
   const [modifiedOptions, setModifiedOptions] =
     useState<PickerOption[]>(options);
 
   useEffect(() => {
-    setModifiedOptions([{ label: `Sem ${label}`, value: 'null' }, ...options]);
+    setModifiedOptions(
+      emptyOption
+        ? [{ label: `Sem ${label}`, value: 'null' }, ...options]
+        : options
+    );
   }, [options]);
 
   return (
