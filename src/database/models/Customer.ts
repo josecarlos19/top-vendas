@@ -8,8 +8,8 @@ export function useCustomerDatabase() {
     const statement = await database.prepareAsync(
       `INSERT INTO customers (
         name, document, document_type, phone, mobile, email,
-        address, neighborhood, city, state, zip_code, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        address, address_number, neighborhood, city, state, zip_code, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     );
     try {
       const result = await statement.executeAsync(
@@ -20,6 +20,7 @@ export function useCustomerDatabase() {
         params.mobile || null,
         params.email || null,
         params.address || null,
+        params.address_number || null,
         params.neighborhood || null,
         params.city || null,
         params.state || null,
@@ -36,6 +37,7 @@ export function useCustomerDatabase() {
         mobile: params.mobile,
         email: params.email,
         address: params.address,
+        address_number: params.address_number,
         neighborhood: params.neighborhood,
         city: params.city,
         state: params.state,
@@ -113,7 +115,7 @@ async function count(params?: Omit<CustomerSearchInterface, 'page' | 'perPage'>)
     const statement = await database.prepareAsync(
       `UPDATE customers SET
         name = ?, document = ?, document_type = ?, phone = ?, mobile = ?,
-        email = ?, address = ?, neighborhood = ?, city = ?, state = ?,
+        email = ?, address = ?, address_number = ?, neighborhood = ?, city = ?, state = ?,
         zip_code = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND deleted_at IS NULL`,
     );
@@ -126,6 +128,7 @@ async function count(params?: Omit<CustomerSearchInterface, 'page' | 'perPage'>)
         params.mobile || null,
         params.email || "",
         params.address || null,
+        params.address_number || null,
         params.neighborhood || null,
         params.city || null,
         params.state || null,

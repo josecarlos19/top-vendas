@@ -26,6 +26,7 @@ interface Customer {
   mobile?: string;
   email?: string;
   address?: string;
+  address_number?: string;
   neighborhood?: string;
   city?: string;
   state?: string;
@@ -49,6 +50,7 @@ export default function EditCustomer() {
   const [neighborhood, setNeighborhood] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
+  const [addressNumber, setAddressNumber] = useState('');
   const [zipCode, setZipCode] = useState('');
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -211,6 +213,7 @@ export default function EditCustomer() {
       setNeighborhood(foundCustomer.neighborhood || '');
       setCity(foundCustomer.city || '');
       setState(foundCustomer.state || '');
+      setAddressNumber(foundCustomer.address_number || '');
       setZipCode(formatForDisplay(foundCustomer.zip_code, 'zipcode'));
       setNotes(foundCustomer.notes || '');
     } catch (error) {
@@ -300,6 +303,7 @@ export default function EditCustomer() {
         mobile: mobile.trim() ? getCleanValue(mobile) : undefined,
         email: email.trim() || undefined,
         address: address.trim() || undefined,
+        address_number: addressNumber.trim() || undefined,
         neighborhood: neighborhood.trim() || undefined,
         city: city.trim() || undefined,
         state: state.trim() || undefined,
@@ -584,15 +588,31 @@ export default function EditCustomer() {
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Estado</Text>
-          <Input
-            placeholder='Estado'
-            value={state}
-            onChangeText={setState}
-            editable={!isSaving}
-            style={styles.input}
-          />
+        <View style={styles.row}>
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Número</Text>
+            <Input
+              placeholder='Número'
+              value={addressNumber}
+              onChangeText={setAddressNumber}
+              editable={!isSaving}
+              style={styles.input}
+              keyboardType='numeric'
+            />
+          </View>
+
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Estado</Text>
+            <Input
+              placeholder='UF'
+              value={state}
+              onChangeText={setState}
+              editable={!isSaving}
+              style={styles.input}
+              autoCapitalize='characters'
+              maxLength={2}
+            />
+          </View>
         </View>
 
         <View style={styles.sectionHeader}>

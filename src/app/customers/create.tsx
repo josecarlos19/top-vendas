@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCustomerDatabase } from '@/database/models/Customer';
@@ -23,6 +14,7 @@ export default function CreateCustomer() {
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
+  const [addressNumber, setAddressNumber] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
@@ -221,6 +213,7 @@ export default function CreateCustomer() {
         mobile: mobile.trim() ? getCleanPhone(mobile) : undefined,
         email: email.trim() || undefined,
         address: address.trim() || undefined,
+        address_number: addressNumber.trim() || undefined,
         neighborhood: neighborhood.trim() || undefined,
         city: city.trim() || undefined,
         state: state.trim() || undefined,
@@ -243,38 +236,6 @@ export default function CreateCustomer() {
       setIsLoading(false);
     }
   }
-
-  const handleCancel = () => {
-    const hasChanges =
-      name.trim() ||
-      document.trim() ||
-      email.trim() ||
-      phone.trim() ||
-      mobile.trim() ||
-      address.trim() ||
-      neighborhood.trim() ||
-      city.trim() ||
-      state.trim() ||
-      zipCode.trim() ||
-      notes.trim();
-
-    if (hasChanges) {
-      Alert.alert(
-        'Descartar alterações?',
-        'Você tem alterações não salvas. Deseja realmente sair?',
-        [
-          { text: 'Continuar editando', style: 'cancel' },
-          {
-            text: 'Descartar',
-            style: 'destructive',
-            onPress: () => router.back(),
-          },
-        ]
-      );
-    } else {
-      router.back();
-    }
-  };
 
   const isFormValid =
     name.trim() &&
@@ -456,15 +417,29 @@ export default function CreateCustomer() {
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Endereço</Text>
-          <Input
-            placeholder='Rua, número, complemento'
-            value={address}
-            onChangeText={setAddress}
-            editable={!isLoading}
-            style={styles.input}
-          />
+        <View style={styles.row}>
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Número</Text>
+            <Input
+              placeholder='Número'
+              value={addressNumber}
+              onChangeText={setAddressNumber}
+              style={styles.input}
+              keyboardType='numeric'
+            />
+          </View>
+
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Estado</Text>
+            <Input
+              placeholder='UF'
+              value={state}
+              onChangeText={setState}
+              style={styles.input}
+              autoCapitalize='characters'
+              maxLength={2}
+            />
+          </View>
         </View>
 
         <View style={styles.row}>

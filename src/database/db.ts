@@ -118,5 +118,10 @@ export async function initializeDatabase(db: SQLiteDatabase) {
         FOREIGN KEY (product_id) REFERENCES products(id)
       );`
     );
+    await db.execAsync(
+      `ALTER TABLE customers ADD COLUMN address_number TEXT;`
+    ).catch(() => {
+      // Column already exists
+    });
   });
 }

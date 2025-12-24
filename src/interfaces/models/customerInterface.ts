@@ -8,6 +8,7 @@ export interface CustomerModelInterface extends BaseModelInterface {
   mobile?: string;
   email?: string;
   address?: string;
+  address_number?: string;
   neighborhood?: string;
   city?: string;
   state?: string;
@@ -24,6 +25,7 @@ export interface CustomerStoreInterface extends BaseModelInterface {
   mobile?: string;
   email?: string;
   address?: string;
+  address_number?: string;
   neighborhood?: string;
   city?: string;
   state?: string;
@@ -40,6 +42,7 @@ export interface CustomerUpdateInterface extends BaseModelInterface {
   mobile?: string;
   email?: string;
   address?: string;
+  address_number?: string;
   neighborhood?: string;
   city?: string;
   state?: string;
