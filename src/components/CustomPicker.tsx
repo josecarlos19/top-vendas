@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
@@ -24,6 +24,13 @@ export default function CustomPicker({
   enabled = true,
   placeholder = 'Selecione...',
 }: CustomPickerProps) {
+  const [modifiedOptions, setModifiedOptions] =
+    useState<PickerOption[]>(options);
+
+  useEffect(() => {
+    setModifiedOptions([{ label: `Sem ${label}`, value: 'null' }, ...options]);
+  }, [options]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
@@ -43,7 +50,7 @@ export default function CustomPicker({
               style={styles.placeholderItem}
             />
           )}
-          {options.map(option => (
+          {modifiedOptions.map(option => (
             <Picker.Item
               key={option.value}
               label={option.label}
