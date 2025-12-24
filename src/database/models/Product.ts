@@ -253,7 +253,7 @@ export function useProductDatabase() {
     );
     try {
       const salesCount: any = await database.getFirstAsync(
-        'SELECT COUNT(*) as count FROM sales_items WHERE product_id = ? AND deleted_at IS NULL',
+        'SELECT COUNT(*) as count FROM sale_items WHERE product_id = ?',
         [id]
       );
 
@@ -263,7 +263,8 @@ export function useProductDatabase() {
       await statement.executeAsync(id);
       return true;
     } catch (error) {
-      console.error('Error deleting product:', error);
+      console.log(error);
+      // console.error('Error deleting product:', error);
       throw new Error('Failed to delete product');
     } finally {
       await statement.finalizeAsync();
