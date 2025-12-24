@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,21 +10,26 @@ import {
   TextInput,
   ActivityIndicator,
   Modal,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { router, useFocusEffect } from "expo-router";
-import { useProductDatabase } from "@/database/models/Product";
-import { useCategoryDatabase } from "@/database/models/Category";
-import { ProductSearchInterface } from "@/interfaces/models/productInterface";
-import ProductItem, { Product } from "@/components/Product/ProductItem";
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
+import { useProductDatabase } from '@/database/models/Product';
+import { useCategoryDatabase } from '@/database/models/Category';
+import { ProductSearchInterface } from '@/interfaces/models/productInterface';
+import ProductItem, { Product } from '@/components/Product/ProductItem';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { SearchBar } from '@/components/SearchBar';
 
 export default function ProductsList() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
+  const [selectedCategory, setSelectedCategory] = useState<
+    number | undefined
+  >();
   const [showLowStock, setShowLowStock] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
 
@@ -59,17 +64,17 @@ export default function ProductsList() {
       const data = await categoryDatabase.index({ active: 1 });
       setCategories(data);
     } catch (error) {
-      console.error("Error loading categories:", error);
+      console.error('Error loading categories:', error);
     }
   };
 
   const clearSearchParams = () => {
-    setSearchText("");
+    setSearchText('');
     setSelectedCategory(undefined);
     setShowLowStock(false);
     setShowInactive(false);
     setCurrentPage(1);
-  }
+  };
 
   const loadProducts = async (page: number = 1, append: boolean = true) => {
     try {
@@ -107,7 +112,7 @@ export default function ProductsList() {
           category_id: searchParams.category_id,
           low_stock: searchParams.low_stock,
           active: searchParams.active,
-        })
+        }),
       ]);
 
       if (append && page > 1) {
@@ -162,10 +167,9 @@ export default function ProductsList() {
 
       const totalPages = Math.ceil(count / perPage);
       setHasMoreData(page < totalPages);
-
     } catch (error) {
-      console.error("Error loading products:", error);
-      Alert.alert("Erro", "Falha ao carregar produtos");
+      console.error('Error loading products:', error);
+      Alert.alert('Erro', 'Falha ao carregar produtos');
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -194,27 +198,27 @@ export default function ProductsList() {
 
   const handleDelete = async (id: number) => {
     Alert.alert(
-      "Confirmar exclusão",
-      "Tem certeza que deseja excluir este produto?",
+      'Confirmar exclusão',
+      'Tem certeza que deseja excluir este produto?',
       [
         {
-          text: "Cancelar",
-          style: "cancel"
+          text: 'Cancelar',
+          style: 'cancel',
         },
         {
-          text: "Excluir",
-          style: "destructive",
+          text: 'Excluir',
+          style: 'destructive',
           onPress: async () => {
             try {
               await productDatabase.remove(id);
               await loadProducts(1, false);
-              Alert.alert("Sucesso", "Produto excluído com sucesso!");
+              Alert.alert('Sucesso', 'Produto excluído com sucesso!');
             } catch (error) {
-              console.error("Error deleting product:", error);
-              Alert.alert("Erro", "Falha ao excluir produto");
+              console.error('Error deleting product:', error);
+              Alert.alert('Erro', 'Falha ao excluir produto');
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
@@ -224,8 +228,8 @@ export default function ProductsList() {
       await productDatabase.toggleActive(id);
       await loadProducts(currentPage, false);
     } catch (error) {
-      console.error("Error toggling product status:", error);
-      Alert.alert("Erro", "Falha ao alterar status do produto");
+      console.error('Error toggling product status:', error);
+      Alert.alert('Erro', 'Falha ao alterar status do produto');
     }
   };
 
@@ -238,14 +242,14 @@ export default function ProductsList() {
   const getActiveFiltersCount = () => {
     let count = 0;
     if (selectedCategory) {
-      count++
-    };
+      count++;
+    }
     if (showLowStock) {
-      count++
-    };
+      count++;
+    }
     if (showInactive) {
-      count++
-    };
+      count++;
+    }
     return count;
   };
 
@@ -270,7 +274,7 @@ export default function ProductsList() {
 
     return (
       <View style={styles.loadingFooter}>
-        <ActivityIndicator size="small" color="#FF6B35" />
+        <ActivityIndicator size='small' color='#FF6B35' />
         <Text style={styles.loadingText}>Carregando mais...</Text>
       </View>
     );
@@ -278,20 +282,21 @@ export default function ProductsList() {
 
   const renderEmpty = () => (
     <View style={styles.emptyState}>
-      <Ionicons name="cube-outline" size={64} color="#cbd5e1" />
+      <Ionicons name='cube-outline' size={64} color='#cbd5e1' />
       <Text style={styles.emptyTitle}>Nenhum produto encontrado</Text>
       <Text style={styles.emptySubtitle}>
-        {searchText || selectedCategory || showLowStock ?
-          "Tente ajustar os filtros de busca" :
-          "Comece cadastrando seu primeiro produto"
-        }
+        {searchText || selectedCategory || showLowStock
+          ? 'Tente ajustar os filtros de busca'
+          : 'Comece cadastrando seu primeiro produto'}
       </Text>
       {!searchText && !selectedCategory && !showLowStock && (
         <TouchableOpacity
           style={styles.createFirstButton}
-          onPress={() => router.push("/products/create")}
+          onPress={() => router.push('/products/create')}
         >
-          <Text style={styles.createFirstButtonText}>Cadastrar primeiro produto</Text>
+          <Text style={styles.createFirstButtonText}>
+            Cadastrar primeiro produto
+          </Text>
         </TouchableOpacity>
       )}
     </View>
@@ -300,15 +305,15 @@ export default function ProductsList() {
   const renderFiltersModal = () => (
     <Modal
       visible={showFilters}
-      animationType="slide"
-      presentationStyle="pageSheet"
+      animationType='slide'
+      presentationStyle='pageSheet'
       onRequestClose={() => setShowFilters(false)}
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>Filtros</Text>
           <TouchableOpacity onPress={() => setShowFilters(false)}>
-            <Ionicons name="close" size={24} color="#64748b" />
+            <Ionicons name='close' size={24} color='#64748b' />
           </TouchableOpacity>
         </View>
 
@@ -319,32 +324,40 @@ export default function ProductsList() {
               <TouchableOpacity
                 style={[
                   styles.categoryFilter,
-                  !selectedCategory && styles.categoryFilterActive
+                  !selectedCategory && styles.categoryFilterActive,
                 ]}
                 onPress={() => setSelectedCategory(undefined)}
               >
-                <Text style={[
-                  styles.categoryFilterText,
-                  !selectedCategory && styles.categoryFilterTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.categoryFilterText,
+                    !selectedCategory && styles.categoryFilterTextActive,
+                  ]}
+                >
                   Todas
                 </Text>
               </TouchableOpacity>
-              {categories.map((category) => (
+              {categories.map(category => (
                 <TouchableOpacity
                   key={category.id}
                   style={[
                     styles.categoryFilter,
-                    selectedCategory === category.id && styles.categoryFilterActive
+                    selectedCategory === category.id &&
+                      styles.categoryFilterActive,
                   ]}
-                  onPress={() => setSelectedCategory(
-                    selectedCategory === category.id ? undefined : category.id
-                  )}
+                  onPress={() =>
+                    setSelectedCategory(
+                      selectedCategory === category.id ? undefined : category.id
+                    )
+                  }
                 >
-                  <Text style={[
-                    styles.categoryFilterText,
-                    selectedCategory === category.id && styles.categoryFilterTextActive
-                  ]}>
+                  <Text
+                    style={[
+                      styles.categoryFilterText,
+                      selectedCategory === category.id &&
+                        styles.categoryFilterTextActive,
+                    ]}
+                  >
                     {category.name}
                   </Text>
                 </TouchableOpacity>
@@ -357,16 +370,18 @@ export default function ProductsList() {
             <TouchableOpacity
               style={[
                 styles.toggleFilter,
-                showLowStock && styles.toggleFilterActive
+                showLowStock && styles.toggleFilterActive,
               ]}
               onPress={() => setShowLowStock(!showLowStock)}
             >
               <Ionicons
-                name={showLowStock ? "checkbox" : "square-outline"}
+                name={showLowStock ? 'checkbox' : 'square-outline'}
                 size={20}
-                color={showLowStock ? "#FF6B35" : "#64748b"}
+                color={showLowStock ? '#FF6B35' : '#64748b'}
               />
-              <Text style={styles.toggleFilterText}>Apenas produtos com estoque baixo</Text>
+              <Text style={styles.toggleFilterText}>
+                Apenas produtos com estoque baixo
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -375,16 +390,18 @@ export default function ProductsList() {
             <TouchableOpacity
               style={[
                 styles.toggleFilter,
-                showInactive && styles.toggleFilterActive
+                showInactive && styles.toggleFilterActive,
               ]}
               onPress={() => setShowInactive(!showInactive)}
             >
               <Ionicons
-                name={showInactive ? "checkbox" : "square-outline"}
+                name={showInactive ? 'checkbox' : 'square-outline'}
                 size={20}
-                color={showInactive ? "#FF6B35" : "#64748b"}
+                color={showInactive ? '#FF6B35' : '#64748b'}
               />
-              <Text style={styles.toggleFilterText}>Incluir produtos inativos</Text>
+              <Text style={styles.toggleFilterText}>
+                Incluir produtos inativos
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -411,113 +428,78 @@ export default function ProductsList() {
   const activeFiltersCount = getActiveFiltersCount();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Ionicons
-            name="search-outline"
-            size={20}
-            color="#64748b"
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar por nome, código, referência..."
-            value={searchText}
-            onChangeText={handleSearch}
-            placeholderTextColor="#94a3b8"
-          />
-          {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch("")}>
-              <Ionicons name="close-circle" size={20} color="#64748b" />
-            </TouchableOpacity>
+    <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <SearchBar
+          value={searchText}
+          onChangeText={handleSearch}
+          placeholder='Buscar por nome, código, referência...'
+          showFilters={true}
+          activeFiltersCount={activeFiltersCount}
+          onFilterPress={() => setShowFilters(true)}
+        />
+
+        <View style={styles.resultsContainer}>
+          <Text style={styles.resultsText}>
+            {totalCount} produto{totalCount !== 1 ? 's' : ''} encontrado
+            {totalCount !== 1 ? 's' : ''}
+          </Text>
+          {totalPages > 1 && (
+            <Text style={styles.paginationText}>
+              Página {currentPage} de {totalPages}
+            </Text>
           )}
         </View>
 
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            activeFiltersCount > 0 && styles.filterButtonActive
-          ]}
-          onPress={() => setShowFilters(true)}
-        >
-          <Ionicons
-            name="funnel-outline"
-            size={20}
-            color={activeFiltersCount > 0 ? "#ffffff" : "#64748b"}
-          />
-          {activeFiltersCount > 0 && (
-            <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        <FlatList
+          data={products}
+          renderItem={renderProduct}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={handleRefresh}
+              colors={['#FF6B35']}
+              tintColor='#FF6B35'
+            />
+          }
+          ListEmptyComponent={!isLoading ? renderEmpty : null}
+          ListFooterComponent={renderFooter}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.1}
+        />
+
+        <FloatingActionButton route='/products/create' />
+
+        {renderFiltersModal()}
       </View>
-
-      <View style={styles.resultsContainer}>
-        <Text style={styles.resultsText}>
-          {totalCount} produto{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
-        </Text>
-        {totalPages > 1 && (
-          <Text style={styles.paginationText}>
-            Página {currentPage} de {totalPages}
-          </Text>
-        )}
-      </View>
-
-      <FlatList
-        data={products}
-        renderItem={renderProduct}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoading}
-            onRefresh={handleRefresh}
-            colors={["#FF6B35"]}
-            tintColor="#FF6B35"
-          />
-        }
-        ListEmptyComponent={!isLoading ? renderEmpty : null}
-        ListFooterComponent={renderFooter}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.1}
-      />
-
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push("/products/create")}
-      >
-        <Ionicons name="add" size={24} color="#ffffff" />
-      </TouchableOpacity>
-
-      {renderFiltersModal()}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: '#f8fafc',
   },
   searchContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 16,
     gap: 12,
   },
   searchInputContainer: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: '#e2e8f0',
   },
   searchIcon: {
     marginRight: 8,
@@ -525,113 +507,113 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: "#1e293b",
+    color: '#1e293b',
   },
   filterButton: {
-    backgroundColor: "#ffffff",
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
+    borderColor: '#e2e8f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
   filterButtonActive: {
-    backgroundColor: "#FF6B35",
-    borderColor: "#FF6B35",
+    backgroundColor: '#FF6B35',
+    borderColor: '#FF6B35',
   },
   filterBadge: {
-    position: "absolute",
+    position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: "#dc2626",
+    backgroundColor: '#dc2626',
     borderRadius: 8,
     minWidth: 16,
     height: 16,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 4,
   },
   filterBadgeText: {
     fontSize: 10,
-    fontWeight: "600",
-    color: "#ffffff",
+    fontWeight: '600',
+    color: '#ffffff',
   },
   resultsContainer: {
     paddingHorizontal: 20,
     paddingBottom: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   resultsText: {
     fontSize: 14,
-    color: "#64748b",
-    fontWeight: "500",
+    color: '#64748b',
+    fontWeight: '500',
   },
   paginationText: {
     fontSize: 12,
-    color: "#94a3b8",
-    fontWeight: "500",
+    color: '#94a3b8',
+    fontWeight: '500',
   },
   listContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
   },
   loadingFooter: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingVertical: 20,
     gap: 8,
   },
   loadingText: {
     fontSize: 14,
-    color: "#64748b",
+    color: '#64748b',
   },
   emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 80,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: "600",
-    color: "#475569",
+    fontWeight: '600',
+    color: '#475569',
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: "#64748b",
-    textAlign: "center",
+    color: '#64748b',
+    textAlign: 'center',
     lineHeight: 20,
   },
   createFirstButton: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: '#FF6B35',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
     marginTop: 24,
   },
   createFirstButtonText: {
-    color: "#ffffff",
+    color: '#ffffff',
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   fab: {
-    position: "absolute",
+    position: 'absolute',
     right: 20,
     bottom: 20,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#FF6B35",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
+    backgroundColor: '#FF6B35',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -639,22 +621,22 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: '#f8fafc',
   },
   modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: "#ffffff",
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
+    borderBottomColor: '#e2e8f0',
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#1e293b",
+    fontWeight: '600',
+    color: '#1e293b',
   },
   modalContent: {
     flex: 1,
@@ -665,88 +647,88 @@ const styles = StyleSheet.create({
   },
   filterSectionTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#1e293b",
+    fontWeight: '600',
+    color: '#1e293b',
     marginBottom: 12,
   },
   categoryFilters: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   categoryFilter: {
-    backgroundColor: "#ffffff",
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: '#e2e8f0',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   categoryFilterActive: {
-    backgroundColor: "#FF6B35",
-    borderColor: "#FF6B35",
+    backgroundColor: '#FF6B35',
+    borderColor: '#FF6B35',
   },
   categoryFilterText: {
     fontSize: 14,
-    color: "#64748b",
-    fontWeight: "500",
+    color: '#64748b',
+    fontWeight: '500',
   },
   categoryFilterTextActive: {
-    color: "#ffffff",
+    color: '#ffffff',
   },
   toggleFilter: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: '#e2e8f0',
     borderRadius: 12,
     padding: 16,
     gap: 12,
   },
   toggleFilterActive: {
-    borderColor: "#FF6B35",
-    backgroundColor: "#fff5f0",
+    borderColor: '#FF6B35',
+    backgroundColor: '#fff5f0',
   },
   toggleFilterText: {
     fontSize: 14,
-    color: "#1e293b",
-    fontWeight: "500",
+    color: '#1e293b',
+    fontWeight: '500',
   },
   modalActions: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 12,
     padding: 20,
-    backgroundColor: "#ffffff",
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
+    borderTopColor: '#e2e8f0',
   },
   clearFiltersButton: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: '#e2e8f0',
     borderRadius: 12,
     paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   clearFiltersButtonText: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#64748b",
+    fontWeight: '600',
+    color: '#64748b',
   },
   applyFiltersButton: {
     flex: 1,
-    backgroundColor: "#FF6B35",
+    backgroundColor: '#FF6B35',
     borderRadius: 12,
     paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   applyFiltersButtonText: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#ffffff",
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });

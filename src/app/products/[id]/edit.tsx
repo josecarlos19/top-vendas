@@ -1,4 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} from 'react';
 import {
   View,
   Text,
@@ -9,13 +14,16 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-} from "react-native";
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useProductDatabase } from "@/database/models/Product";
-import { useCategoryDatabase } from "@/database/models/Category";
-import { Input } from "@/components/Input";
-import formatCurrency from "@/components/utils/formatCurrency";
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
+import { useProductDatabase } from '@/database/models/Product';
+import { useCategoryDatabase } from '@/database/models/Category';
+import { Input } from '@/components/Input';
+import formatCurrency from '@/components/utils/formatCurrency';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import WorkArea from '@/components/WorkArea';
+import { HeaderDeleteButton } from '@/components/HeaderDeleteButton';
 
 interface Category {
   id: number;
@@ -42,18 +50,19 @@ interface Product {
 
 export default function EditProduct() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const navigation = useNavigation();
   const [product, setProduct] = useState<Product | null>(null);
-  const [name, setName] = useState("");
-  const [barcode, setBarcode] = useState("");
-  const [reference, setReference] = useState("");
-  const [description, setDescription] = useState("");
-  const [costPrice, setCostPrice] = useState("");
-  const [salePrice, setSalePrice] = useState("");
-  const [wholesalePrice, setWholesalePrice] = useState("");
-  const [currentStock, setCurrentStock] = useState("");
-  const [minimumStock, setMinimumStock] = useState("");
+  const [name, setName] = useState('');
+  const [barcode, setBarcode] = useState('');
+  const [reference, setReference] = useState('');
+  const [description, setDescription] = useState('');
+  const [costPrice, setCostPrice] = useState('');
+  const [salePrice, setSalePrice] = useState('');
+  const [wholesalePrice, setWholesalePrice] = useState('');
+  const [currentStock, setCurrentStock] = useState('');
+  const [minimumStock, setMinimumStock] = useState('');
   const [categoryId, setCategoryId] = useState<number | undefined>();
-  const [supplier, setSupplier] = useState("");
+  const [supplier, setSupplier] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -61,6 +70,50 @@ export default function EditProduct() {
 
   const productDatabase = useProductDatabase();
   const categoryDatabase = useCategoryDatabase();
+
+  const handleDelete = useCallback(() => {
+    if (!product) return;
+
+    Alert.alert(
+      'Confirmar Exclusão',
+      `Deseja realmente excluir o produto "${product.name}"? Esta ação não pode ser desfeita.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: confirmDelete,
+        },
+      ]
+    );
+  }, [product]);
+
+  const confirmDelete = async () => {
+    if (!product) return;
+
+    try {
+      await productDatabase.remove(product.id);
+      Alert.alert('Sucesso', 'Produto excluído com sucesso!', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      Alert.alert('Erro', 'Falha ao excluir produto');
+    }
+  };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => handleDelete()}
+          style={{ marginRight: 12 }}
+        >
+          <Ionicons name='trash-outline' size={22} color='#FF6A00' />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, handleDelete]);
 
   useEffect(() => {
     loadProduct();
@@ -72,30 +125,38 @@ export default function EditProduct() {
 
     try {
       setIsLoading(true);
-      const foundProduct = await productDatabase.show(+id) as Product | null;
+      const foundProduct = (await productDatabase.show(+id)) as Product | null;
 
       if (!foundProduct) {
-        Alert.alert("Erro", "Produto não encontrado", [
-          { text: "OK", onPress: () => router.back() },
+        Alert.alert('Erro', 'Produto não encontrado', [
+          { text: 'OK', onPress: () => router.back() },
         ]);
         return;
       }
 
       setProduct(foundProduct);
-      setName(foundProduct.name || "");
-      setBarcode(foundProduct.barcode || "");
-      setReference(foundProduct.reference || "");
-      setDescription(foundProduct.description || "");
-      setCostPrice(foundProduct.cost_price ? formatCurrency(foundProduct.cost_price.toString()) : "");
+      setName(foundProduct.name || '');
+      setBarcode(foundProduct.barcode || '');
+      setReference(foundProduct.reference || '');
+      setDescription(foundProduct.description || '');
+      setCostPrice(
+        foundProduct.cost_price
+          ? formatCurrency(foundProduct.cost_price.toString())
+          : ''
+      );
       setSalePrice(formatCurrency(foundProduct.sale_price.toString()));
-      setWholesalePrice(foundProduct.wholesale_price ? formatCurrency(foundProduct.wholesale_price.toString()) : "");
+      setWholesalePrice(
+        foundProduct.wholesale_price
+          ? formatCurrency(foundProduct.wholesale_price.toString())
+          : ''
+      );
       setCurrentStock(foundProduct.initial_stock.toString());
       setMinimumStock(foundProduct.minimum_stock.toString());
       setCategoryId(foundProduct.category_id);
-      setSupplier(foundProduct.supplier || "");
+      setSupplier(foundProduct.supplier || '');
     } catch (error) {
-      console.error("Error loading product:", error);
-      Alert.alert("Erro", "Falha ao carregar produto");
+      console.error('Error loading product:', error);
+      Alert.alert('Erro', 'Falha ao carregar produto');
     } finally {
       setIsLoading(false);
     }
@@ -104,12 +165,14 @@ export default function EditProduct() {
   const loadCategories = async () => {
     try {
       const categoriesData = await categoryDatabase.index();
-      setCategories(categoriesData.map(cat => ({
-        id: cat.id!,
-        name: cat.name!
-      })));
+      setCategories(
+        categoriesData.map(cat => ({
+          id: cat.id!,
+          name: cat.name!,
+        }))
+      );
     } catch (error) {
-      console.error("Error loading categories:", error);
+      console.error('Error loading categories:', error);
     }
   };
 
@@ -119,36 +182,34 @@ export default function EditProduct() {
 
   const getCurrencyValue = (formattedValue: string): number => {
     if (!formattedValue) return 0;
-    const cleanValue = formattedValue
-      .replace(/[R$\s.]/g, '')
-      .replace(',', '.');
+    const cleanValue = formattedValue.replace(/[R$\s.]/g, '').replace(',', '.');
     return parseFloat(cleanValue) || 0;
   };
 
   const validateForm = () => {
     if (!name.trim()) {
-      Alert.alert("Erro", "Por favor, preencha o nome do produto.");
+      Alert.alert('Erro', 'Por favor, preencha o nome do produto.');
       return false;
     }
 
     if (!salePrice.trim()) {
-      Alert.alert("Erro", "Por favor, preencha o preço de venda.");
+      Alert.alert('Erro', 'Por favor, preencha o preço de venda.');
       return false;
     }
 
     const salePriceValue = getCurrencyValue(salePrice);
     if (salePriceValue <= 0) {
-      Alert.alert("Erro", "O preço de venda deve ser maior que zero.");
+      Alert.alert('Erro', 'O preço de venda deve ser maior que zero.');
       return false;
     }
 
     if (!minimumStock || isNaN(parseInt(minimumStock))) {
-      Alert.alert("Erro", "O estoque mínimo deve ser um número válido.");
+      Alert.alert('Erro', 'O estoque mínimo deve ser um número válido.');
       return false;
     }
 
     if (!currentStock || isNaN(parseInt(minimumStock))) {
-      Alert.alert("Erro", "O estoque inicial deve ser um número válido.");
+      Alert.alert('Erro', 'O estoque inicial deve ser um número válido.');
       return false;
     }
 
@@ -160,25 +221,39 @@ export default function EditProduct() {
 
     setIsSaving(true);
     try {
-      if (barcode.trim() && barcode.trim() !== (product.barcode || "")) {
-        const existingByBarcode = await productDatabase.findByBarcode(barcode.trim());
+      if (barcode.trim() && barcode.trim() !== (product.barcode || '')) {
+        const existingByBarcode = await productDatabase.findByBarcode(
+          barcode.trim()
+        );
         if (existingByBarcode && existingByBarcode.id !== product.id) {
-          Alert.alert("Erro", "Já existe outro produto cadastrado com este código de barras.");
+          Alert.alert(
+            'Erro',
+            'Já existe outro produto cadastrado com este código de barras.'
+          );
           return;
         }
       }
 
-      if (reference.trim() && reference.trim() !== (product.reference || "")) {
-        const existingByReference = await productDatabase.findByReference(reference.trim());
+      if (reference.trim() && reference.trim() !== (product.reference || '')) {
+        const existingByReference = await productDatabase.findByReference(
+          reference.trim()
+        );
         if (existingByReference && existingByReference.id !== product.id) {
-          Alert.alert("Erro", "Já existe outro produto cadastrado com esta referência.");
+          Alert.alert(
+            'Erro',
+            'Já existe outro produto cadastrado com esta referência.'
+          );
           return;
         }
       }
 
-      const costPriceValue = costPrice ? Math.round(getCurrencyValue(costPrice) * 100) : undefined;
+      const costPriceValue = costPrice
+        ? Math.round(getCurrencyValue(costPrice) * 100)
+        : undefined;
       const salePriceValue = Math.round(getCurrencyValue(salePrice) * 100);
-      const wholesalePriceValue = wholesalePrice ? Math.round(getCurrencyValue(wholesalePrice) * 100) : undefined;
+      const wholesalePriceValue = wholesalePrice
+        ? Math.round(getCurrencyValue(wholesalePrice) * 100)
+        : undefined;
 
       await productDatabase.update({
         id: product.id,
@@ -195,52 +270,17 @@ export default function EditProduct() {
         supplier: supplier.trim() || undefined,
       });
 
-      Alert.alert(
-        "Sucesso",
-        "Produto atualizado com sucesso!",
-        [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ]
-      );
-    } catch (error) {
-      console.error("Error updating product:", error);
-      Alert.alert("Erro", "Falha ao atualizar produto. Tente novamente.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = () => {
-    if (!product) return;
-
-    Alert.alert(
-      "Confirmar Exclusão",
-      `Deseja realmente excluir o produto "${product.name}"? Esta ação não pode ser desfeita.`,
-      [
-        { text: "Cancelar", style: "cancel" },
+      Alert.alert('Sucesso', 'Produto atualizado com sucesso!', [
         {
-          text: "Excluir",
-          style: "destructive",
-          onPress: confirmDelete,
+          text: 'OK',
+          onPress: () => router.back(),
         },
-      ],
-    );
-  };
-
-  const confirmDelete = async () => {
-    if (!product) return;
-
-    try {
-      await productDatabase.remove(product.id);
-      Alert.alert("Sucesso", "Produto excluído com sucesso!", [
-        { text: "OK", onPress: () => router.back() },
       ]);
     } catch (error) {
-      console.error("Error deleting product:", error);
-      Alert.alert("Erro", "Falha ao excluir produto");
+      console.error('Error updating product:', error);
+      Alert.alert('Erro', 'Falha ao atualizar produto. Tente novamente.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -249,57 +289,30 @@ export default function EditProduct() {
 
     try {
       await productDatabase.toggleActive(product.id);
-      const updatedProduct = { ...product, active: product.active === 1 ? 0 : 1 };
+      const updatedProduct = {
+        ...product,
+        active: product.active === 1 ? 0 : 1,
+      };
       setProduct(updatedProduct);
 
-      const status = updatedProduct.active === 1 ? "ativado" : "desativado";
-      Alert.alert("Sucesso", `Produto ${status} com sucesso!`);
+      const status = updatedProduct.active === 1 ? 'ativado' : 'desativado';
+      Alert.alert('Sucesso', `Produto ${status} com sucesso!`);
     } catch (error) {
-      console.error("Error toggling product status:", error);
-      Alert.alert("Erro", "Falha ao alterar status do produto");
-    }
-  };
-
-  const handleCancel = () => {
-    if (!product) return;
-
-    const hasChanges =
-      name !== (product.name || "") ||
-      barcode !== (product.barcode || "") ||
-      reference !== (product.reference || "") ||
-      description !== (product.description || "") ||
-      getCurrencyValue(costPrice) !== (product.cost_price ? product.cost_price / 100 : 0) ||
-      getCurrencyValue(salePrice) !== (product.sale_price / 100) ||
-      getCurrencyValue(wholesalePrice) !== (product.wholesale_price ? product.wholesale_price / 100 : 0) ||
-      parseInt(currentStock || "0") !== product.initial_stock ||
-      parseInt(minimumStock || "0") !== product.minimum_stock ||
-      categoryId !== product.category_id ||
-      supplier !== (product.supplier || "");
-
-    if (hasChanges) {
-      Alert.alert(
-        "Descartar alterações?",
-        "Você tem alterações não salvas. Deseja realmente sair?",
-        [
-          { text: "Continuar editando", style: "cancel" },
-          { text: "Descartar", style: "destructive", onPress: () => router.back() },
-        ]
-      );
-    } else {
-      router.back();
+      console.error('Error toggling product status:', error);
+      Alert.alert('Erro', 'Falha ao alterar status do produto');
     }
   };
 
   const getSelectedCategoryName = () => {
-    if (!categoryId) return "Nenhuma categoria";
+    if (!categoryId) return 'Nenhuma categoria';
     const category = categories.find(cat => cat.id === categoryId);
-    return category ? category.name : "Categoria não encontrada";
+    return category ? category.name : 'Categoria não encontrada';
   };
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size='large' color='#FF6B35' />
         <Text style={styles.loadingText}>Carregando produto...</Text>
       </View>
     );
@@ -308,7 +321,7 @@ export default function EditProduct() {
   if (!product) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={64} color="#ef4444" />
+        <Ionicons name='alert-circle-outline' size={64} color='#ef4444' />
         <Text style={styles.errorTitle}>Produto não encontrado</Text>
         <TouchableOpacity
           style={styles.backButton}
@@ -320,269 +333,274 @@ export default function EditProduct() {
     );
   }
 
-  const isFormValid = name.trim() && salePrice.trim() && getCurrencyValue(salePrice) > 0;
+  const isFormValid =
+    name.trim() && salePrice.trim() && getCurrencyValue(salePrice) > 0;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <WorkArea>
+      <HeaderDeleteButton
+        onDelete={handleDelete}
+        itemName={product?.name || ''}
+        itemType='o produto'
+        successMessage='Produto excluído com sucesso!'
+      />
+      <View style={styles.headerSection}>
+        <View style={styles.iconContainer}>
+          <Ionicons name='cube-outline' size={48} color='#FF6B35' />
+        </View>
+        <Text style={styles.title}>Editar Produto</Text>
+        <Text style={styles.subtitle}>Atualize as informações do produto</Text>
+      </View>
+
+      <TouchableOpacity
+        style={[
+          styles.statusToggle,
+          product.active === 1 && styles.statusToggleActive,
+        ]}
+        onPress={handleToggleActive}
+        disabled={isSaving}
       >
-        <View style={styles.headerSection}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="cube-outline" size={48} color="#FF6B35" />
-          </View>
-          <Text style={styles.title}>Editar Produto</Text>
-          <Text style={styles.subtitle}>
-            Atualize as informações do produto
-          </Text>
+        <View
+          style={[
+            styles.statusIndicator,
+            product.active === 1 && styles.statusIndicatorActive,
+          ]}
+        >
+          {product.active === 1 && (
+            <Ionicons name='checkmark' size={12} color='#ffffff' />
+          )}
+        </View>
+        <Text
+          style={[
+            styles.statusText,
+            product.active === 1 && styles.statusTextActive,
+          ]}
+        >
+          {product.active === 1 ? 'Produto Ativo' : 'Produto Inativo'}
+        </Text>
+      </TouchableOpacity>
+
+      <View style={styles.formSection}>
+        {/* Informações Básicas */}
+        <View style={styles.sectionHeader}>
+          <Ionicons
+            name='information-circle-outline'
+            size={20}
+            color='#FF6B35'
+          />
+          <Text style={styles.sectionTitle}>Informações Básicas</Text>
         </View>
 
-        {/* Status Toggle */}
-        <TouchableOpacity
-          style={[styles.statusToggle, product.active === 1 && styles.statusToggleActive]}
-          onPress={handleToggleActive}
-          disabled={isSaving}
-        >
-          <View style={[styles.statusIndicator, product.active === 1 && styles.statusIndicatorActive]}>
-            {product.active === 1 && <Ionicons name="checkmark" size={12} color="#ffffff" />}
-          </View>
-          <Text style={[styles.statusText, product.active === 1 && styles.statusTextActive]}>
-            {product.active === 1 ? "Produto Ativo" : "Produto Inativo"}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Nome do Produto *</Text>
+          <Input
+            placeholder='Ex: iPhone 15, Camiseta Polo, Notebook...'
+            value={name}
+            onChangeText={setName}
+            editable={!isSaving}
+            style={styles.input}
+          />
+        </View>
 
-        <View style={styles.formSection}>
-          {/* Informações Básicas */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="information-circle-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Informações Básicas</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome do Produto *</Text>
+        <View style={styles.row}>
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Código de Barras</Text>
             <Input
-              placeholder="Ex: iPhone 15, Camiseta Polo, Notebook..."
-              value={name}
-              onChangeText={setName}
+              placeholder='0000000000000'
+              value={barcode}
+              onChangeText={setBarcode}
+              editable={!isSaving}
+              style={styles.input}
+              keyboardType='numeric'
+            />
+          </View>
+
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Referência</Text>
+            <Input
+              placeholder='REF-001'
+              value={reference}
+              onChangeText={setReference}
               editable={!isSaving}
               style={styles.input}
             />
           </View>
+        </View>
 
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Código de Barras</Text>
-              <Input
-                placeholder="0000000000000"
-                value={barcode}
-                onChangeText={setBarcode}
-                editable={!isSaving}
-                style={styles.input}
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Referência</Text>
-              <Input
-                placeholder="REF-001"
-                value={reference}
-                onChangeText={setReference}
-                editable={!isSaving}
-                style={styles.input}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Categoria</Text>
-            <TouchableOpacity
-              style={styles.categorySelector}
-              onPress={() => setShowCategoryPicker(!showCategoryPicker)}
-              disabled={isSaving}
-            >
-              <Text style={[
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Categoria</Text>
+          <TouchableOpacity
+            style={styles.categorySelector}
+            onPress={() => setShowCategoryPicker(!showCategoryPicker)}
+            disabled={isSaving}
+          >
+            <Text
+              style={[
                 styles.categorySelectorText,
-                !categoryId && styles.categorySelectorPlaceholder
-              ]}>
-                {getSelectedCategoryName()}
-              </Text>
-              <Ionicons
-                name={showCategoryPicker ? "chevron-up" : "chevron-down"}
-                size={20}
-                color="#64748b"
-              />
-            </TouchableOpacity>
+                !categoryId && styles.categorySelectorPlaceholder,
+              ]}
+            >
+              {getSelectedCategoryName()}
+            </Text>
+            <Ionicons
+              name={showCategoryPicker ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color='#64748b'
+            />
+          </TouchableOpacity>
 
-            {showCategoryPicker && (
-              <View style={styles.categoryList}>
+          {showCategoryPicker && (
+            <View style={styles.categoryList}>
+              <TouchableOpacity
+                style={styles.categoryOption}
+                onPress={() => {
+                  setCategoryId(undefined);
+                  setShowCategoryPicker(false);
+                }}
+              >
+                <Text style={styles.categoryOptionText}>Nenhuma categoria</Text>
+              </TouchableOpacity>
+              {categories.map(category => (
                 <TouchableOpacity
-                  style={styles.categoryOption}
+                  key={category.id}
+                  style={[
+                    styles.categoryOption,
+                    categoryId === category.id && styles.categoryOptionSelected,
+                  ]}
                   onPress={() => {
-                    setCategoryId(undefined);
+                    setCategoryId(category.id);
                     setShowCategoryPicker(false);
                   }}
                 >
-                  <Text style={styles.categoryOptionText}>Nenhuma categoria</Text>
-                </TouchableOpacity>
-                {categories.map((category) => (
-                  <TouchableOpacity
-                    key={category.id}
+                  <Text
                     style={[
-                      styles.categoryOption,
-                      categoryId === category.id && styles.categoryOptionSelected
-                    ]}
-                    onPress={() => {
-                      setCategoryId(category.id);
-                      setShowCategoryPicker(false);
-                    }}
-                  >
-                    <Text style={[
                       styles.categoryOptionText,
-                      categoryId === category.id && styles.categoryOptionSelectedText
-                    ]}>
-                      {category.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Descrição</Text>
-            <Input
-              placeholder="Descrição detalhada do produto (opcional)"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-              editable={!isSaving}
-              style={[styles.input, styles.textArea]}
-            />
-          </View>
-
-          {/* Preços */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="pricetag-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Preços</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Preço de Venda *</Text>
-            <Input
-              placeholder="R$ 0,00"
-              value={salePrice}
-              onChangeText={(text) => setSalePrice(formatCurrency(text))}
-              editable={!isSaving}
-              style={styles.input}
-              keyboardType="numeric"
-            />
-          </View>
-
-          {/* Estoque */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="archive-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Controle de Estoque</Text>
-          </View>
-
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Estoque Inicial</Text>
-              <Input
-                placeholder="0"
-                value={currentStock}
-                onChangeText={(text) => setCurrentStock(formatNumber(text))}
-                editable={!isSaving}
-                style={styles.input}
-                keyboardType="numeric"
-              />
+                      categoryId === category.id &&
+                        styles.categoryOptionSelectedText,
+                    ]}
+                  >
+                    {category.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
+          )}
+        </View>
 
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Estoque Mínimo</Text>
-              <Input
-                placeholder="0"
-                value={minimumStock}
-                onChangeText={(text) => setMinimumStock(formatNumber(text))}
-                editable={!isSaving}
-                style={styles.input}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Descrição</Text>
+          <Input
+            placeholder='Descrição detalhada do produto (opcional)'
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={3}
+            editable={!isSaving}
+            style={[styles.input, styles.textArea]}
+          />
+        </View>
 
-          {/* Fornecedor */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="business-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Fornecedor</Text>
-          </View>
+        {/* Preços */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Preços</Text>
+        </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Fornecedor</Text>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Preço de Venda *</Text>
+          <Input
+            placeholder='R$ 0,00'
+            value={salePrice}
+            onChangeText={text => setSalePrice(formatCurrency(text))}
+            editable={!isSaving}
+            style={styles.input}
+            keyboardType='numeric'
+          />
+        </View>
+
+        {/* Estoque */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='archive-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Controle de Estoque</Text>
+        </View>
+
+        <View style={styles.row}>
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Estoque Inicial</Text>
             <Input
-              placeholder="Nome do fornecedor (opcional)"
-              value={supplier}
-              onChangeText={setSupplier}
+              placeholder='0'
+              value={currentStock}
+              onChangeText={text => setCurrentStock(formatNumber(text))}
               editable={!isSaving}
               style={styles.input}
+              keyboardType='numeric'
             />
           </View>
 
-          <View style={styles.infoSection}>
-            <View style={[styles.infoCard, styles.warningCard]}>
-              <Ionicons name="warning-outline" size={20} color="#f59e0b" />
-              <Text style={[styles.infoText, styles.warningText]}>
-                Não é possível excluir produtos que possuem vendas ou movimentações de estoque associadas.
-              </Text>
-            </View>
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Estoque Mínimo</Text>
+            <Input
+              placeholder='0'
+              value={minimumStock}
+              onChangeText={text => setMinimumStock(formatNumber(text))}
+              editable={!isSaving}
+              style={styles.input}
+              keyboardType='numeric'
+            />
           </View>
         </View>
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={handleDelete}
-            disabled={isSaving}
-          >
-            <Ionicons name="trash-outline" size={16} color="#ef4444" />
-            <Text style={styles.deleteButtonText}>Excluir</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={handleCancel}
-            disabled={isSaving}
-          >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.saveButton, (!isFormValid || isSaving) && styles.saveButtonDisabled]}
-            onPress={handleUpdate}
-            disabled={!isFormValid || isSaving}
-          >
-            {isSaving ? (
-              <>
-                <ActivityIndicator size="small" color="#ffffff" />
-                <Text style={styles.saveButtonText}>Salvando...</Text>
-              </>
-            ) : (
-              <>
-                <Ionicons name="checkmark-outline" size={16} color="#ffffff" />
-                <Text style={styles.saveButtonText}>Salvar</Text>
-              </>
-            )}
-          </TouchableOpacity>
+        {/* Fornecedor */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='business-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Fornecedor</Text>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Fornecedor</Text>
+          <Input
+            placeholder='Nome do fornecedor (opcional)'
+            value={supplier}
+            onChangeText={setSupplier}
+            editable={!isSaving}
+            style={styles.input}
+          />
+        </View>
+
+        <View style={styles.infoSection}>
+          <View style={[styles.infoCard, styles.warningCard]}>
+            <Ionicons name='warning-outline' size={20} color='#f59e0b' />
+            <Text style={[styles.infoText, styles.warningText]}>
+              Não é possível excluir produtos que possuem vendas ou
+              movimentações de estoque associadas.
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[
+            styles.saveButton,
+            (!isFormValid || isSaving) && styles.saveButtonDisabled,
+          ]}
+          onPress={handleUpdate}
+          disabled={!isFormValid || isSaving}
+        >
+          {isSaving ? (
+            <>
+              <ActivityIndicator size='small' color='#ffffff' />
+              <Text style={styles.saveButtonText}>Salvando...</Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
+              <Text style={styles.saveButtonText}>Salvar</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    </WorkArea>
   );
 }
 
@@ -816,7 +834,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginTop: 'auto',
-    paddingTop: 20,
   },
   deleteButton: {
     backgroundColor: '#fef2f2',
