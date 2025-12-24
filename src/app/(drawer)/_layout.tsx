@@ -52,9 +52,8 @@ function CustomDrawerContent(props: any) {
           <View style={styles.profileIcon}>
             <Text style={styles.profileText}>JC</Text>
           </View>
-          <View style={styles.profileInfo}>
+          <View>
             <Text style={styles.profileName}>José Carlos</Text>
-            <Text style={styles.profileEmail}>carlojf0@gmail.com</Text>
           </View>
         </View>
       </View>
@@ -217,9 +216,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
-  },
-  profileInfo: {
-    flex: 1,
   },
   profileName: {
     color: '#64748b',
