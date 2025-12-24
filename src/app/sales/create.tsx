@@ -646,7 +646,7 @@ export default function CreateSale() {
           ) : (
             <>
               <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
-              <Text style={styles.saveButtonText}>Finalizar Venda</Text>
+              <Text style={styles.saveButtonText}>Registrar</Text>
             </>
           )}
         </TouchableOpacity>
@@ -834,9 +834,11 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#ffffffff',
     borderRadius: 8,
     padding: 4,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   quantityButton: {
     width: 32,
@@ -845,6 +847,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#c2c7cdff',
   },
   quantityText: {
     fontSize: 16,
