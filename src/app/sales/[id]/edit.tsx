@@ -459,9 +459,9 @@ export default function EditSale() {
         </View>
 
         <CustomPicker
-          label="Status da Venda"
+          label='Status da Venda'
           selectedValue={status}
-          onValueChange={(value) => setStatus(value as string)}
+          onValueChange={value => setStatus(value as string)}
           options={STATUS_OPTIONS}
           enabled={!isSaving}
         />
@@ -476,7 +476,8 @@ export default function EditSale() {
           <Text style={styles.label}>Cliente</Text>
           <View style={[styles.disabledField]}>
             <Text style={styles.disabledText}>
-              {customers.find(c => c.id === customerId)?.name || 'Nenhum cliente'}
+              {customers.find(c => c.id === customerId)?.name ||
+                'Nenhum cliente'}
             </Text>
           </View>
         </View>
@@ -508,7 +509,8 @@ export default function EditSale() {
           <Text style={styles.label}>Forma de Pagamento</Text>
           <View style={styles.disabledField}>
             <Text style={styles.disabledText}>
-              {PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label || paymentMethod}
+              {PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label ||
+                paymentMethod}
             </Text>
           </View>
         </View>
@@ -537,12 +539,14 @@ export default function EditSale() {
                   activeOpacity={0.7}
                   onPress={openInstallmentModal(inst)}
                 >
-                  <View style={styles.installmentInfo}>
+                  <View>
                     <Text style={styles.installmentText}>
-                      {inst.number}ª parcela — {formatCurrency(inst.amount.toString())}
+                      {inst.number}ª parcela —{' '}
+                      {formatCurrency(inst.amount.toString())}
                     </Text>
                     <Text style={styles.installmentDate}>
-                      Venc: {new Date(inst.due_date).toLocaleDateString('pt-BR')}
+                      Venc:{' '}
+                      {new Date(inst.due_date).toLocaleDateString('pt-BR')}
                     </Text>
                   </View>
                   <Text
@@ -593,9 +597,7 @@ export default function EditSale() {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Desconto</Text>
           <View style={styles.disabledField}>
-            <Text style={styles.disabledText}>
-              {discount || 'R$ 0,00'}
-            </Text>
+            <Text style={styles.disabledText}>{discount || 'R$ 0,00'}</Text>
           </View>
         </View>
 
