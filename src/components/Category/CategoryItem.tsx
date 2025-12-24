@@ -31,14 +31,11 @@ export default function CategoryItem({ category }: CategoryItemProps) {
             {category.name}
           </Text>
           {category.description && (
-            <Text
-              style={[
-                styles.categoryDescription,
-                !isActive && styles.inactiveText,
-              ]}
-            >
-              {category.description}
-            </Text>
+            <View style={styles.descriptionContainer}>
+              <Text style={styles.description} numberOfLines={2}>
+                {category.description}
+              </Text>
+            </View>
           )}
         </View>
       </View>
@@ -132,5 +129,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     color: '#ef4444',
+  },
+
+  descriptionContainer: {
+    paddingBottom: 12,
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#64748b',
+  },
+  description: {
+    fontSize: 14,
+    color: '#64748b',
+    fontStyle: 'italic',
+    lineHeight: 18,
   },
 });
