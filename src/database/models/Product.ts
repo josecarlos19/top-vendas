@@ -263,8 +263,7 @@ export function useProductDatabase() {
       await statement.executeAsync(id);
       return true;
     } catch (error) {
-      console.log(error);
-      // console.error('Error deleting product:', error);
+      console.error('Error deleting product:', error);
       throw new Error('Failed to delete product');
     } finally {
       await statement.finalizeAsync();
