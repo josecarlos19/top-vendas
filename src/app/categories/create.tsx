@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,24 +6,26 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   TouchableOpacity,
-} from "react-native";
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useCategoryDatabase } from "@/database/models/Category";
-import { Input } from "@/components/Input";
+import { useCategoryDatabase } from '@/database/models/Category';
+import { Input } from '@/components/Input';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreateCategory() {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const categoryDatabase = useCategoryDatabase();
 
   async function handleStore() {
     if (!name.trim()) {
-      Alert.alert("Erro", "Por favor, preencha o nome da categoria.");
+      Alert.alert('Erro', 'Por favor, preencha o nome da categoria.');
       return;
     }
 
@@ -34,21 +36,17 @@ export default function CreateCategory() {
         description: description.trim() || undefined,
       });
 
-      Alert.alert(
-        "Sucesso",
-        "Categoria criada com sucesso!",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              router.back();
-            },
+      Alert.alert('Sucesso', 'Categoria criada com sucesso!', [
+        {
+          text: 'OK',
+          onPress: () => {
+            router.back();
           },
-        ]
-      );
+        },
+      ]);
     } catch (error) {
-      console.error("Error creating category:", error);
-      Alert.alert("Erro", "Falha ao criar categoria. Tente novamente.");
+      console.error('Error creating category:', error);
+      Alert.alert('Erro', 'Falha ao criar categoria. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -57,11 +55,15 @@ export default function CreateCategory() {
   const handleCancel = () => {
     if (name.trim() || description.trim()) {
       Alert.alert(
-        "Descartar alterações?",
-        "Você tem alterações não salvas. Deseja realmente sair?",
+        'Descartar alterações?',
+        'Você tem alterações não salvas. Deseja realmente sair?',
         [
-          { text: "Continuar editando", style: "cancel" },
-          { text: "Descartar", style: "destructive", onPress: () => router.back() },
+          { text: 'Continuar editando', style: 'cancel' },
+          {
+            text: 'Descartar',
+            style: 'destructive',
+            onPress: () => router.back(),
+          },
         ]
       );
     } else {
@@ -70,88 +72,87 @@ export default function CreateCategory() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView edges={['bottom']} style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       >
-        <View style={styles.headerSection}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="folder-outline" size={48} color="#FF6B35" />
+        <TouchableWithoutFeedback
+          style={{ flex: 1 }}
+          onPress={Keyboard.dismiss}
+        >
+          <View>
+            <View style={styles.headerSection}>
+              <View style={styles.iconContainer}>
+                <Ionicons name='folder-outline' size={48} color='#FF6B35' />
+              </View>
+              <Text style={styles.title}>Nova Categoria</Text>
+              <Text style={styles.subtitle}>
+                Organize seus produtos criando uma nova categoria
+              </Text>
+            </View>
+
+            <View style={styles.formSection}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Nome da Categoria*</Text>
+                <Input
+                  placeholder='Ex: Eletrônicos, Roupas, Livros...'
+                  value={name}
+                  onChangeText={setName}
+                  editable={!isLoading}
+                  style={styles.input}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Descrição</Text>
+                <Input
+                  placeholder='Descreva brevemente esta categoria (opcional)'
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  numberOfLines={4}
+                  editable={!isLoading}
+                  style={[styles.input, styles.textArea]}
+                />
+              </View>
+            </View>
+
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.saveButton,
+                  isLoading && styles.saveButtonDisabled,
+                ]}
+                onPress={handleStore}
+                disabled={isLoading || !name.trim()}
+              >
+                {isLoading ? (
+                  <>
+                    <Ionicons
+                      name='hourglass-outline'
+                      size={16}
+                      color='#ffffff'
+                    />
+                    <Text style={styles.saveButtonText}>Salvando...</Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons
+                      name='checkmark-outline'
+                      size={16}
+                      color='#ffffff'
+                    />
+                    <Text style={styles.saveButtonText}>Salvar Categoria</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.title}>Nova Categoria</Text>
-          <Text style={styles.subtitle}>
-            Organize seus produtos criando uma nova categoria
-          </Text>
-        </View>
-
-        <View style={styles.formSection}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome da Categoria *</Text>
-            <Input
-              placeholder="Ex: Eletrônicos, Roupas, Livros..."
-              value={name}
-              onChangeText={setName}
-              editable={!isLoading}
-              style={styles.input}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Descrição</Text>
-            <Input
-              placeholder="Descreva brevemente esta categoria (opcional)"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={4}
-              editable={!isLoading}
-              style={[styles.input, styles.textArea]}
-            />
-          </View>
-
-          <View style={styles.infoCard}>
-            <Ionicons name="information-circle-outline" size={20} color="#3b82f6" />
-            <Text style={styles.infoText}>
-              As categorias ajudam a organizar seus produtos e facilitam a busca e relatórios.
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={handleCancel}
-            disabled={isLoading}
-          >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
-            onPress={handleStore}
-            disabled={isLoading || !name.trim()}
-          >
-            {isLoading ? (
-              <>
-                <Ionicons name="hourglass-outline" size={16} color="#ffffff" />
-                <Text style={styles.saveButtonText}>Salvando...</Text>
-              </>
-            ) : (
-              <>
-                <Ionicons name="checkmark-outline" size={16} color="#ffffff" />
-                <Text style={styles.saveButtonText}>Salvar Categoria</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -159,11 +160,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
+    paddingHorizontal: 10,
   },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
-  },
+
   headerSection: {
     alignItems: 'center',
     marginBottom: 32,
@@ -193,11 +192,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   formSection: {
-    marginBottom: 32,
+    gap: 16,
   },
-  inputGroup: {
-    marginBottom: 20,
-  },
+  inputGroup: {},
   label: {
     fontSize: 16,
     fontWeight: '600',

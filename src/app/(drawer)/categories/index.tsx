@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,16 +9,19 @@ import {
   RefreshControl,
   TextInput,
   ActivityIndicator,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { router, useFocusEffect } from "expo-router";
-import { useCategoryDatabase } from "@/database/models/Category";
-import { CategorySearchInterface } from "@/interfaces/models/categoryInterface";
-import CategoryItem, { Category } from "@/components/Category/CategoryItem";
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
+import { useCategoryDatabase } from '@/database/models/Category';
+import { CategorySearchInterface } from '@/interfaces/models/categoryInterface';
+import CategoryItem, { Category } from '@/components/Category/CategoryItem';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { SearchBar } from '@/components/SearchBar';
 
 export default function CategoriesList() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -61,7 +64,7 @@ export default function CategoriesList() {
         categoryDatabase.index(searchParams),
         categoryDatabase.count({
           name: searchParams.name,
-        })
+        }),
       ]);
 
       if (append && page > 1) {
@@ -94,10 +97,9 @@ export default function CategoriesList() {
 
       const totalPages = Math.ceil(count / perPage);
       setHasMoreData(page < totalPages);
-
     } catch (error) {
-      console.error("Error loading categories:", error);
-      Alert.alert("Erro", "Falha ao carregar categorias");
+      console.error('Error loading categories:', error);
+      Alert.alert('Erro', 'Falha ao carregar categorias');
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -128,10 +130,10 @@ export default function CategoriesList() {
     try {
       await categoryDatabase.remove(id);
       await loadCategories(1, false);
-      Alert.alert("Sucesso", "Categoria excluída com sucesso!");
+      Alert.alert('Sucesso', 'Categoria excluída com sucesso!');
     } catch (error) {
-      console.error("Error deleting category:", error);
-      Alert.alert("Erro", "Falha ao excluir categoria");
+      console.error('Error deleting category:', error);
+      Alert.alert('Erro', 'Falha ao excluir categoria');
     }
   };
 
@@ -142,11 +144,7 @@ export default function CategoriesList() {
   );
 
   const renderCategory = ({ item }: { item: Category }) => (
-    <CategoryItem
-      category={item}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-    />
+    <CategoryItem category={item} onEdit={handleEdit} onDelete={handleDelete} />
   );
 
   const renderFooter = () => {
@@ -154,7 +152,7 @@ export default function CategoriesList() {
 
     return (
       <View style={styles.loadingFooter}>
-        <ActivityIndicator size="small" color="#FF6B35" />
+        <ActivityIndicator size='small' color='#FF6B35' />
         <Text style={styles.loadingText}>Carregando mais...</Text>
       </View>
     );
@@ -162,7 +160,7 @@ export default function CategoriesList() {
 
   const renderEmpty = () => (
     <View style={styles.emptyState}>
-      <Ionicons name="folder-outline" size={64} color="#cbd5e1" />
+      <Ionicons name='folder-outline' size={64} color='#cbd5e1' />
       <Text style={styles.emptyTitle}>Nenhuma categoria encontrada</Text>
     </View>
   );
@@ -170,92 +168,68 @@ export default function CategoriesList() {
   const totalPages = Math.ceil(totalCount / perPage);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Ionicons
-            name="search-outline"
-            size={20}
-            color="#64748b"
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar categorias..."
-            value={searchText}
-            onChangeText={handleSearch}
-            placeholderTextColor="#94a3b8"
-          />
-          {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch("")}>
-              <Ionicons name="close-circle" size={20} color="#64748b" />
-            </TouchableOpacity>
+    <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <SearchBar
+          value={searchText}
+          onChangeText={handleSearch}
+          placeholder='Buscar categorias...'
+        />
+
+        <View style={styles.resultsContainer}>
+          <Text style={styles.resultsText}>
+            {totalCount} categoria{totalCount !== 1 ? 's' : ''} encontrada
+            {totalCount !== 1 ? 's' : ''}
+          </Text>
+          {totalPages > 1 && (
+            <Text style={styles.paginationText}>
+              Página {currentPage} de {totalPages}
+            </Text>
           )}
         </View>
+
+        <FlatList
+          data={categories}
+          renderItem={renderCategory}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={handleRefresh}
+              colors={['#FF6B35']}
+              tintColor='#FF6B35'
+            />
+          }
+          ListEmptyComponent={!isLoading ? renderEmpty : null}
+          ListFooterComponent={renderFooter}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.1}
+        />
+
+        <FloatingActionButton route='/categories/create' />
       </View>
-
-      <View style={styles.resultsContainer}>
-        <Text style={styles.resultsText}>
-          {totalCount} categoria{totalCount !== 1 ? "s" : ""} encontrada{totalCount !== 1 ? "s" : ""}
-        </Text>
-        {totalPages > 1 && (
-          <Text style={styles.paginationText}>
-            Página {currentPage} de {totalPages}
-          </Text>
-        )}
-      </View>
-
-      <FlatList
-        data={categories}
-        renderItem={renderCategory}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoading}
-            onRefresh={handleRefresh}
-            colors={["#FF6B35"]}
-            tintColor="#FF6B35"
-          />
-        }
-        ListEmptyComponent={!isLoading ? renderEmpty : null}
-        ListFooterComponent={renderFooter}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.1}
-      />
-
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push("/categories/create")}
-      >
-        <Ionicons name="add" size={24} color="#ffffff" />
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: '#f8fafc',
   },
-  searchContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
-  },
+
   searchInputContainer: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 4,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: '#e2e8f0',
   },
   searchIcon: {
     marginRight: 8,
@@ -263,96 +237,96 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: "#1e293b",
+    color: '#1e293b',
   },
   filterButton: {
-    backgroundColor: "#ffffff",
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: '#e2e8f0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterButtonActive: {
-    backgroundColor: "#FF6B35",
-    borderColor: "#FF6B35",
+    backgroundColor: '#FF6B35',
+    borderColor: '#FF6B35',
   },
   resultsContainer: {
     paddingHorizontal: 20,
     paddingBottom: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   resultsText: {
     fontSize: 14,
-    color: "#64748b",
-    fontWeight: "500",
+    color: '#64748b',
+    fontWeight: '500',
   },
   paginationText: {
     fontSize: 12,
-    color: "#94a3b8",
-    fontWeight: "500",
+    color: '#94a3b8',
+    fontWeight: '500',
   },
   listContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
   },
   loadingFooter: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingVertical: 20,
     gap: 8,
   },
   loadingText: {
     fontSize: 14,
-    color: "#64748b",
+    color: '#64748b',
   },
 
   emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 80,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: "600",
-    color: "#475569",
+    fontWeight: '600',
+    color: '#475569',
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: "#64748b",
-    textAlign: "center",
+    color: '#64748b',
+    textAlign: 'center',
     lineHeight: 20,
   },
   createFirstButton: {
-    backgroundColor: "#FF6B35",
+    backgroundColor: '#FF6B35',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
     marginTop: 24,
   },
   createFirstButtonText: {
-    color: "#ffffff",
+    color: '#ffffff',
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   fab: {
-    position: "absolute",
+    position: 'absolute',
     right: 20,
     bottom: 20,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#FF6B35",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
+    backgroundColor: '#FF6B35',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
