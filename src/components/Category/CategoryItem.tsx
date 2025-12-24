@@ -1,5 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export interface Category {
   id: number;
@@ -25,23 +25,36 @@ export default function CategoryItem({
 
   const handleDelete = () => {
     Alert.alert(
-      "Confirmar Exclusão",
+      'Confirmar Exclusão',
       `Deseja realmente excluir a categoria "${category.name}"?`,
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: 'Cancelar', style: 'cancel' },
         {
-          text: "Excluir",
-          style: "destructive",
+          text: 'Excluir',
+          style: 'destructive',
           onPress: () => onDelete(category.id),
         },
-      ],
+      ]
     );
+  };
+
+  const handleEdit = (e?: any) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    onEdit(category);
+  };
+
+  const handleDeletePress = (e: any) => {
+    e.stopPropagation();
+    handleDelete();
   };
 
   return (
     <TouchableOpacity
       style={[styles.categoryItem, !isActive && styles.categoryItemInactive]}
-      onPress={() => onEdit(category)}
+      onPress={handleEdit}
+      activeOpacity={0.7}
     >
       <View style={styles.categoryHeader}>
         <View style={styles.categoryInfo}>
@@ -64,32 +77,33 @@ export default function CategoryItem({
       <View style={styles.categoryActions}>
         <TouchableOpacity
           style={[styles.actionButton, styles.editButton]}
-          onPress={() => onEdit(category)}
+          onPress={handleEdit}
         >
-          <Ionicons name="pencil-outline" size={16} color="#3b82f6" />
+          <Ionicons name='pencil-outline' size={16} color='#3b82f6' />
           <Text style={styles.editButtonText}>Editar</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.actionButton, styles.deleteButton]}
-          onPress={handleDelete}
+          onPress={handleDeletePress}
         >
-          <Ionicons name="trash-outline" size={16} color="#ef4444" />
+          <Ionicons name='trash-outline' size={16} color='#ef4444' />
           <Text style={styles.deleteButtonText}>Excluir</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 }
+
 const styles = StyleSheet.create({
   categoryItem: {
-    backgroundColor: "#ffffff",
+    backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 20,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    shadowColor: "#000",
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -97,12 +111,12 @@ const styles = StyleSheet.create({
   },
   categoryItemInactive: {
     opacity: 0.7,
-    backgroundColor: "#f8fafc",
+    backgroundColor: '#f8fafc',
   },
   categoryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 16,
   },
   categoryInfo: {
@@ -111,20 +125,20 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#1e293b",
+    fontWeight: '600',
+    color: '#1e293b',
     marginBottom: 4,
   },
   categoryDescription: {
     fontSize: 14,
-    color: "#64748b",
+    color: '#64748b',
     lineHeight: 20,
   },
   inactiveText: {
-    color: "#94a3b8",
+    color: '#94a3b8',
   },
   statusContainer: {
-    alignItems: "flex-end",
+    alignItems: 'flex-end',
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -133,41 +147,41 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   categoryActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     gap: 4,
   },
   editButton: {
-    backgroundColor: "#eff6ff",
+    backgroundColor: '#eff6ff',
   },
   editButtonText: {
     fontSize: 12,
-    fontWeight: "500",
-    color: "#3b82f6",
+    fontWeight: '500',
+    color: '#3b82f6',
   },
   toggleButton: {
-    backgroundColor: "#f0fdf4",
+    backgroundColor: '#f0fdf4',
   },
   toggleButtonText: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   deleteButton: {
-    backgroundColor: "#fef2f2",
+    backgroundColor: '#fef2f2',
   },
   deleteButtonText: {
     fontSize: 12,
-    fontWeight: "500",
-    color: "#ef4444",
+    fontWeight: '500',
+    color: '#ef4444',
   },
 });
