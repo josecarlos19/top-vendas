@@ -464,6 +464,7 @@ export default function EditSale() {
           onValueChange={value => setStatus(value as string)}
           options={STATUS_OPTIONS}
           enabled={!isSaving}
+          emptyOption={false}
         />
 
         {/* Cliente */}
