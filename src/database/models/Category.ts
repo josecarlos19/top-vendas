@@ -126,6 +126,15 @@ async function count(params?: Omit<CategorySearchInterface, 'page' | 'perPage'>)
   }
 
   async function remove(id: number) {
+    const linkedProducts = await database.getFirstAsync(
+      "SELECT COUNT(*) as count FROM products WHERE category_id = ? AND deleted_at IS NULL",
+      [id],
+    ) as { count: number };
+
+    if (linkedProducts.count > 0) {
+      throw new Error("Não é possível excluir categorias que possuem produtos associados.");
+    }
+
     const statement = await database.prepareAsync(
       "UPDATE categories SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?",
     );
