@@ -4,13 +4,12 @@ import {
   Text,
   StyleSheet,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
   Modal,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -22,6 +21,7 @@ import formatCurrency from '@/components/utils/formatCurrency';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useInstallmentDatabase } from '@/database/models/Installment';
 import WorkArea from '@/components/WorkArea';
+import CustomPicker from '@/components/CustomPicker';
 
 type statusTypes = 'completed' | 'pending';
 
@@ -78,9 +78,7 @@ interface Sale {
 
 const PAYMENT_METHODS = [
   { value: 'money', label: 'Dinheiro' },
-  { value: 'card', label: 'Cartão' },
   { value: 'pix', label: 'PIX' },
-  { value: 'transfer', label: 'Transferência' },
   { value: 'installment', label: 'Parcelado' },
 ];
 
@@ -105,11 +103,6 @@ export default function EditSale() {
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [showCustomerPicker, setShowCustomerPicker] = useState(false);
-  const [showPaymentPicker, setShowPaymentPicker] = useState(false);
-  const [showStatusPicker, setShowStatusPicker] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState('');
-  const [productSearch, setProductSearch] = useState('');
   const [firstDueDate, setFirstDueDate] = useState(new Date());
   const [showFirstDuePicker, setShowFirstDuePicker] = useState(false);
   const [selectedInstallment, setSelectedInstallment] =
@@ -309,12 +302,6 @@ export default function EditSale() {
 
     setIsSaving(true);
     try {
-      const subtotal = getSubtotal();
-      const discountValue = getDiscountValue();
-      const total = getTotal();
-      const installmentCount =
-        paymentMethod === 'installment' ? parseInt(installments) : 1;
-
       await saleDatabase.update({
         id: sale.id,
         status: status as any,
@@ -371,23 +358,10 @@ export default function EditSale() {
     if (!sale) return;
 
     const hasChanges =
-      customerId !== sale.customer_id ||
-      getCurrencyValue(discount) !== (sale.discount ? sale.discount : 0) ||
-      paymentMethod !== sale.payment_method ||
-      parseInt(installments) !== sale.installments?.length ||
       status !== sale.status ||
-      saleDate.getTime() !== new Date(sale.sale_date).getTime() ||
       notes !== (sale.notes || '') ||
-      JSON.stringify(items) !==
-        JSON.stringify(
-          sale.items?.map(item => ({
-            product_id: item.product_id,
-            product_name: item.product_name,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            subtotal: item.subtotal,
-          })) || []
-        );
+      firstDueDate.getTime() !==
+        new Date(sale.first_due_date || sale.sale_date).getTime();
 
     if (hasChanges) {
       Alert.alert(
@@ -412,32 +386,6 @@ export default function EditSale() {
     setPaymentDate(new Date());
     setShowInstallmentModal(true);
   };
-
-  const getSelectedCustomerName = () => {
-    if (!customerId) return 'Nenhum cliente';
-    const customer = customers.find(c => c.id === customerId);
-    return customer ? customer.name : 'Cliente não encontrado';
-  };
-
-  const getSelectedPaymentMethodLabel = () => {
-    const method = PAYMENT_METHODS.find(m => m.value === paymentMethod);
-    return method ? method.label : paymentMethod;
-  };
-
-  const getSelectedStatusLabel = () => {
-    const statusOption = STATUS_OPTIONS.find(s => s.value === status);
-    return statusOption ? statusOption.label : status;
-  };
-
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(customerSearch.toLowerCase())
-  );
-
-  const filteredProducts = products.filter(
-    product =>
-      product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-      (product.barcode && product.barcode.includes(productSearch))
-  );
 
   if (isLoading) {
     return (
@@ -465,6 +413,11 @@ export default function EditSale() {
 
   const isFormValid = items.length > 0 && getTotal() > 0;
 
+  const customerOptions = customers.map(customer => ({
+    label: customer.name,
+    value: customer.id,
+  }));
+
   const renderSaleItem = ({ item }: { item: SaleItem }) => (
     <View style={styles.saleItem}>
       <View style={styles.saleItemHeader}>
@@ -473,9 +426,7 @@ export default function EditSale() {
 
       <View style={styles.saleItemDetails}>
         <View style={styles.quantityContainer}>
-          <Text disabled style={styles.quantityText}>
-            {item.quantity}
-          </Text>
+          <Text style={styles.quantityText}>{item.quantity}</Text>
         </View>
 
         <View style={styles.priceContainer}>
@@ -507,49 +458,13 @@ export default function EditSale() {
           <Text style={styles.sectionTitle}>Status</Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Status da Venda</Text>
-          <TouchableOpacity
-            style={styles.selector}
-            onPress={() => setShowStatusPicker(!showStatusPicker)}
-            disabled={isSaving}
-          >
-            <Text style={styles.selectorText}>{getSelectedStatusLabel()}</Text>
-            <Ionicons
-              name={showStatusPicker ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color='#64748b'
-            />
-          </TouchableOpacity>
-
-          {showStatusPicker && (
-            <View style={styles.pickerContainer}>
-              {STATUS_OPTIONS.map(statusOption => (
-                <TouchableOpacity
-                  key={statusOption.value}
-                  style={[
-                    styles.option,
-                    status === statusOption.value && styles.optionSelected,
-                  ]}
-                  onPress={() => {
-                    setStatus(statusOption.value);
-                    setShowStatusPicker(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      status === statusOption.value &&
-                        styles.optionSelectedText,
-                    ]}
-                  >
-                    {statusOption.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
+        <CustomPicker
+          label="Status da Venda"
+          selectedValue={status}
+          onValueChange={(value) => setStatus(value as string)}
+          options={STATUS_OPTIONS}
+          enabled={!isSaving}
+        />
 
         {/* Cliente */}
         <View style={styles.sectionHeader}>
@@ -559,59 +474,11 @@ export default function EditSale() {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Cliente</Text>
-          <TouchableOpacity
-            style={{ ...styles.selector, ...styles.disabledInput }}
-            onPress={() => setShowCustomerPicker(!showCustomerPicker)}
-            disabled
-          >
-            <Text
-              style={[
-                styles.selectorText,
-                !customerId && styles.selectorPlaceholder,
-              ]}
-            >
-              {getSelectedCustomerName()}
+          <View style={[styles.disabledField]}>
+            <Text style={styles.disabledText}>
+              {customers.find(c => c.id === customerId)?.name || 'Nenhum cliente'}
             </Text>
-          </TouchableOpacity>
-
-          {showCustomerPicker && (
-            <View style={styles.pickerContainer}>
-              <Input
-                placeholder='Buscar cliente...'
-                value={customerSearch}
-                onChangeText={setCustomerSearch}
-                style={styles.searchInput}
-              />
-              <ScrollView style={styles.optionsList} nestedScrollEnabled>
-                {filteredCustomers.map(customer => (
-                  <TouchableOpacity
-                    key={customer.id}
-                    style={[
-                      styles.option,
-                      customerId === customer.id && styles.optionSelected,
-                    ]}
-                    onPress={() => {
-                      setCustomerId(customer.id);
-                      setShowCustomerPicker(false);
-                      setCustomerSearch('');
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.optionText,
-                        customerId === customer.id && styles.optionSelectedText,
-                      ]}
-                    >
-                      {customer.name}
-                    </Text>
-                    {customer.email && (
-                      <Text style={styles.optionSubtext}>{customer.email}</Text>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
+          </View>
         </View>
 
         {/* Produtos */}
@@ -639,64 +506,26 @@ export default function EditSale() {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Forma de Pagamento</Text>
-          <TouchableOpacity
-            style={{ ...styles.selector, ...styles.disabledInput }}
-            onPress={() => setShowPaymentPicker(!showPaymentPicker)}
-            disabled
-          >
-            <Text style={styles.selectorText}>
-              {getSelectedPaymentMethodLabel()}
+          <View style={styles.disabledField}>
+            <Text style={styles.disabledText}>
+              {PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label || paymentMethod}
             </Text>
-          </TouchableOpacity>
-
-          {showPaymentPicker && (
-            <View style={styles.pickerContainer}>
-              {PAYMENT_METHODS.map(method => (
-                <TouchableOpacity
-                  key={method.value}
-                  style={[
-                    styles.option,
-                    paymentMethod === method.value && styles.optionSelected,
-                  ]}
-                  onPress={() => {
-                    setPaymentMethod(method.value);
-                    setShowPaymentPicker(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      paymentMethod === method.value &&
-                        styles.optionSelectedText,
-                    ]}
-                  >
-                    {method.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+          </View>
         </View>
 
         {paymentMethod === 'installment' && (
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Número de Parcelas</Text>
-            <Input
-              placeholder='Número de parcelas'
-              value={installments}
-              onChangeText={text => setInstallments(formatNumber(text))}
-              editable={!isSaving}
-              style={{ ...styles.input, ...styles.disabledInput }}
-              keyboardType='numeric'
-              readOnly
-            />
+            <View style={styles.disabledField}>
+              <Text style={styles.disabledText}>{installments}</Text>
+            </View>
           </View>
         )}
 
         {sale.payment_method === 'installment' &&
           sale?.installments &&
           sale.installments.length > 0 && (
-            <View>
+            <View style={styles.inputGroup}>
               <Text style={styles.label}>Parcelas</Text>
               {sale.installments.map(inst => (
                 <TouchableOpacity
@@ -708,13 +537,14 @@ export default function EditSale() {
                   activeOpacity={0.7}
                   onPress={openInstallmentModal(inst)}
                 >
-                  <Text style={styles.installmentText}>
-                    {inst.number}ª parcela —{' '}
-                    {formatCurrency(inst.amount.toString())}
-                  </Text>
-                  <Text style={styles.installmentDate}>
-                    Venc: {new Date(inst.due_date).toLocaleDateString('pt-BR')}
-                  </Text>
+                  <View style={styles.installmentInfo}>
+                    <Text style={styles.installmentText}>
+                      {inst.number}ª parcela — {formatCurrency(inst.amount.toString())}
+                    </Text>
+                    <Text style={styles.installmentDate}>
+                      Venc: {new Date(inst.due_date).toLocaleDateString('pt-BR')}
+                    </Text>
+                  </View>
                   <Text
                     style={[
                       styles.installmentStatus,
@@ -762,14 +592,11 @@ export default function EditSale() {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Desconto</Text>
-          <Input
-            placeholder='R$ 0,00'
-            value={discount}
-            onChangeText={text => setDiscount(formatCurrency(text))}
-            editable={false}
-            style={{ ...styles.input, ...styles.disabledInput }}
-            keyboardType='numeric'
-          />
+          <View style={styles.disabledField}>
+            <Text style={styles.disabledText}>
+              {discount || 'R$ 0,00'}
+            </Text>
+          </View>
         </View>
 
         {/* Resumo */}
@@ -850,6 +677,7 @@ export default function EditSale() {
           )}
         </TouchableOpacity>
       </View>
+
       <Modal
         visible={showInstallmentModal}
         transparent
@@ -932,10 +760,6 @@ export default function EditSale() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -971,10 +795,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
   },
   headerSection: {
     alignItems: 'center',
@@ -1053,86 +873,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  disabledInput: {
-    backgroundColor: '#f1f5f9',
-    borderColor: '#e2e8f0',
-    opacity: 0.7,
-  },
   selectorText: {
     fontSize: 16,
     color: '#1e293b',
   },
-  selectorPlaceholder: {
-    color: '#94a3b8',
-  },
-  pickerContainer: {
-    backgroundColor: '#ffffff',
+  disabledField: {
+    backgroundColor: '#f1f5f9',
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 12,
-    marginTop: 8,
-    maxHeight: 250,
-  },
-  searchInput: {
-    margin: 8,
-    marginBottom: 0,
-  },
-  optionsList: {
-    maxHeight: 200,
-  },
-  option: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    paddingVertical: 14,
   },
-  optionSelected: {
-    backgroundColor: '#fff5f0',
-  },
-  optionText: {
+  disabledText: {
     fontSize: 16,
-    color: '#1e293b',
-  },
-  optionSelectedText: {
-    color: '#FF6B35',
-    fontWeight: '600',
-  },
-  optionSubtext: {
-    fontSize: 12,
     color: '#64748b',
-    marginTop: 2,
-  },
-  productOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  productPrice: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#22c55e',
-  },
-  productStock: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 4,
-  },
-  addProductButton: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  addProductText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FF6B35',
   },
   itemsList: {
     marginTop: 16,
@@ -1156,9 +911,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1e293b',
     flex: 1,
-  },
-  removeItemButton: {
-    padding: 4,
   },
   saleItemDetails: {
     flexDirection: 'row',

@@ -21,6 +21,8 @@ import formatCurrency from '@/components/utils/formatCurrency';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { DateTime } from 'luxon';
 import WorkArea from '@/components/WorkArea';
+import CustomPicker from '@/components/CustomPicker';
+
 interface Customer {
   id: number;
   name: string;
@@ -47,9 +49,7 @@ interface SaleItem {
 
 const PAYMENT_METHODS = [
   { value: 'money', label: 'Dinheiro' },
-  { value: 'card', label: 'Cartão' },
   { value: 'pix', label: 'PIX' },
-  { value: 'transfer', label: 'Transferência' },
   { value: 'installment', label: 'Parcelado' },
 ];
 
@@ -64,10 +64,7 @@ export default function CreateSale() {
   const [saleDate, setSaleDate] = useState(new Date());
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [showProductPicker, setShowProductPicker] = useState(false);
-  const [showPaymentPicker, setShowPaymentPicker] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [firstDueDate, setFirstDueDate] = useState(new Date());
   const [firstDueDatePlusOneMonth, setFirstDueDatePlusOneMonth] = useState(
@@ -323,21 +320,6 @@ export default function CreateSale() {
     }
   };
 
-  const getSelectedCustomerName = () => {
-    if (!customerId) return 'Selecionar cliente';
-    const customer = customers.find(c => c.id === customerId);
-    return customer ? customer.name : 'Cliente não encontrado';
-  };
-
-  const getSelectedPaymentMethodLabel = () => {
-    const method = PAYMENT_METHODS.find(m => m.value === paymentMethod);
-    return method ? method.label : paymentMethod;
-  };
-
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(customerSearch.toLowerCase())
-  );
-
   const filteredProducts = products.filter(
     product =>
       product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
@@ -345,6 +327,11 @@ export default function CreateSale() {
   );
 
   const isFormValid = items.length > 0 && getTotal() > 0;
+
+  const customerOptions = customers.map(customer => ({
+    label: customer.name,
+    value: customer.id,
+  }));
 
   const renderSaleItem = ({ item }: { item: SaleItem }) => (
     <View style={styles.saleItem}>
@@ -408,67 +395,14 @@ export default function CreateSale() {
           <Text style={styles.sectionTitle}>Cliente</Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Cliente</Text>
-          <TouchableOpacity
-            style={styles.selector}
-            onPress={() => setShowCustomerPicker(!showCustomerPicker)}
-            disabled={isLoading}
-          >
-            <Text
-              style={[
-                styles.selectorText,
-                !customerId && styles.selectorPlaceholder,
-              ]}
-            >
-              {getSelectedCustomerName()}
-            </Text>
-            <Ionicons
-              name={showCustomerPicker ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color='#64748b'
-            />
-          </TouchableOpacity>
-
-          {showCustomerPicker && (
-            <View style={styles.pickerContainer}>
-              <Input
-                placeholder='Buscar cliente...'
-                value={customerSearch}
-                onChangeText={setCustomerSearch}
-                style={styles.searchInput}
-              />
-              <ScrollView style={styles.optionsList} nestedScrollEnabled>
-                {filteredCustomers.map(customer => (
-                  <TouchableOpacity
-                    key={customer.id}
-                    style={[
-                      styles.option,
-                      customerId === customer.id && styles.optionSelected,
-                    ]}
-                    onPress={() => {
-                      setCustomerId(customer.id);
-                      setShowCustomerPicker(false);
-                      setCustomerSearch('');
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.optionText,
-                        customerId === customer.id && styles.optionSelectedText,
-                      ]}
-                    >
-                      {customer.name}
-                    </Text>
-                    {customer.email && (
-                      <Text style={styles.optionSubtext}>{customer.email}</Text>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
+        <CustomPicker
+          label='Cliente'
+          selectedValue={customerId}
+          onValueChange={value => setCustomerId(value as number)}
+          options={customerOptions}
+          enabled={!isLoading}
+          placeholder='Selecione um cliente'
+        />
 
         {/* Produtos */}
         <View style={styles.sectionHeader}>
@@ -559,51 +493,13 @@ export default function CreateSale() {
           <Text style={styles.sectionTitle}>Pagamento</Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Forma de Pagamento</Text>
-          <TouchableOpacity
-            style={styles.selector}
-            onPress={() => setShowPaymentPicker(!showPaymentPicker)}
-            disabled={isLoading}
-          >
-            <Text style={styles.selectorText}>
-              {getSelectedPaymentMethodLabel()}
-            </Text>
-            <Ionicons
-              name={showPaymentPicker ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color='#64748b'
-            />
-          </TouchableOpacity>
-
-          {showPaymentPicker && (
-            <View style={styles.pickerContainer}>
-              {PAYMENT_METHODS.map(method => (
-                <TouchableOpacity
-                  key={method.value}
-                  style={[
-                    styles.option,
-                    paymentMethod === method.value && styles.optionSelected,
-                  ]}
-                  onPress={() => {
-                    setPaymentMethod(method.value);
-                    setShowPaymentPicker(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      paymentMethod === method.value &&
-                        styles.optionSelectedText,
-                    ]}
-                  >
-                    {method.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
+        <CustomPicker
+          label='Forma de Pagamento'
+          selectedValue={paymentMethod}
+          onValueChange={value => setPaymentMethod(value as string)}
+          options={PAYMENT_METHODS}
+          enabled={!isLoading}
+        />
 
         {paymentMethod === 'installment' && (
           <View style={styles.inputGroup}>
@@ -752,14 +648,6 @@ export default function CreateSale() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
-  },
   headerSection: {
     alignItems: 'center',
     marginBottom: 32,
@@ -841,9 +729,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1e293b',
   },
-  selectorPlaceholder: {
-    color: '#94a3b8',
-  },
   pickerContainer: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
@@ -865,9 +750,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
-  optionSelected: {
-    backgroundColor: '#fff5f0',
-  },
   optionDisabled: {
     opacity: 0.5,
   },
@@ -875,17 +757,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1e293b',
   },
-  optionSelectedText: {
-    color: '#FF6B35',
-    fontWeight: '600',
-  },
   optionDisabledText: {
     color: '#94a3b8',
-  },
-  optionSubtext: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 2,
   },
   productOption: {
     flexDirection: 'row',
@@ -1052,21 +925,6 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 'auto',
     paddingTop: 20,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#64748b',
   },
   saveButton: {
     flex: 2,
