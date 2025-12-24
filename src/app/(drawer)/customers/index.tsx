@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Alert,
   RefreshControl,
-  TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -218,41 +217,6 @@ export default function CustomersList() {
     <View style={styles.emptyState}>
       <Ionicons name='people-outline' size={64} color='#cbd5e1' />
       <Text style={styles.emptyTitle}>Nenhum cliente encontrado</Text>
-      <Text style={styles.emptySubtitle}>
-        {searchText
-          ? 'Tente ajustar os termos de busca ou limpar o filtro'
-          : 'Comece cadastrando seu primeiro cliente'}
-      </Text>
-      {!searchText && (
-        <TouchableOpacity
-          style={styles.createFirstButton}
-          onPress={() => router.push('/customers/create')}
-        >
-          <Ionicons
-            name='person-add-outline'
-            size={16}
-            color='#ffffff'
-            style={styles.buttonIcon}
-          />
-          <Text style={styles.createFirstButtonText}>
-            Cadastrar primeiro cliente
-          </Text>
-        </TouchableOpacity>
-      )}
-      {searchText && (
-        <TouchableOpacity
-          style={styles.clearSearchButton}
-          onPress={() => handleSearch('')}
-        >
-          <Ionicons
-            name='refresh-outline'
-            size={16}
-            color='#FF6B35'
-            style={styles.buttonIcon}
-          />
-          <Text style={styles.clearSearchButtonText}>Limpar busca</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 
@@ -261,61 +225,45 @@ export default function CustomersList() {
   return (
     <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
       <View style={styles.container}>
-        <View style={styles.container}>
-          <SearchBar
-            value={searchText}
-            onChangeText={handleSearch}
-            placeholder='Buscar clientes...'
-          />
+        <SearchBar
+          value={searchText}
+          onChangeText={handleSearch}
+          placeholder='Buscar clientes...'
+        />
 
-          <View style={styles.resultsContainer}>
-            <Text style={styles.resultsText}>
-              {totalCount} cliente{totalCount !== 1 ? 's' : ''} encontrado
-              {totalCount !== 1 ? 's' : ''}
-              {searchText && (
-                <Text style={styles.searchIndicator}> para "{searchText}"</Text>
-              )}
+        <View style={styles.resultsContainer}>
+          <Text style={styles.resultsText}>
+            {totalCount} cliente{totalCount !== 1 ? 's' : ''} encontrado
+            {totalCount !== 1 ? 's' : ''}
+          </Text>
+          {totalPages > 1 && (
+            <Text style={styles.paginationText}>
+              Página {currentPage} de {totalPages}
             </Text>
-            {totalPages > 1 && (
-              <Text style={styles.paginationText}>
-                Página {currentPage} de {totalPages}
-              </Text>
-            )}
-          </View>
-
-          <FlatList
-            data={customers}
-            renderItem={renderCustomer}
-            keyExtractor={item => item.id.toString()}
-            contentContainerStyle={[
-              styles.listContainer,
-              customers.length === 0 && styles.emptyListContainer,
-            ]}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={isLoading}
-                onRefresh={handleRefresh}
-                colors={['#FF6B35']}
-                tintColor='#FF6B35'
-              />
-            }
-            ListEmptyComponent={!isLoading ? renderEmpty : null}
-            ListFooterComponent={renderFooter}
-            onEndReached={loadMore}
-            onEndReachedThreshold={0.1}
-          />
-          {isLoading && customers.length === 0 && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size='large' color='#FF6B35' />
-              <Text style={styles.loadingOverlayText}>
-                Carregando clientes...
-              </Text>
-            </View>
           )}
-
-          <FloatingActionButton route='/customers/create' />
         </View>
+
+        <FlatList
+          data={customers}
+          renderItem={renderCustomer}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={handleRefresh}
+              colors={['#FF6B35']}
+              tintColor='#FF6B35'
+            />
+          }
+          ListEmptyComponent={!isLoading ? renderEmpty : null}
+          ListFooterComponent={renderFooter}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.1}
+        />
+
+        <FloatingActionButton route='/customers/create' />
       </View>
     </SafeAreaView>
   );
@@ -326,77 +274,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-  header: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  headerTitleContainer: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  searchInputContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1e293b',
-  },
-  clearButton: {
-    padding: 4,
-  },
   resultsContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff',
+    paddingBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
   },
   resultsText: {
     fontSize: 14,
     color: '#64748b',
     fontWeight: '500',
-    flex: 1,
-  },
-  searchIndicator: {
-    fontWeight: '400',
-    fontStyle: 'italic',
   },
   paginationText: {
     fontSize: 12,
@@ -406,9 +294,6 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
-  },
-  emptyListContainer: {
-    flexGrow: 1,
   },
   loadingFooter: {
     flexDirection: 'row',
@@ -421,28 +306,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
   },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(248, 250, 252, 0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-  },
-  loadingOverlayText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#64748b',
-    fontWeight: '500',
-  },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 80,
-    paddingHorizontal: 20,
   },
   emptyTitle: {
     fontSize: 20,
@@ -450,68 +317,5 @@ const styles = StyleSheet.create({
     color: '#475569',
     marginTop: 16,
     marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  createFirstButton: {
-    backgroundColor: '#FF6B35',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    shadowColor: '#FF6B35',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  createFirstButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  clearSearchButton: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#FF6B35',
-    marginTop: 12,
-  },
-  clearSearchButtonText: {
-    color: '#FF6B35',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  buttonIcon: {
-    marginRight: 4,
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FF6B35',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
   },
 });
