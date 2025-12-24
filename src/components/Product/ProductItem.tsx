@@ -96,7 +96,19 @@ export default function ProductItem({ product, onEdit }: ProductItemProps) {
             Estoque: {product.current_stock}
             {product.minimum_stock > 0 && ` (Mín: ${product.minimum_stock})`}
           </Text>
-          {isLowStock && <Ionicons name='warning' size={16} color='#ef4444' />}
+          {isLowStock && (
+            <View
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <Ionicons name='warning' size={16} color='#ef4444' />
+              <Text style={styles.lowStockBannerText}>Estoque baixo!</Text>
+            </View>
+          )}
         </View>
 
         {product.supplier && (
@@ -114,13 +126,6 @@ export default function ProductItem({ product, onEdit }: ProductItemProps) {
           <Text style={styles.description} numberOfLines={2}>
             {product.description}
           </Text>
-        </View>
-      )}
-
-      {isLowStock && isActive && (
-        <View style={styles.lowStockBanner}>
-          <Ionicons name='warning' size={16} color='#dc2626' />
-          <Text style={styles.lowStockBannerText}>Estoque baixo!</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -205,13 +210,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   detailText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#475569',
-    flex: 1,
   },
   lowStockText: {
     color: '#ef4444',
-    fontWeight: '500',
+    fontWeight: '700',
   },
   descriptionContainer: {
     marginBottom: 12,

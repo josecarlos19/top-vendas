@@ -518,13 +518,10 @@ const styles = StyleSheet.create({
   },
   resultsContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff',
+
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
   },
   resultsText: {
     fontSize: 14,
@@ -543,6 +540,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 20,
+    paddingTop: 15,
     paddingBottom: 100,
   },
   emptyListContainer: {
