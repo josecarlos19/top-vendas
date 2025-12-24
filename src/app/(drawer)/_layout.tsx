@@ -1,13 +1,56 @@
 import { Drawer } from 'expo-router/drawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, usePathname } from 'expo-router';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function CustomDrawerContent(props: any) {
   const pathname = usePathname();
+  const [userName, setUserName] = useState('Usuário');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [tempName, setTempName] = useState('');
+
+  const saveUserName = async () => {
+    if (!tempName.trim()) {
+      Alert.alert('Atenção', 'Por favor, insira um nome válido');
+      return;
+    }
+
+    try {
+      await AsyncStorage.setItem('userName', tempName.trim());
+      setUserName(tempName.trim());
+      setModalVisible(false);
+      setTempName('');
+    } catch (error) {
+      console.error('Erro ao salvar nome:', error);
+      Alert.alert('Erro', 'Não foi possível salvar o nome');
+    }
+  };
+
+  const openEditModal = () => {
+    setTempName(userName);
+    setModalVisible(true);
+  };
+
+  const getInitials = (name: string) => {
+    const words = name.trim().split(' ');
+    if (words.length >= 2) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
 
   const menuItems = [
     {
@@ -48,14 +91,20 @@ function CustomDrawerContent(props: any) {
   return (
     <SafeAreaView edges={['bottom']} style={styles.drawerContainer}>
       <View style={styles.drawerHeader}>
-        <View style={styles.profileSection}>
+        <TouchableOpacity
+          style={styles.profileSection}
+          onPress={openEditModal}
+          activeOpacity={0.7}
+        >
           <View style={styles.profileIcon}>
-            <Text style={styles.profileText}>JC</Text>
+            <Text style={styles.profileText}>{getInitials(userName)}</Text>
           </View>
-          <View>
-            <Text style={styles.profileName}>José Carlos</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.profileName}>{userName}</Text>
+            <Text style={styles.editHint}>Toque para editar</Text>
           </View>
-        </View>
+          <Ionicons name='pencil-outline' size={20} color='#94a3b8' />
+        </TouchableOpacity>
       </View>
 
       <DrawerContentScrollView
@@ -97,6 +146,46 @@ function CustomDrawerContent(props: any) {
       <View style={styles.drawerFooter}>
         <Text style={styles.footerText}>Top Vendas App</Text>
       </View>
+
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType='fade'
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Editar Nome</Text>
+
+            <TextInput
+              style={styles.input}
+              value={tempName}
+              onChangeText={setTempName}
+              placeholder='Digite seu nome'
+              autoFocus
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setModalVisible(false);
+                  setTempName('');
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={saveUserName}
+              >
+                <Text style={styles.saveButtonText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -187,6 +276,64 @@ export default function DrawerLayout() {
 }
 
 const styles = StyleSheet.create({
+  editHint: {
+    color: '#94a3b8',
+    fontSize: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 24,
+    width: '85%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#1e293b',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#f1f5f9',
+  },
+  cancelButtonText: {
+    color: '#64748b',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  saveButton: {
+    backgroundColor: '#667eea',
+  },
+  saveButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   drawerContainer: {
     flex: 1,
     backgroundColor: '#ffffff',
