@@ -141,7 +141,7 @@ export default function CustomersList() {
     loadCustomers(1, false);
   };
 
-  const handleEdit = (customer: Customer) => {
+  const handleRedirect = (customer: Customer) => {
     router.push(`/customers/${customer.id}/edit`);
   };
 
@@ -199,7 +199,7 @@ export default function CustomersList() {
   );
 
   const renderCustomer = ({ item }: { item: Customer }) => (
-    <CustomerItem customer={item} onEdit={handleEdit} onDelete={handleDelete} />
+    <CustomerItem customer={item} onClick={handleRedirect} />
   );
 
   const renderFooter = () => {
