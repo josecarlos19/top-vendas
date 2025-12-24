@@ -44,14 +44,6 @@ function CustomDrawerContent(props: any) {
     setModalVisible(true);
   };
 
-  const getInitials = (name: string) => {
-    const words = name.trim().split(' ');
-    if (words.length >= 2) {
-      return (words[0][0] + words[1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-
   const menuItems = [
     {
       name: 'Home',
@@ -97,7 +89,7 @@ function CustomDrawerContent(props: any) {
           activeOpacity={0.7}
         >
           <View style={styles.profileIcon}>
-            <Text style={styles.profileText}>{getInitials(userName)}</Text>
+            <Ionicons name='person' size={20} color='#ffffffff' />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.profileName}>{userName}</Text>
