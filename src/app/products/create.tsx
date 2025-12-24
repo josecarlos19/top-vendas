@@ -17,6 +17,7 @@ import { useCategoryDatabase } from '@/database/models/Category';
 import { Input } from '@/components/Input';
 import formatCurrency from '@/components/utils/formatCurrency';
 import WorkArea from '@/components/WorkArea';
+import CustomPicker from '@/components/CustomPicker';
 
 interface Category {
   id: number;
@@ -264,65 +265,17 @@ export default function CreateProduct() {
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Categoria</Text>
-          <TouchableOpacity
-            style={styles.categorySelector}
-            onPress={() => setShowCategoryPicker(!showCategoryPicker)}
-            disabled={isLoading}
-          >
-            <Text
-              style={[
-                styles.categorySelectorText,
-                !categoryId && styles.categorySelectorPlaceholder,
-              ]}
-            >
-              {getSelectedCategoryName()}
-            </Text>
-            <Ionicons
-              name={showCategoryPicker ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color='#64748b'
-            />
-          </TouchableOpacity>
-
-          {showCategoryPicker && (
-            <View style={styles.categoryList}>
-              <TouchableOpacity
-                style={styles.categoryOption}
-                onPress={() => {
-                  setCategoryId(undefined);
-                  setShowCategoryPicker(false);
-                }}
-              >
-                <Text style={styles.categoryOptionText}>Nenhuma categoria</Text>
-              </TouchableOpacity>
-              {categories.map(category => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.categoryOption,
-                    categoryId === category.id && styles.categoryOptionSelected,
-                  ]}
-                  onPress={() => {
-                    setCategoryId(category.id);
-                    setShowCategoryPicker(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.categoryOptionText,
-                      categoryId === category.id &&
-                        styles.categoryOptionSelectedText,
-                    ]}
-                  >
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
+        <CustomPicker
+          label='Categoria'
+          selectedValue={categoryId}
+          onValueChange={value => setCategoryId(value as number)}
+          options={categories.map(category => ({
+            label: category.name,
+            value: category.id,
+          }))}
+          enabled={!isLoading}
+          placeholder='Selecionar categoria'
+        />
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Descrição</Text>
