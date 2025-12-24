@@ -22,6 +22,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useInstallmentDatabase } from '@/database/models/Installment';
 import WorkArea from '@/components/WorkArea';
 import CustomPicker from '@/components/CustomPicker';
+import { formatDate } from '@/database/utils/formatDate';
 
 type statusTypes = 'completed' | 'pending';
 
@@ -545,10 +546,18 @@ export default function EditSale() {
                       {inst.number}ª parcela —{' '}
                       {formatCurrency(inst.amount.toString())}
                     </Text>
-                    <Text style={styles.installmentDate}>
-                      Venc:{' '}
-                      {new Date(inst.due_date).toLocaleDateString('pt-BR')}
-                    </Text>
+                    {inst.status === 'completed' ? (
+                      <Text style={styles.installmentDate}>
+                        Data Pagamento:{' '}
+                        {inst.payment_date
+                          ? formatDate(inst.payment_date)
+                          : '-'}
+                      </Text>
+                    ) : (
+                      <Text style={styles.installmentDate}>
+                        Vencimento: {formatDate(inst.due_date)}
+                      </Text>
+                    )}
                   </View>
                   <Text
                     style={[

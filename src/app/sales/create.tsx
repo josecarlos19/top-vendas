@@ -365,17 +365,7 @@ export default function CreateSale() {
               }
             }}
             keyboardType='numeric'
-            style={[
-              styles.quantityText,
-              {
-                minWidth: 40,
-                textAlign: 'center',
-                paddingVertical: 0,
-                paddingHorizontal: 0,
-                backgroundColor: 'transparent',
-                borderWidth: 0,
-              },
-            ]}
+            style={[styles.quantityText]}
             editable={true}
           />
           <TouchableOpacity
@@ -841,8 +831,8 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   quantityButton: {
-    width: 32,
-    height: 32,
+    width: 35,
+    height: 42,
     borderRadius: 6,
     backgroundColor: '#ffffff',
     alignItems: 'center',
@@ -851,12 +841,20 @@ const styles = StyleSheet.create({
     borderColor: '#c2c7cdff',
   },
   quantityText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1e293b',
     marginHorizontal: 16,
-    minWidth: 20,
+    minWidth: 42,
+    height: 42,
     textAlign: 'center',
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 6,
+    padding: 10,
   },
   priceContainer: {
     alignItems: 'flex-end',
