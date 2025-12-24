@@ -67,6 +67,7 @@ export default function EditProduct() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [isActive, setIsActive] = useState(true);
 
   const productDatabase = useProductDatabase();
   const categoryDatabase = useCategoryDatabase();
@@ -102,6 +103,7 @@ export default function EditProduct() {
         return;
       }
 
+      setIsActive(foundProduct.active === 1);
       setProduct(foundProduct);
       setName(foundProduct.name || '');
       setBarcode(foundProduct.barcode || '');
@@ -255,20 +257,39 @@ export default function EditProduct() {
   const handleToggleActive = async () => {
     if (!product) return;
 
-    try {
-      await productDatabase.toggleActive(product.id);
-      const updatedProduct = {
-        ...product,
-        active: product.active === 1 ? 0 : 1,
-      };
-      setProduct(updatedProduct);
+    const nextStatus = product.active === 1 ? 'desativar' : 'ativar';
+    Alert.alert(
+      'Confirmação',
+      `Tem certeza que deseja ${nextStatus} este produto?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Confirmar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await productDatabase.toggleActive(product.id);
+              const updatedProduct = {
+                ...product,
+                active: product.active === 1 ? 0 : 1,
+              };
+              setProduct(updatedProduct);
 
-      const status = updatedProduct.active === 1 ? 'ativado' : 'desativado';
-      Alert.alert('Sucesso', `Produto ${status} com sucesso!`);
-    } catch (error) {
-      console.error('Error toggling product status:', error);
-      Alert.alert('Erro', 'Falha ao alterar status do produto');
-    }
+              const status =
+                updatedProduct.active === 1 ? 'ativado' : 'desativado';
+              Alert.alert('Sucesso', `Produto ${status} com sucesso!`);
+              router.back();
+            } catch (error) {
+              console.error('Error toggling product status:', error);
+              Alert.alert('Erro', 'Falha ao alterar status do produto');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const getSelectedCategoryName = () => {
@@ -596,6 +617,32 @@ export default function EditProduct() {
 }
 
 const styles = StyleSheet.create({
+  activateButton: {
+    backgroundColor: '#f0fdf4',
+  },
+  deactivateButton: {
+    backgroundColor: '#fffbeb',
+  },
+  toggleButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  activateButtonText: {
+    color: '#22c55e',
+  },
+  deactivateButtonText: {
+    color: '#f59e0b',
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 4,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
