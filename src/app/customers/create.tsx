@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,25 +8,26 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
-} from "react-native";
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useCustomerDatabase } from "@/database/models/Customer";
-import { Input } from "@/components/Input";
+import { useCustomerDatabase } from '@/database/models/Customer';
+import { Input } from '@/components/Input';
+import WorkArea from '@/components/WorkArea';
 
 export default function CreateCustomer() {
-  const [name, setName] = useState("");
-  const [document, setDocument] = useState("");
-  const [documentType, setDocumentType] = useState("CPF");
-  const [phone, setPhone] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [notes, setNotes] = useState("");
+  const [name, setName] = useState('');
+  const [document, setDocument] = useState('');
+  const [documentType, setDocumentType] = useState('CPF');
+  const [phone, setPhone] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [email, setEmail] = useState('');
+  const [address, setAddress] = useState('');
+  const [neighborhood, setNeighborhood] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
 
@@ -35,19 +36,33 @@ export default function CreateCustomer() {
   const formatDocument = (text: string, type: string) => {
     const numbers = text.replace(/\D/g, '');
 
-    if (type === "CPF") {
+    if (type === 'CPF') {
       const limitedNumbers = numbers.slice(0, 11);
       if (limitedNumbers.length <= 3) return limitedNumbers;
-      if (limitedNumbers.length <= 6) return limitedNumbers.replace(/(\d{3})(\d+)/, '$1.$2');
-      if (limitedNumbers.length <= 9) return limitedNumbers.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
-      return limitedNumbers.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, '$1.$2.$3-$4');
+      if (limitedNumbers.length <= 6)
+        return limitedNumbers.replace(/(\d{3})(\d+)/, '$1.$2');
+      if (limitedNumbers.length <= 9)
+        return limitedNumbers.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+      return limitedNumbers.replace(
+        /(\d{3})(\d{3})(\d{3})(\d+)/,
+        '$1.$2.$3-$4'
+      );
     } else {
       const limitedNumbers = numbers.slice(0, 14);
       if (limitedNumbers.length <= 2) return limitedNumbers;
-      if (limitedNumbers.length <= 5) return limitedNumbers.replace(/(\d{2})(\d+)/, '$1.$2');
-      if (limitedNumbers.length <= 8) return limitedNumbers.replace(/(\d{2})(\d{3})(\d+)/, '$1.$2.$3');
-      if (limitedNumbers.length <= 12) return limitedNumbers.replace(/(\d{2})(\d{3})(\d{3})(\d+)/, '$1.$2.$3/$4');
-      return limitedNumbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d+)/, '$1.$2.$3/$4-$5');
+      if (limitedNumbers.length <= 5)
+        return limitedNumbers.replace(/(\d{2})(\d+)/, '$1.$2');
+      if (limitedNumbers.length <= 8)
+        return limitedNumbers.replace(/(\d{2})(\d{3})(\d+)/, '$1.$2.$3');
+      if (limitedNumbers.length <= 12)
+        return limitedNumbers.replace(
+          /(\d{2})(\d{3})(\d{3})(\d+)/,
+          '$1.$2.$3/$4'
+        );
+      return limitedNumbers.replace(
+        /(\d{2})(\d{3})(\d{3})(\d{4})(\d+)/,
+        '$1.$2.$3/$4-$5'
+      );
     }
   };
 
@@ -56,8 +71,10 @@ export default function CreateCustomer() {
     const limitedNumbers = numbers.slice(0, 11);
 
     if (limitedNumbers.length <= 2) return limitedNumbers;
-    if (limitedNumbers.length <= 6) return limitedNumbers.replace(/(\d{2})(\d+)/, '($1) $2');
-    if (limitedNumbers.length <= 10) return limitedNumbers.replace(/(\d{2})(\d{4})(\d+)/, '($1) $2-$3');
+    if (limitedNumbers.length <= 6)
+      return limitedNumbers.replace(/(\d{2})(\d+)/, '($1) $2');
+    if (limitedNumbers.length <= 10)
+      return limitedNumbers.replace(/(\d{2})(\d{4})(\d+)/, '($1) $2-$3');
     return limitedNumbers.replace(/(\d{2})(\d{5})(\d+)/, '($1) $2-$3');
   };
 
@@ -78,7 +95,7 @@ export default function CreateCustomer() {
   const validateDocument = (doc: string, type: string) => {
     if (!doc.trim()) return true;
     const numbers = doc.replace(/\D/g, '');
-    if (type === "CPF") {
+    if (type === 'CPF') {
       return numbers.length === 11;
     } else {
       return numbers.length === 14;
@@ -104,27 +121,35 @@ export default function CreateCustomer() {
 
     setIsLoadingCep(true);
     try {
-      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const response = await fetch(
+        `https://viacep.com.br/ws/${cleanCep}/json/`
+      );
       const data = await response.json();
 
       if (data.erro) {
-        Alert.alert("CEP não encontrado", "O CEP informado não foi encontrado.");
+        Alert.alert(
+          'CEP não encontrado',
+          'O CEP informado não foi encontrado.'
+        );
         return;
       }
 
-      setAddress(data.logradouro || "");
-      setNeighborhood(data.bairro || "");
-      setCity(data.localidade || "");
-      setState(data.uf || "");
+      setAddress(data.logradouro || '');
+      setNeighborhood(data.bairro || '');
+      setCity(data.localidade || '');
+      setState(data.uf || '');
 
       Alert.alert(
-        "Endereço encontrado!",
-        `${data.logradouro ? data.logradouro + ", " : ""}${data.bairro ? data.bairro + ", " : ""}${data.localidade || ""} - ${data.uf || ""}`,
-        [{ text: "OK" }]
+        'Endereço encontrado!',
+        `${data.logradouro ? data.logradouro + ', ' : ''}${data.bairro ? data.bairro + ', ' : ''}${data.localidade || ''} - ${data.uf || ''}`,
+        [{ text: 'OK' }]
       );
     } catch (error) {
-      console.error("Erro ao buscar CEP:", error);
-      Alert.alert("Erro", "Não foi possível buscar o endereço. Verifique sua conexão.");
+      console.error('Erro ao buscar CEP:', error);
+      Alert.alert(
+        'Erro',
+        'Não foi possível buscar o endereço. Verifique sua conexão.'
+      );
     } finally {
       setIsLoadingCep(false);
     }
@@ -142,36 +167,48 @@ export default function CreateCustomer() {
 
   async function handleStore() {
     if (!name.trim()) {
-      Alert.alert("Erro", "Por favor, preencha o nome do cliente.");
+      Alert.alert('Erro', 'Por favor, preencha o nome do cliente.');
       return;
     }
 
     if (document.trim() && !validateDocument(document, documentType)) {
-      const expectedLength = documentType === "CPF" ? "11" : "14";
-      Alert.alert("Erro", `${documentType} deve ter ${expectedLength} dígitos.`);
+      const expectedLength = documentType === 'CPF' ? '11' : '14';
+      Alert.alert(
+        'Erro',
+        `${documentType} deve ter ${expectedLength} dígitos.`
+      );
       return;
     }
 
     if (email.trim() && !validateEmail(email)) {
-      Alert.alert("Erro", "Por favor, insira um email válido.");
+      Alert.alert('Erro', 'Por favor, insira um email válido.');
       return;
     }
 
     setIsLoading(true);
     try {
       if (email.trim()) {
-        const existingByEmail = await customerDatabase.findByEmail(email.trim());
+        const existingByEmail = await customerDatabase.findByEmail(
+          email.trim()
+        );
         if (existingByEmail) {
-          Alert.alert("Erro", "Já existe um cliente cadastrado com este email.");
+          Alert.alert(
+            'Erro',
+            'Já existe um cliente cadastrado com este email.'
+          );
           return;
         }
       }
 
       if (document.trim()) {
         const cleanDocument = getCleanDocument(document);
-        const existingByDocument = await customerDatabase.findByDocument(cleanDocument);
+        const existingByDocument =
+          await customerDatabase.findByDocument(cleanDocument);
         if (existingByDocument) {
-          Alert.alert("Erro", "Já existe um cliente cadastrado com este documento.");
+          Alert.alert(
+            'Erro',
+            'Já existe um cliente cadastrado com este documento.'
+          );
           return;
         }
       }
@@ -191,39 +228,47 @@ export default function CreateCustomer() {
         notes: notes.trim() || undefined,
       });
 
-      Alert.alert(
-        "Sucesso",
-        "Cliente criado com sucesso!",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              router.back();
-            },
+      Alert.alert('Sucesso', 'Cliente criado com sucesso!', [
+        {
+          text: 'OK',
+          onPress: () => {
+            router.back();
           },
-        ]
-      );
+        },
+      ]);
     } catch (error) {
-      console.error("Error creating customer:", error);
-      Alert.alert("Erro", "Falha ao criar cliente. Tente novamente.");
+      console.error('Error creating customer:', error);
+      Alert.alert('Erro', 'Falha ao criar cliente. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
   }
 
   const handleCancel = () => {
-    const hasChanges = name.trim() || document.trim() || email.trim() ||
-      phone.trim() || mobile.trim() || address.trim() ||
-      neighborhood.trim() || city.trim() || state.trim() ||
-      zipCode.trim() || notes.trim();
+    const hasChanges =
+      name.trim() ||
+      document.trim() ||
+      email.trim() ||
+      phone.trim() ||
+      mobile.trim() ||
+      address.trim() ||
+      neighborhood.trim() ||
+      city.trim() ||
+      state.trim() ||
+      zipCode.trim() ||
+      notes.trim();
 
     if (hasChanges) {
       Alert.alert(
-        "Descartar alterações?",
-        "Você tem alterações não salvas. Deseja realmente sair?",
+        'Descartar alterações?',
+        'Você tem alterações não salvas. Deseja realmente sair?',
         [
-          { text: "Continuar editando", style: "cancel" },
-          { text: "Descartar", style: "destructive", onPress: () => router.back() },
+          { text: 'Continuar editando', style: 'cancel' },
+          {
+            text: 'Descartar',
+            style: 'destructive',
+            onPress: () => router.back(),
+          },
         ]
       );
     } else {
@@ -231,267 +276,274 @@ export default function CreateCustomer() {
     }
   };
 
-  const isFormValid = name.trim() &&
+  const isFormValid =
+    name.trim() &&
     validateDocument(document, documentType) &&
     validateEmail(email);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.headerSection}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="person-add-outline" size={48} color="#FF6B35" />
-          </View>
-          <Text style={styles.title}>Novo Cliente</Text>
-          <Text style={styles.subtitle}>
-            Cadastre um novo cliente no sistema
-          </Text>
+    <WorkArea>
+      <View style={styles.headerSection}>
+        <View style={styles.iconContainer}>
+          <Ionicons name='person-add-outline' size={48} color='#FF6B35' />
+        </View>
+        <Text style={styles.title}>Novo Cliente</Text>
+        <Text style={styles.subtitle}>Cadastre um novo cliente no sistema</Text>
+      </View>
+
+      <View>
+        <View style={styles.sectionHeader}>
+          <Ionicons name='person-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Dados Básicos</Text>
         </View>
 
-        <View style={styles.formSection}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="person-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Dados Básicos</Text>
-          </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Nome Completo *</Text>
+          <Input
+            placeholder='Nome completo do cliente'
+            value={name}
+            onChangeText={setName}
+            editable={!isLoading}
+            style={styles.input}
+          />
+        </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome Completo *</Text>
-            <Input
-              placeholder="Nome completo do cliente"
-              value={name}
-              onChangeText={setName}
-              editable={!isLoading}
-              style={styles.input}
-            />
-          </View>
-
-          <View style={styles.row}>
-            <View style={styles.pickerGroup}>
-              <Text style={styles.label}>Tipo de Documento</Text>
-              <View style={styles.documentTypeContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.documentTypeButton,
-                    documentType === "CPF" && styles.documentTypeButtonActive
-                  ]}
-                  onPress={() => setDocumentType("CPF")}
-                  disabled={isLoading}
-                >
-                  <Text style={[
-                    styles.documentTypeText,
-                    documentType === "CPF" && styles.documentTypeTextActive
-                  ]}>
-                    CPF
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.documentTypeButton,
-                    documentType === "CNPJ" && styles.documentTypeButtonActive
-                  ]}
-                  onPress={() => setDocumentType("CNPJ")}
-                  disabled={isLoading}
-                >
-                  <Text style={[
-                    styles.documentTypeText,
-                    documentType === "CNPJ" && styles.documentTypeTextActive
-                  ]}>
-                    CNPJ
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>{documentType}</Text>
-              <Input
-                placeholder={documentType === "CPF" ? "000.000.000-00" : "00.000.000/0000-00"}
-                value={document}
-                onChangeText={(text) => setDocument(formatDocument(text, documentType))}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <Input
-              placeholder="email@exemplo.com (opcional)"
-              value={email}
-              onChangeText={setEmail}
-              editable={!isLoading}
-              style={styles.input}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.sectionHeader}>
-            <Ionicons name="call-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Contato</Text>
-          </View>
-
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Telefone</Text>
-              <Input
-                placeholder="(11) 1234-5678"
-                value={phone}
-                onChangeText={(text) => setPhone(formatPhone(text))}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType="phone-pad"
-              />
-            </View>
-
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Celular</Text>
-              <Input
-                placeholder="(11) 91234-5678"
-                value={mobile}
-                onChangeText={(text) => setMobile(formatPhone(text))}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType="phone-pad"
-              />
-            </View>
-          </View>
-
-          <View style={styles.sectionHeader}>
-            <Ionicons name="location-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Endereço</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>CEP</Text>
-            <View style={styles.cepContainer}>
-              <Input
-                placeholder="00000-000"
-                value={zipCode}
-                onChangeText={handleZipCodeChange}
-                editable={!isLoading && !isLoadingCep}
-                style={[styles.input, styles.cepInput]}
-                keyboardType="numeric"
-              />
-              {isLoadingCep && (
-                <View style={styles.cepLoading}>
-                  <Ionicons name="hourglass-outline" size={16} color="#FF6B35" />
-                </View>
-              )}
+        <View style={styles.row}>
+          <View style={styles.pickerGroup}>
+            <Text style={styles.label}>Tipo de Documento</Text>
+            <View style={styles.documentTypeContainer}>
               <TouchableOpacity
-                style={styles.cepButton}
-                onPress={() => zipCode.replace(/\D/g, '').length === 8 && fetchAddressFromCep(zipCode)}
-                disabled={isLoading || isLoadingCep || zipCode.replace(/\D/g, '').length !== 8}
+                style={[
+                  styles.documentTypeButton,
+                  documentType === 'CPF' && styles.documentTypeButtonActive,
+                ]}
+                onPress={() => setDocumentType('CPF')}
+                disabled={isLoading}
               >
-                <Ionicons name="search-outline" size={16} color={zipCode.replace(/\D/g, '').length === 8 ? "#FF6B35" : "#94a3b8"} />
+                <Text
+                  style={[
+                    styles.documentTypeText,
+                    documentType === 'CPF' && styles.documentTypeTextActive,
+                  ]}
+                >
+                  CPF
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.documentTypeButton,
+                  documentType === 'CNPJ' && styles.documentTypeButtonActive,
+                ]}
+                onPress={() => setDocumentType('CNPJ')}
+                disabled={isLoading}
+              >
+                <Text
+                  style={[
+                    styles.documentTypeText,
+                    documentType === 'CNPJ' && styles.documentTypeTextActive,
+                  ]}
+                >
+                  CNPJ
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Endereço</Text>
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>{documentType}</Text>
             <Input
-              placeholder="Rua, número, complemento"
-              value={address}
-              onChangeText={setAddress}
+              placeholder={
+                documentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'
+              }
+              value={document}
+              onChangeText={text =>
+                setDocument(formatDocument(text, documentType))
+              }
               editable={!isLoading}
               style={styles.input}
-            />
-          </View>
-
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Bairro</Text>
-              <Input
-                placeholder="Bairro"
-                value={neighborhood}
-                onChangeText={setNeighborhood}
-                editable={!isLoading}
-                style={styles.input}
-              />
-            </View>
-
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Cidade</Text>
-              <Input
-                placeholder="Cidade"
-                value={city}
-                onChangeText={setCity}
-                editable={!isLoading}
-                style={styles.input}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Estado</Text>
-            <Input
-              placeholder="Estado"
-              value={state}
-              onChangeText={setState}
-              editable={!isLoading}
-              style={styles.input}
-            />
-          </View>
-
-          <View style={styles.sectionHeader}>
-            <Ionicons name="document-text-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Observações</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Observações</Text>
-            <Input
-              placeholder="Informações adicionais sobre o cliente (opcional)"
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={4}
-              editable={!isLoading}
-              style={[styles.input, styles.textArea]}
+              keyboardType='numeric'
             />
           </View>
         </View>
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={handleCancel}
-            disabled={isLoading}
-          >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
-          </TouchableOpacity>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Email</Text>
+          <Input
+            placeholder='email@exemplo.com (opcional)'
+            value={email}
+            onChangeText={setEmail}
+            editable={!isLoading}
+            style={styles.input}
+            keyboardType='email-address'
+            autoCapitalize='none'
+          />
+        </View>
 
-          <TouchableOpacity
-            style={[styles.saveButton, (!isFormValid || isLoading) && styles.saveButtonDisabled]}
-            onPress={handleStore}
-            disabled={!isFormValid || isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Ionicons name="hourglass-outline" size={16} color="#ffffff" />
-                <Text style={styles.saveButtonText}>Salvando...</Text>
-              </>
-            ) : (
-              <>
-                <Ionicons name="checkmark-outline" size={16} color="#ffffff" />
-                <Text style={styles.saveButtonText}>Salvar Cliente</Text>
-              </>
+        <View style={styles.sectionHeader}>
+          <Ionicons name='call-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Contato</Text>
+        </View>
+
+        <View style={styles.row}>
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Telefone</Text>
+            <Input
+              placeholder='(11) 1234-5678'
+              value={phone}
+              onChangeText={text => setPhone(formatPhone(text))}
+              editable={!isLoading}
+              style={styles.input}
+              keyboardType='phone-pad'
+            />
+          </View>
+
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Celular</Text>
+            <Input
+              placeholder='(11) 91234-5678'
+              value={mobile}
+              onChangeText={text => setMobile(formatPhone(text))}
+              editable={!isLoading}
+              style={styles.input}
+              keyboardType='phone-pad'
+            />
+          </View>
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Ionicons name='location-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Endereço</Text>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>CEP</Text>
+          <View style={styles.cepContainer}>
+            <Input
+              placeholder='00000-000'
+              value={zipCode}
+              onChangeText={handleZipCodeChange}
+              editable={!isLoading && !isLoadingCep}
+              style={[styles.input, styles.cepInput]}
+              keyboardType='numeric'
+            />
+            {isLoadingCep && (
+              <View style={styles.cepLoading}>
+                <Ionicons name='hourglass-outline' size={16} color='#FF6B35' />
+              </View>
             )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cepButton}
+              onPress={() =>
+                zipCode.replace(/\D/g, '').length === 8 &&
+                fetchAddressFromCep(zipCode)
+              }
+              disabled={
+                isLoading ||
+                isLoadingCep ||
+                zipCode.replace(/\D/g, '').length !== 8
+              }
+            >
+              <Ionicons
+                name='search-outline'
+                size={16}
+                color={
+                  zipCode.replace(/\D/g, '').length === 8
+                    ? '#FF6B35'
+                    : '#94a3b8'
+                }
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Endereço</Text>
+          <Input
+            placeholder='Rua, número, complemento'
+            value={address}
+            onChangeText={setAddress}
+            editable={!isLoading}
+            style={styles.input}
+          />
+        </View>
+
+        <View style={styles.row}>
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Bairro</Text>
+            <Input
+              placeholder='Bairro'
+              value={neighborhood}
+              onChangeText={setNeighborhood}
+              editable={!isLoading}
+              style={styles.input}
+            />
+          </View>
+
+          <View style={styles.inputHalf}>
+            <Text style={styles.label}>Cidade</Text>
+            <Input
+              placeholder='Cidade'
+              value={city}
+              onChangeText={setCity}
+              editable={!isLoading}
+              style={styles.input}
+            />
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Estado</Text>
+          <Input
+            placeholder='Estado'
+            value={state}
+            onChangeText={setState}
+            editable={!isLoading}
+            style={styles.input}
+          />
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Ionicons name='document-text-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Observações</Text>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Observações</Text>
+          <Input
+            placeholder='Informações adicionais sobre o cliente (opcional)'
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            numberOfLines={4}
+            editable={!isLoading}
+            style={[styles.input, styles.textArea]}
+          />
+        </View>
+      </View>
+
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[
+            styles.saveButton,
+            (!isFormValid || isLoading) && styles.saveButtonDisabled,
+          ]}
+          onPress={handleStore}
+          disabled={!isFormValid || isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Ionicons name='hourglass-outline' size={16} color='#ffffff' />
+              <Text style={styles.saveButtonText}>Salvando...</Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
+              <Text style={styles.saveButtonText}>Salvar Cliente</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    </WorkArea>
   );
 }
 
@@ -532,9 +584,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     paddingHorizontal: 20,
   },
-  formSection: {
-    marginBottom: 32,
-  },
+
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -659,7 +709,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginTop: 'auto',
-    paddingTop: 20,
   },
   cancelButton: {
     flex: 1,
