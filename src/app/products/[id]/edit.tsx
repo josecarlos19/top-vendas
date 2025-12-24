@@ -71,49 +71,17 @@ export default function EditProduct() {
   const productDatabase = useProductDatabase();
   const categoryDatabase = useCategoryDatabase();
 
-  const handleDelete = useCallback(() => {
-    if (!product) return;
-
-    Alert.alert(
-      'Confirmar Exclusão',
-      `Deseja realmente excluir o produto "${product.name}"? Esta ação não pode ser desfeita.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: confirmDelete,
-        },
-      ]
-    );
-  }, [product]);
-
-  const confirmDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!product) return;
 
     try {
       await productDatabase.remove(product.id);
-      Alert.alert('Sucesso', 'Produto excluído com sucesso!', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      router.back();
     } catch (error) {
-      console.error('Error deleting product:', error);
-      Alert.alert('Erro', 'Falha ao excluir produto');
+      console.error('Error deleting:', error);
+      throw error;
     }
-  };
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={() => handleDelete()}
-          style={{ marginRight: 12 }}
-        >
-          <Ionicons name='trash-outline' size={22} color='#FF6A00' />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, handleDelete]);
+  }, [product]);
 
   useEffect(() => {
     loadProduct();
@@ -572,13 +540,36 @@ export default function EditProduct() {
             <Ionicons name='warning-outline' size={20} color='#f59e0b' />
             <Text style={[styles.infoText, styles.warningText]}>
               Não é possível excluir produtos que possuem vendas ou
-              movimentações de estoque associadas.
+              movimentações de estoque.
             </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[
+            styles.actionButton,
+            isActive ? styles.deactivateButton : styles.activateButton,
+          ]}
+          onPress={handleToggleActive}
+        >
+          <Ionicons
+            name={isActive ? 'pause-outline' : 'play-outline'}
+            size={16}
+            color={isActive ? '#f59e0b' : '#22c55e'}
+          />
+          <Text
+            style={[
+              styles.toggleButtonText,
+              isActive
+                ? styles.deactivateButtonText
+                : styles.activateButtonText,
+            ]}
+          >
+            {isActive ? 'Desativar' : 'Ativar'}
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.saveButton,
@@ -805,7 +796,6 @@ const styles = StyleSheet.create({
   },
   infoSection: {
     gap: 12,
-    marginTop: 16,
   },
   infoCard: {
     flexDirection: 'row',

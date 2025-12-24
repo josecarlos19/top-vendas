@@ -33,24 +33,18 @@ export default function EditCategory() {
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const navigation = useNavigation();
   const categoryDatabase = useCategoryDatabase();
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (!category) return;
 
-    Alert.alert(
-      'Confirmar Exclusão',
-      `Deseja realmente excluir a categoria "${category.name}"? Esta ação não pode ser desfeita.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: confirmDelete,
-        },
-      ]
-    );
+    try {
+      await categoryDatabase.remove(category.id);
+      router.back();
+    } catch (error) {
+      console.error('Error deleting:', error);
+      throw error;
+    }
   }, [category]);
 
   const loadCategory = async () => {
@@ -115,20 +109,6 @@ export default function EditCategory() {
     }
   };
 
-  const confirmDelete = async () => {
-    if (!category) return;
-
-    try {
-      await categoryDatabase.remove(category.id);
-      Alert.alert('Sucesso', 'Categoria excluída com sucesso!', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (error) {
-      console.error('Error deleting category:', error);
-      Alert.alert('Erro', 'Falha ao excluir categoria');
-    }
-  };
-
   useEffect(() => {
     loadCategory();
   }, [id]);
@@ -187,7 +167,7 @@ export default function EditCategory() {
 
           <View style={styles.formSection}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nome da Categoria*</Text>
+              <Text style={styles.label}>Nome da Categoria *</Text>
               <Input
                 placeholder='Ex: Eletrônicos, Roupas, Livros...'
                 value={name}
