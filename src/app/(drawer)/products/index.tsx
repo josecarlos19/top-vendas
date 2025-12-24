@@ -196,43 +196,6 @@ export default function ProductsList() {
     router.push(`/products/${product.id}/edit`);
   };
 
-  const handleDelete = async (id: number) => {
-    Alert.alert(
-      'Confirmar exclusão',
-      'Tem certeza que deseja excluir este produto?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await productDatabase.remove(id);
-              await loadProducts(1, false);
-              Alert.alert('Sucesso', 'Produto excluído com sucesso!');
-            } catch (error) {
-              console.error('Error deleting product:', error);
-              Alert.alert('Erro', 'Falha ao excluir produto');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleToggleActive = async (id: number) => {
-    try {
-      await productDatabase.toggleActive(id);
-      await loadProducts(currentPage, false);
-    } catch (error) {
-      console.error('Error toggling product status:', error);
-      Alert.alert('Erro', 'Falha ao alterar status do produto');
-    }
-  };
-
   const clearFilters = () => {
     setSelectedCategory(undefined);
     setShowLowStock(false);
@@ -261,12 +224,7 @@ export default function ProductsList() {
   );
 
   const renderProduct = ({ item }: { item: Product }) => (
-    <ProductItem
-      product={item}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-      onToggleActive={handleToggleActive}
-    />
+    <ProductItem product={item} onEdit={handleEdit} />
   );
 
   const renderFooter = () => {

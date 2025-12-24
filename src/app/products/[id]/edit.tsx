@@ -1,17 +1,9 @@
-import React, {
-  useState,
-  useEffect,
-  useLayoutEffect,
-  useCallback,
-} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
@@ -24,6 +16,7 @@ import formatCurrency from '@/components/utils/formatCurrency';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import WorkArea from '@/components/WorkArea';
 import { HeaderDeleteButton } from '@/components/HeaderDeleteButton';
+import CustomPicker from '@/components/CustomPicker';
 
 interface Category {
   id: number;
@@ -50,7 +43,6 @@ interface Product {
 
 export default function EditProduct() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const navigation = useNavigation();
   const [product, setProduct] = useState<Product | null>(null);
   const [name, setName] = useState('');
   const [barcode, setBarcode] = useState('');
@@ -66,7 +58,6 @@ export default function EditProduct() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [isActive, setIsActive] = useState(true);
 
   const productDatabase = useProductDatabase();
@@ -292,12 +283,6 @@ export default function EditProduct() {
     );
   };
 
-  const getSelectedCategoryName = () => {
-    if (!categoryId) return 'Nenhuma categoria';
-    const category = categories.find(cat => cat.id === categoryId);
-    return category ? category.name : 'Categoria não encontrada';
-  };
-
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -417,63 +402,17 @@ export default function EditProduct() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Categoria</Text>
-          <TouchableOpacity
-            style={styles.categorySelector}
-            onPress={() => setShowCategoryPicker(!showCategoryPicker)}
-            disabled={isSaving}
-          >
-            <Text
-              style={[
-                styles.categorySelectorText,
-                !categoryId && styles.categorySelectorPlaceholder,
-              ]}
-            >
-              {getSelectedCategoryName()}
-            </Text>
-            <Ionicons
-              name={showCategoryPicker ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color='#64748b'
-            />
-          </TouchableOpacity>
-
-          {showCategoryPicker && (
-            <View style={styles.categoryList}>
-              <TouchableOpacity
-                style={styles.categoryOption}
-                onPress={() => {
-                  setCategoryId(undefined);
-                  setShowCategoryPicker(false);
-                }}
-              >
-                <Text style={styles.categoryOptionText}>Nenhuma categoria</Text>
-              </TouchableOpacity>
-              {categories.map(category => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.categoryOption,
-                    categoryId === category.id && styles.categoryOptionSelected,
-                  ]}
-                  onPress={() => {
-                    setCategoryId(category.id);
-                    setShowCategoryPicker(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.categoryOptionText,
-                      categoryId === category.id &&
-                        styles.categoryOptionSelectedText,
-                    ]}
-                  >
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+          <CustomPicker
+            label='Categoria'
+            selectedValue={categoryId}
+            onValueChange={value => setCategoryId(value as number)}
+            options={categories.map(category => ({
+              label: category.name,
+              value: category.id,
+            }))}
+            enabled={!isLoading}
+            placeholder='Selecionar categoria'
+          />
         </View>
 
         <View style={styles.inputGroup}>
@@ -489,14 +428,12 @@ export default function EditProduct() {
           />
         </View>
 
-        {/* Preços */}
         <View style={styles.sectionHeader}>
           <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Preços</Text>
+          <Text style={styles.sectionTitle}>Preço</Text>
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Preço de Venda *</Text>
           <Input
             placeholder='R$ 0,00'
             value={salePrice}
@@ -568,29 +505,6 @@ export default function EditProduct() {
       </View>
 
       <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[
-            styles.actionButton,
-            isActive ? styles.deactivateButton : styles.activateButton,
-          ]}
-          onPress={handleToggleActive}
-        >
-          <Ionicons
-            name={isActive ? 'pause-outline' : 'play-outline'}
-            size={16}
-            color={isActive ? '#f59e0b' : '#22c55e'}
-          />
-          <Text
-            style={[
-              styles.toggleButtonText,
-              isActive
-                ? styles.deactivateButtonText
-                : styles.activateButtonText,
-            ]}
-          >
-            {isActive ? 'Desativar' : 'Ativar'}
-          </Text>
-        </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.saveButton,
