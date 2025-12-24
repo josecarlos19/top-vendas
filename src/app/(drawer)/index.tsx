@@ -14,6 +14,7 @@ export default function Index() {
       icon: 'cube-outline' as keyof typeof Ionicons.glyphMap,
       color: '#3b82f6',
       backgroundColor: '#ffffff',
+      route: '/products',
     },
     {
       title: 'Vendas Hoje',
@@ -21,6 +22,7 @@ export default function Index() {
       icon: 'trending-up-outline' as keyof typeof Ionicons.glyphMap,
       color: '#22c55e',
       backgroundColor: '#ffffff',
+      route: '/reports/daily-sales',
     },
     {
       title: 'Clientes',
@@ -28,6 +30,7 @@ export default function Index() {
       icon: 'people-outline' as keyof typeof Ionicons.glyphMap,
       color: '#f59e0b',
       backgroundColor: '#ffffff',
+      route: '/customers',
     },
     {
       title: 'Receita',
@@ -35,6 +38,7 @@ export default function Index() {
       icon: 'cash-outline' as keyof typeof Ionicons.glyphMap,
       color: '#ec4899',
       backgroundColor: '#ffffff',
+      route: '/reports/revenue',
     },
   ];
 
