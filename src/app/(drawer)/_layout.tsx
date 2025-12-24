@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, usePathname } from 'expo-router';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function CustomDrawerContent(props: any) {
@@ -79,6 +79,21 @@ function CustomDrawerContent(props: any) {
       router.replace(route as any);
     }, 200);
   };
+
+  useEffect(() => {
+    const fetchUserName = async () => {
+      try {
+        const storedName = await AsyncStorage.getItem('userName');
+        if (storedName) {
+          setUserName(storedName);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar nome do usuário:', error);
+      }
+    };
+
+    fetchUserName();
+  }, []);
 
   return (
     <SafeAreaView edges={['bottom']} style={styles.drawerContainer}>
