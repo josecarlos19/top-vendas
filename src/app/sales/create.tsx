@@ -183,8 +183,7 @@ export default function CreateSale() {
   };
 
   const updateItemQuantity = (productId: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeItem(productId);
+    if (newQuantity < 0) {
       return;
     }
 
@@ -354,7 +353,31 @@ export default function CreateSale() {
           >
             <Ionicons name='remove' size={16} color='#64748b' />
           </TouchableOpacity>
-          <Text style={styles.quantityText}>{item.quantity}</Text>
+          <Input
+            value={item.quantity.toString()}
+            onChangeText={text => {
+              const value = parseInt(text.replace(/\D/g, ''), 10) || 0;
+              updateItemQuantity(item.product_id, value);
+            }}
+            onBlur={() => {
+              if (item.quantity === 0) {
+                removeItem(item.product_id);
+              }
+            }}
+            keyboardType='numeric'
+            style={[
+              styles.quantityText,
+              {
+                minWidth: 40,
+                textAlign: 'center',
+                paddingVertical: 0,
+                paddingHorizontal: 0,
+                backgroundColor: 'transparent',
+                borderWidth: 0,
+              },
+            ]}
+            editable={true}
+          />
           <TouchableOpacity
             style={styles.quantityButton}
             onPress={() =>
@@ -387,8 +410,7 @@ export default function CreateSale() {
         <Text style={styles.subtitle}>Registre uma nova venda no sistema</Text>
       </View>
 
-      <View style={styles.formSection}>
-        {/* Cliente */}
+      <View>
         <View style={styles.sectionHeader}>
           <Ionicons name='person-outline' size={20} color='#FF6B35' />
           <Text style={styles.sectionTitle}>Cliente</Text>
@@ -401,9 +423,9 @@ export default function CreateSale() {
           options={customerOptions}
           enabled={!isLoading}
           placeholder='Selecione um cliente'
+          emptyOption={false}
         />
 
-        {/* Produtos */}
         <View style={styles.sectionHeader}>
           <Ionicons name='cube-outline' size={20} color='#FF6B35' />
           <Text style={styles.sectionTitle}>Produtos</Text>
@@ -604,20 +626,6 @@ export default function CreateSale() {
             style={[styles.input, styles.textArea]}
           />
         </View>
-
-        <View style={styles.infoCard}>
-          <Ionicons
-            name='information-circle-outline'
-            size={20}
-            color='#3b82f6'
-          />
-          <Text style={styles.infoText}>
-            Adicione produtos à venda para continuar. O estoque será atualizado
-            automaticamente após a conclusão.
-            {'\n\n'}💡 Para pagamento parcelado, o sistema gerará as parcelas
-            automaticamente.
-          </Text>
-        </View>
       </View>
 
       <View style={styles.actionButtons}>
@@ -674,9 +682,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     paddingHorizontal: 20,
-  },
-  formSection: {
-    marginBottom: 32,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -922,8 +927,6 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 'auto',
-    paddingTop: 20,
   },
   saveButton: {
     flex: 2,
