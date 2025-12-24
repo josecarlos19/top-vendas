@@ -66,7 +66,10 @@ function CustomDrawerContent(props: any) {
       >
         <View style={styles.menuSection}>
           {menuItems.map(item => {
-            const isActive = pathname.startsWith(item.route);
+            const isActive =
+              item.route === '/(drawer)'
+                ? pathname === '/'
+                : pathname.includes(item.route.split('/').pop() || '');
 
             return (
               <TouchableOpacity
@@ -230,10 +233,10 @@ const styles = StyleSheet.create({
   },
   drawerContent: {
     flexGrow: 1,
+    paddingTop: 5,
   },
   menuSection: {
     paddingHorizontal: 10,
-    paddingTop: 10,
   },
   menuItem: {
     flexDirection: 'row',
