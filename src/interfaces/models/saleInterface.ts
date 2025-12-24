@@ -8,10 +8,8 @@ export interface SaleModelInterface extends BaseModelInterface {
   total?: number;
   payment_method?:
     | 'cash'
-    | 'credit_card'
-    | 'debit_card'
     | 'pix'
-    | 'bank_transfer';
+    | 'installment';
   installments?: number;
   status?: 'pending' | 'completed' | 'cancelled';
   sale_date?: Date;
@@ -26,10 +24,8 @@ export interface SaleStoreInterface extends BaseModelInterface {
   total: number;
   payment_method:
     | 'cash'
-    | 'credit_card'
-    | 'debit_card'
     | 'pix'
-    | 'bank_transfer';
+    | 'installment';
   installments: number;
   status?: 'pending' | 'completed' | 'cancelled';
   sale_date?: Date;

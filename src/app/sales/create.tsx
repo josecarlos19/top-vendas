@@ -520,6 +520,7 @@ export default function CreateSale() {
           onValueChange={value => setPaymentMethod(value as string)}
           options={PAYMENT_METHODS}
           enabled={!isLoading}
+          emptyOption={false}
         />
 
         {paymentMethod === 'installment' && (
