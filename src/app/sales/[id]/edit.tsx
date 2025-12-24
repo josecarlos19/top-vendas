@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,16 +11,17 @@ import {
   ActivityIndicator,
   FlatList,
   Modal,
-} from "react-native";
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useSaleDatabase } from "@/database/models/Sale";
-import { useCustomerDatabase } from "@/database/models/Customer";
-import { useProductDatabase } from "@/database/models/Product";
-import { Input } from "@/components/Input";
-import formatCurrency from "@/components/utils/formatCurrency";
+import { useSaleDatabase } from '@/database/models/Sale';
+import { useCustomerDatabase } from '@/database/models/Customer';
+import { useProductDatabase } from '@/database/models/Product';
+import { Input } from '@/components/Input';
+import formatCurrency from '@/components/utils/formatCurrency';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useInstallmentDatabase } from "@/database/models/Installment";
+import { useInstallmentDatabase } from '@/database/models/Installment';
+import WorkArea from '@/components/WorkArea';
 
 type statusTypes = 'completed' | 'pending';
 
@@ -96,22 +97,23 @@ export default function EditSale() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [items, setItems] = useState<SaleItem[]>([]);
-  const [discount, setDiscount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("money");
-  const [installments, setInstallments] = useState("1");
-  const [status, setStatus] = useState("completed");
+  const [discount, setDiscount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('money');
+  const [installments, setInstallments] = useState('1');
+  const [status, setStatus] = useState('completed');
   const [saleDate, setSaleDate] = useState(new Date());
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [showPaymentPicker, setShowPaymentPicker] = useState(false);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [productSearch, setProductSearch] = useState("");
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [productSearch, setProductSearch] = useState('');
   const [firstDueDate, setFirstDueDate] = useState(new Date());
   const [showFirstDuePicker, setShowFirstDuePicker] = useState(false);
-  const [selectedInstallment, setSelectedInstallment] = useState<Installment | null>(null);
+  const [selectedInstallment, setSelectedInstallment] =
+    useState<Installment | null>(null);
   const [showInstallmentModal, setShowInstallmentModal] = useState(false);
   const [paymentDate, setPaymentDate] = useState(new Date());
   const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
@@ -132,20 +134,26 @@ export default function EditSale() {
 
     try {
       setIsLoading(true);
-      const foundSale = await saleDatabase.show(+id) as Sale | null;
+      const foundSale = (await saleDatabase.show(+id)) as Sale | null;
 
       if (!foundSale) {
-        Alert.alert("Erro", "Venda não encontrada", [
-          { text: "OK", onPress: () => router.back() },
+        Alert.alert('Erro', 'Venda não encontrada', [
+          { text: 'OK', onPress: () => router.back() },
         ]);
         return;
       }
 
       setSale(foundSale);
       setCustomerId(foundSale.customer_id);
-      setDiscount(foundSale.discount ? formatCurrency((foundSale.discount).toString()) : "");
+      setDiscount(
+        foundSale.discount ? formatCurrency(foundSale.discount.toString()) : ''
+      );
       setPaymentMethod(foundSale.payment_method);
-      setInstallments(foundSale.installments?.length ? foundSale.installments.length.toString() : "1");
+      setInstallments(
+        foundSale.installments?.length
+          ? foundSale.installments.length.toString()
+          : '1'
+      );
       setStatus(foundSale.status);
       setSaleDate(new Date(foundSale.sale_date));
       if ((foundSale as any).first_due_date) {
@@ -153,7 +161,7 @@ export default function EditSale() {
       } else {
         setFirstDueDate(new Date(foundSale.sale_date));
       }
-      setNotes(foundSale.notes || "");
+      setNotes(foundSale.notes || '');
 
       if (foundSale.items) {
         const saleItems: SaleItem[] = foundSale.items.map(item => ({
@@ -166,8 +174,8 @@ export default function EditSale() {
         setItems(saleItems);
       }
     } catch (error) {
-      console.error("Error loading sale:", error);
-      Alert.alert("Erro", "Falha ao carregar venda");
+      console.error('Error loading sale:', error);
+      Alert.alert('Erro', 'Falha ao carregar venda');
     } finally {
       setIsLoading(false);
     }
@@ -176,30 +184,34 @@ export default function EditSale() {
   const loadCustomers = async () => {
     try {
       const customersData = await customerDatabase.index();
-      setCustomers(customersData.map(customer => ({
-        id: customer.id!,
-        name: customer.name!,
-        email: customer.email,
-        phone: customer.phone,
-      })));
+      setCustomers(
+        customersData.map(customer => ({
+          id: customer.id!,
+          name: customer.name!,
+          email: customer.email,
+          phone: customer.phone,
+        }))
+      );
     } catch (error) {
-      console.error("Error loading customers:", error);
+      console.error('Error loading customers:', error);
     }
   };
 
   const loadProducts = async () => {
     try {
       const productsData = await productDatabase.index();
-      setProducts(productsData.map(product => ({
-        id: product.id!,
-        name: product.name!,
-        sale_price: product.sale_price!,
-        initial_stock: product.initial_stock!,
-        current_stock: product.current_stock,
-        barcode: product.barcode,
-      })));
+      setProducts(
+        productsData.map(product => ({
+          id: product.id!,
+          name: product.name!,
+          sale_price: product.sale_price!,
+          initial_stock: product.initial_stock!,
+          current_stock: product.current_stock,
+          barcode: product.barcode,
+        }))
+      );
     } catch (error) {
-      console.error("Error loading products:", error);
+      console.error('Error loading products:', error);
     }
   };
 
@@ -209,9 +221,7 @@ export default function EditSale() {
 
   const getCurrencyValue = (formattedValue: string): number => {
     if (!formattedValue) return 0;
-    const cleanValue = formattedValue
-      .replace(/[R$\s.]/g, '')
-      .replace(',', '.');
+    const cleanValue = formattedValue.replace(/[R$\s.]/g, '').replace(',', '.');
     return parseFloat(cleanValue) || 0;
   };
 
@@ -229,8 +239,8 @@ export default function EditSale() {
 
   const handleInstallment = async (status: statusTypes) => {
     if (!selectedInstallment) {
-      return
-    };
+      return;
+    }
 
     try {
       await installmentDatabase.updateStatus({
@@ -239,40 +249,55 @@ export default function EditSale() {
         payment_date: paymentDate.toISOString(),
       });
 
-      Alert.alert("Sucesso", status === 'completed' ? "Pagamento registrado!" : "Pagamento revertido!");
-      setSale((prev) =>
+      Alert.alert(
+        'Sucesso',
+        status === 'completed'
+          ? 'Pagamento registrado!'
+          : 'Pagamento revertido!'
+      );
+      setSale(prev =>
         prev
           ? {
-            ...prev,
-            installments: prev.installments?.map((inst) =>
-              inst.id === selectedInstallment.id
-                ? { ...inst, status, payment_date: status === 'completed' ? paymentDate.toISOString() : undefined }
-                : inst
-            ),
-          }
+              ...prev,
+              installments: prev.installments?.map(inst =>
+                inst.id === selectedInstallment.id
+                  ? {
+                      ...inst,
+                      status,
+                      payment_date:
+                        status === 'completed'
+                          ? paymentDate.toISOString()
+                          : undefined,
+                    }
+                  : inst
+              ),
+            }
           : prev
       );
 
       setShowInstallmentModal(false);
       await loadSale();
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível atualizar a parcela.");
+      Alert.alert('Erro', 'Não foi possível atualizar a parcela.');
     }
-  }
+  };
 
   const validateForm = () => {
     if (items.length === 0) {
-      Alert.alert("Erro", "Adicione pelo menos um produto à venda.");
+      Alert.alert('Erro', 'Adicione pelo menos um produto à venda.');
       return false;
     }
 
     if (getTotal() <= 0) {
-      Alert.alert("Erro", "O total da venda deve ser maior que zero.");
+      Alert.alert('Erro', 'O total da venda deve ser maior que zero.');
       return false;
     }
 
     if (paymentMethod === 'installment' && parseInt(installments) <= 1) {
-      Alert.alert("Erro", "Para pagamento parcelado, informe mais de 1 parcela.");
+      Alert.alert(
+        'Erro',
+        'Para pagamento parcelado, informe mais de 1 parcela.'
+      );
       return false;
     }
 
@@ -287,7 +312,8 @@ export default function EditSale() {
       const subtotal = getSubtotal();
       const discountValue = getDiscountValue();
       const total = getTotal();
-      const installmentCount = paymentMethod === 'installment' ? parseInt(installments) : 1;
+      const installmentCount =
+        paymentMethod === 'installment' ? parseInt(installments) : 1;
 
       await saleDatabase.update({
         id: sale.id,
@@ -296,19 +322,15 @@ export default function EditSale() {
         first_due_date: firstDueDate,
       });
 
-      Alert.alert(
-        "Sucesso",
-        "Venda atualizada com sucesso!",
-        [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ]
-      );
+      Alert.alert('Sucesso', 'Venda atualizada com sucesso!', [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
     } catch (error) {
-      console.error("Error updating sale:", error);
-      Alert.alert("Erro", "Falha ao atualizar venda. Tente novamente.");
+      console.error('Error updating sale:', error);
+      Alert.alert('Erro', 'Falha ao atualizar venda. Tente novamente.');
     } finally {
       setIsSaving(false);
     }
@@ -318,16 +340,16 @@ export default function EditSale() {
     if (!sale) return;
 
     Alert.alert(
-      "Confirmar Exclusão",
+      'Confirmar Exclusão',
       `Deseja realmente excluir esta venda? Esta ação não pode ser desfeita e o estoque será revertido.`,
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: 'Cancelar', style: 'cancel' },
         {
-          text: "Excluir",
-          style: "destructive",
+          text: 'Excluir',
+          style: 'destructive',
           onPress: confirmDelete,
         },
-      ],
+      ]
     );
   };
 
@@ -336,12 +358,12 @@ export default function EditSale() {
 
     try {
       await saleDatabase.remove(sale.id);
-      Alert.alert("Sucesso", "Venda excluída com sucesso!", [
-        { text: "OK", onPress: () => router.back() },
+      Alert.alert('Sucesso', 'Venda excluída com sucesso!', [
+        { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error) {
-      console.error("Error deleting sale:", error);
-      Alert.alert("Erro", "Falha ao excluir venda");
+      console.error('Error deleting sale:', error);
+      Alert.alert('Erro', 'Falha ao excluir venda');
     }
   };
 
@@ -355,22 +377,29 @@ export default function EditSale() {
       parseInt(installments) !== sale.installments?.length ||
       status !== sale.status ||
       saleDate.getTime() !== new Date(sale.sale_date).getTime() ||
-      notes !== (sale.notes || "") ||
-      JSON.stringify(items) !== JSON.stringify(sale.items?.map(item => ({
-        product_id: item.product_id,
-        product_name: item.product_name,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        subtotal: item.subtotal,
-      })) || []);
+      notes !== (sale.notes || '') ||
+      JSON.stringify(items) !==
+        JSON.stringify(
+          sale.items?.map(item => ({
+            product_id: item.product_id,
+            product_name: item.product_name,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            subtotal: item.subtotal,
+          })) || []
+        );
 
     if (hasChanges) {
       Alert.alert(
-        "Descartar alterações?",
-        "Você tem alterações não salvas. Deseja realmente sair?",
+        'Descartar alterações?',
+        'Você tem alterações não salvas. Deseja realmente sair?',
         [
-          { text: "Continuar editando", style: "cancel" },
-          { text: "Descartar", style: "destructive", onPress: () => router.back() },
+          { text: 'Continuar editando', style: 'cancel' },
+          {
+            text: 'Descartar',
+            style: 'destructive',
+            onPress: () => router.back(),
+          },
         ]
       );
     } else {
@@ -385,9 +414,9 @@ export default function EditSale() {
   };
 
   const getSelectedCustomerName = () => {
-    if (!customerId) return "Nenhum cliente";
+    if (!customerId) return 'Nenhum cliente';
     const customer = customers.find(c => c.id === customerId);
-    return customer ? customer.name : "Cliente não encontrado";
+    return customer ? customer.name : 'Cliente não encontrado';
   };
 
   const getSelectedPaymentMethodLabel = () => {
@@ -404,15 +433,16 @@ export default function EditSale() {
     customer.name.toLowerCase().includes(customerSearch.toLowerCase())
   );
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-    (product.barcode && product.barcode.includes(productSearch))
+  const filteredProducts = products.filter(
+    product =>
+      product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+      (product.barcode && product.barcode.includes(productSearch))
   );
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF6B35" />
+        <ActivityIndicator size='large' color='#FF6B35' />
         <Text style={styles.loadingText}>Carregando venda...</Text>
       </View>
     );
@@ -421,7 +451,7 @@ export default function EditSale() {
   if (!sale) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle-outline" size={64} color="#ef4444" />
+        <Ionicons name='alert-circle-outline' size={64} color='#ef4444' />
         <Text style={styles.errorTitle}>Venda não encontrada</Text>
         <TouchableOpacity
           style={styles.backButton}
@@ -443,15 +473,17 @@ export default function EditSale() {
 
       <View style={styles.saleItemDetails}>
         <View style={styles.quantityContainer}>
-          <Text disabled style={styles.quantityText}>{item.quantity}</Text>
+          <Text disabled style={styles.quantityText}>
+            {item.quantity}
+          </Text>
         </View>
 
         <View style={styles.priceContainer}>
           <Text style={styles.unitPrice}>
-            {formatCurrency((item.unit_price).toString())}
+            {formatCurrency(item.unit_price.toString())}
           </Text>
           <Text style={styles.subtotal}>
-            {formatCurrency((item.subtotal).toString())}
+            {formatCurrency(item.subtotal.toString())}
           </Text>
         </View>
       </View>
@@ -459,218 +491,214 @@ export default function EditSale() {
   );
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.headerSection}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="receipt-outline" size={48} color="#FF6B35" />
-          </View>
-          <Text style={styles.title}>Editar Venda</Text>
-          <Text style={styles.subtitle}>
-            Atualize as informações da venda
-          </Text>
+    <WorkArea>
+      <View style={styles.headerSection}>
+        <View style={styles.iconContainer}>
+          <Ionicons name='receipt-outline' size={48} color='#FF6B35' />
+        </View>
+        <Text style={styles.title}>Editar Venda</Text>
+        <Text style={styles.subtitle}>Atualize as informações da venda</Text>
+      </View>
+
+      <View style={styles.formSection}>
+        {/* Status */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='flag-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Status</Text>
         </View>
 
-        <View style={styles.formSection}>
-          {/* Status */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="flag-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Status</Text>
-          </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Status da Venda</Text>
+          <TouchableOpacity
+            style={styles.selector}
+            onPress={() => setShowStatusPicker(!showStatusPicker)}
+            disabled={isSaving}
+          >
+            <Text style={styles.selectorText}>{getSelectedStatusLabel()}</Text>
+            <Ionicons
+              name={showStatusPicker ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color='#64748b'
+            />
+          </TouchableOpacity>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Status da Venda</Text>
-            <TouchableOpacity
-              style={styles.selector}
-              onPress={() => setShowStatusPicker(!showStatusPicker)}
-              disabled={isSaving}
-            >
-              <Text style={styles.selectorText}>
-                {getSelectedStatusLabel()}
-              </Text>
-              <Ionicons
-                name={showStatusPicker ? "chevron-up" : "chevron-down"}
-                size={20}
-                color="#64748b"
-              />
-            </TouchableOpacity>
-
-            {showStatusPicker && (
-              <View style={styles.pickerContainer}>
-                {STATUS_OPTIONS.map((statusOption) => (
-                  <TouchableOpacity
-                    key={statusOption.value}
+          {showStatusPicker && (
+            <View style={styles.pickerContainer}>
+              {STATUS_OPTIONS.map(statusOption => (
+                <TouchableOpacity
+                  key={statusOption.value}
+                  style={[
+                    styles.option,
+                    status === statusOption.value && styles.optionSelected,
+                  ]}
+                  onPress={() => {
+                    setStatus(statusOption.value);
+                    setShowStatusPicker(false);
+                  }}
+                >
+                  <Text
                     style={[
-                      styles.option,
-                      status === statusOption.value && styles.optionSelected
-                    ]}
-                    onPress={() => {
-                      setStatus(statusOption.value);
-                      setShowStatusPicker(false);
-                    }}
-                  >
-                    <Text style={[
                       styles.optionText,
-                      status === statusOption.value && styles.optionSelectedText
-                    ]}>
-                      {statusOption.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
+                      status === statusOption.value &&
+                        styles.optionSelectedText,
+                    ]}
+                  >
+                    {statusOption.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
 
-          {/* Cliente */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="person-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Cliente</Text>
-          </View>
+        {/* Cliente */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='person-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Cliente</Text>
+        </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Cliente</Text>
-            <TouchableOpacity
-              style={{ ...styles.selector, ...styles.disabledInput }}
-              onPress={() => setShowCustomerPicker(!showCustomerPicker)}
-              disabled
-            >
-              <Text style={[
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Cliente</Text>
+          <TouchableOpacity
+            style={{ ...styles.selector, ...styles.disabledInput }}
+            onPress={() => setShowCustomerPicker(!showCustomerPicker)}
+            disabled
+          >
+            <Text
+              style={[
                 styles.selectorText,
-                !customerId && styles.selectorPlaceholder
-              ]}>
-                {getSelectedCustomerName()}
-              </Text>
-
-            </TouchableOpacity>
-
-            {showCustomerPicker && (
-              <View style={styles.pickerContainer}>
-                <Input
-                  placeholder="Buscar cliente..."
-                  value={customerSearch}
-                  onChangeText={setCustomerSearch}
-                  style={styles.searchInput}
-                />
-                <ScrollView style={styles.optionsList} nestedScrollEnabled>
-                  {filteredCustomers.map((customer) => (
-                    <TouchableOpacity
-                      key={customer.id}
-                      style={[
-                        styles.option,
-                        customerId === customer.id && styles.optionSelected
-                      ]}
-                      onPress={() => {
-                        setCustomerId(customer.id);
-                        setShowCustomerPicker(false);
-                        setCustomerSearch("");
-                      }}
-                    >
-                      <Text style={[
-                        styles.optionText,
-                        customerId === customer.id && styles.optionSelectedText
-                      ]}>
-                        {customer.name}
-                      </Text>
-                      {customer.email && (
-                        <Text style={styles.optionSubtext}>{customer.email}</Text>
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </View>
-
-          {/* Produtos */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="cube-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Produtos</Text>
-          </View>
-
-          {items.length > 0 && (
-            <View style={styles.itemsList}>
-              <FlatList
-                data={items}
-                renderItem={renderSaleItem}
-                keyExtractor={(item) => item.product_id.toString()}
-                scrollEnabled={false}
-              />
-            </View>
-          )}
-
-          {/* Pagamento */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="card-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Pagamento</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Forma de Pagamento</Text>
-            <TouchableOpacity
-              style={{ ...styles.selector, ...styles.disabledInput }}
-              onPress={() => setShowPaymentPicker(!showPaymentPicker)}
-              disabled
+                !customerId && styles.selectorPlaceholder,
+              ]}
             >
-              <Text style={styles.selectorText}>
-                {getSelectedPaymentMethodLabel()}
-              </Text>
+              {getSelectedCustomerName()}
+            </Text>
+          </TouchableOpacity>
 
-            </TouchableOpacity>
-
-            {showPaymentPicker && (
-              <View style={styles.pickerContainer}>
-                {PAYMENT_METHODS.map((method) => (
+          {showCustomerPicker && (
+            <View style={styles.pickerContainer}>
+              <Input
+                placeholder='Buscar cliente...'
+                value={customerSearch}
+                onChangeText={setCustomerSearch}
+                style={styles.searchInput}
+              />
+              <ScrollView style={styles.optionsList} nestedScrollEnabled>
+                {filteredCustomers.map(customer => (
                   <TouchableOpacity
-                    key={method.value}
+                    key={customer.id}
                     style={[
                       styles.option,
-                      paymentMethod === method.value && styles.optionSelected
+                      customerId === customer.id && styles.optionSelected,
                     ]}
                     onPress={() => {
-                      setPaymentMethod(method.value);
-                      setShowPaymentPicker(false);
+                      setCustomerId(customer.id);
+                      setShowCustomerPicker(false);
+                      setCustomerSearch('');
                     }}
                   >
-                    <Text style={[
-                      styles.optionText,
-                      paymentMethod === method.value && styles.optionSelectedText
-                    ]}>
-                      {method.label}
+                    <Text
+                      style={[
+                        styles.optionText,
+                        customerId === customer.id && styles.optionSelectedText,
+                      ]}
+                    >
+                      {customer.name}
                     </Text>
+                    {customer.email && (
+                      <Text style={styles.optionSubtext}>{customer.email}</Text>
+                    )}
                   </TouchableOpacity>
                 ))}
-              </View>
-            )}
-          </View>
-
-
-          {paymentMethod === 'installment' && (
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Número de Parcelas</Text>
-              <Input
-                placeholder="Número de parcelas"
-                value={installments}
-                onChangeText={(text) => setInstallments(formatNumber(text))}
-                editable={!isSaving}
-                style={{ ...styles.input, ...styles.disabledInput }}
-                keyboardType="numeric"
-                readOnly
-              />
+              </ScrollView>
             </View>
           )}
+        </View>
 
-          {sale.payment_method === 'installment' && sale?.installments && sale.installments.length > 0 && (
+        {/* Produtos */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='cube-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Produtos</Text>
+        </View>
+
+        {items.length > 0 && (
+          <View style={styles.itemsList}>
+            <FlatList
+              data={items}
+              renderItem={renderSaleItem}
+              keyExtractor={item => item.product_id.toString()}
+              scrollEnabled={false}
+            />
+          </View>
+        )}
+
+        {/* Pagamento */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='card-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Pagamento</Text>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Forma de Pagamento</Text>
+          <TouchableOpacity
+            style={{ ...styles.selector, ...styles.disabledInput }}
+            onPress={() => setShowPaymentPicker(!showPaymentPicker)}
+            disabled
+          >
+            <Text style={styles.selectorText}>
+              {getSelectedPaymentMethodLabel()}
+            </Text>
+          </TouchableOpacity>
+
+          {showPaymentPicker && (
+            <View style={styles.pickerContainer}>
+              {PAYMENT_METHODS.map(method => (
+                <TouchableOpacity
+                  key={method.value}
+                  style={[
+                    styles.option,
+                    paymentMethod === method.value && styles.optionSelected,
+                  ]}
+                  onPress={() => {
+                    setPaymentMethod(method.value);
+                    setShowPaymentPicker(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      paymentMethod === method.value &&
+                        styles.optionSelectedText,
+                    ]}
+                  >
+                    {method.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {paymentMethod === 'installment' && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Número de Parcelas</Text>
+            <Input
+              placeholder='Número de parcelas'
+              value={installments}
+              onChangeText={text => setInstallments(formatNumber(text))}
+              editable={!isSaving}
+              style={{ ...styles.input, ...styles.disabledInput }}
+              keyboardType='numeric'
+              readOnly
+            />
+          </View>
+        )}
+
+        {sale.payment_method === 'installment' &&
+          sale?.installments &&
+          sale.installments.length > 0 && (
             <View>
               <Text style={styles.label}>Parcelas</Text>
-              {sale.installments.map((inst) => (
+              {sale.installments.map(inst => (
                 <TouchableOpacity
                   key={inst.id}
                   style={[
@@ -681,7 +709,8 @@ export default function EditSale() {
                   onPress={openInstallmentModal(inst)}
                 >
                   <Text style={styles.installmentText}>
-                    {inst.number}ª parcela — {formatCurrency(inst.amount.toString())}
+                    {inst.number}ª parcela —{' '}
+                    {formatCurrency(inst.amount.toString())}
                   </Text>
                   <Text style={styles.installmentDate}>
                     Venc: {new Date(inst.due_date).toLocaleDateString('pt-BR')}
@@ -701,140 +730,130 @@ export default function EditSale() {
             </View>
           )}
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{paymentMethod === 'installment' ? 'Data do Primeiro Vencimento' : 'Data do Pagamento'}</Text>
-            <TouchableOpacity
-              style={styles.selector}
-              onPress={() => setShowFirstDuePicker(true)}
-              disabled={isSaving}
-            >
-              <Text style={styles.selectorText}>
-                {firstDueDate.toLocaleDateString('pt-BR')}
-              </Text>
-              <Ionicons name="calendar-outline" size={20} color="#64748b" />
-            </TouchableOpacity>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>
+            {paymentMethod === 'installment'
+              ? 'Data do Primeiro Vencimento'
+              : 'Data do Pagamento'}
+          </Text>
+          <TouchableOpacity
+            style={styles.selector}
+            onPress={() => setShowFirstDuePicker(true)}
+            disabled={isSaving}
+          >
+            <Text style={styles.selectorText}>
+              {firstDueDate.toLocaleDateString('pt-BR')}
+            </Text>
+            <Ionicons name='calendar-outline' size={20} color='#64748b' />
+          </TouchableOpacity>
 
-            {showFirstDuePicker && (
-              <DateTimePicker
-                value={firstDueDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(event, date) => {
-                  setShowFirstDuePicker(false);
-                  if (date) setFirstDueDate(date);
-                }}
-              />
-            )}
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Desconto</Text>
-            <Input
-              placeholder="R$ 0,00"
-              value={discount}
-              onChangeText={(text) => setDiscount(formatCurrency(text))}
-              editable={false}
-              style={{ ...styles.input, ...styles.disabledInput }}
-              keyboardType="numeric"
+          {showFirstDuePicker && (
+            <DateTimePicker
+              value={firstDueDate}
+              mode='date'
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, date) => {
+                setShowFirstDuePicker(false);
+                if (date) setFirstDueDate(date);
+              }}
             />
-          </View>
-
-          {/* Resumo */}
-          {items.length > 0 && (
-            <View style={styles.summaryContainer}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Subtotal:</Text>
-                <Text style={styles.summaryValue}>
-                  {formatCurrency((getSubtotal()).toString())}
-                </Text>
-              </View>
-              {getDiscountValue() > 0 && (
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Desconto:</Text>
-                  <Text style={[styles.summaryValue, styles.discountValue]}>
-                    -{formatCurrency((getDiscountValue()).toString())}
-                  </Text>
-                </View>
-              )}
-              <View style={[styles.summaryRow, styles.totalRow]}>
-                <Text style={styles.totalLabel}>Total:</Text>
-                <Text style={styles.totalValue}>
-                  {formatCurrency((getTotal()).toString())}
-                </Text>
-              </View>
-            </View>
           )}
+        </View>
 
-          {/* Observações */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="document-text-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Observações</Text>
-          </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Desconto</Text>
+          <Input
+            placeholder='R$ 0,00'
+            value={discount}
+            onChangeText={text => setDiscount(formatCurrency(text))}
+            editable={false}
+            style={{ ...styles.input, ...styles.disabledInput }}
+            keyboardType='numeric'
+          />
+        </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Observações</Text>
-            <Input
-              placeholder="Informações adicionais sobre a venda (opcional)"
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={3}
-              editable={!isSaving}
-              style={[styles.input, styles.textArea]}
-            />
-          </View>
-
-          <View style={styles.infoSection}>
-            <View style={[styles.infoCard, styles.warningCard]}>
-              <Ionicons name="warning-outline" size={20} color="#f59e0b" />
-              <Text style={[styles.infoText, styles.warningText]}>
-                Ao excluir esta venda, todos os produtos serão devolvidos ao estoque e as parcelas pendentes serão canceladas.
+        {/* Resumo */}
+        {items.length > 0 && (
+          <View style={styles.summaryContainer}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal:</Text>
+              <Text style={styles.summaryValue}>
+                {formatCurrency(getSubtotal().toString())}
+              </Text>
+            </View>
+            {getDiscountValue() > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Desconto:</Text>
+                <Text style={[styles.summaryValue, styles.discountValue]}>
+                  -{formatCurrency(getDiscountValue().toString())}
+                </Text>
+              </View>
+            )}
+            <View style={[styles.summaryRow, styles.totalRow]}>
+              <Text style={styles.totalLabel}>Total:</Text>
+              <Text style={styles.totalValue}>
+                {formatCurrency(getTotal().toString())}
               </Text>
             </View>
           </View>
+        )}
+
+        {/* Observações */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='document-text-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Observações</Text>
         </View>
 
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={handleDelete}
-            disabled={isSaving}
-          >
-            <Ionicons name="trash-outline" size={16} color="#ef4444" />
-            <Text style={styles.deleteButtonText}>Excluir</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={handleCancel}
-            disabled={isSaving}
-          >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.saveButton, (!isFormValid || isSaving) && styles.saveButtonDisabled]}
-            onPress={handleUpdate}
-            disabled={!isFormValid || isSaving}
-          >
-            {isSaving ? (
-              <>
-                <ActivityIndicator size="small" color="#ffffff" />
-                <Text style={styles.saveButtonText}>Salvando...</Text>
-              </>
-            ) : (
-              <>
-                <Ionicons name="checkmark-outline" size={16} color="#ffffff" />
-                <Text style={styles.saveButtonText}>Salvar</Text>
-              </>
-            )}
-          </TouchableOpacity>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Observações</Text>
+          <Input
+            placeholder='Informações adicionais sobre a venda (opcional)'
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            numberOfLines={3}
+            editable={!isSaving}
+            style={[styles.input, styles.textArea]}
+          />
         </View>
-      </ScrollView>
+
+        <View style={styles.infoSection}>
+          <View style={[styles.infoCard, styles.warningCard]}>
+            <Ionicons name='warning-outline' size={20} color='#f59e0b' />
+            <Text style={[styles.infoText, styles.warningText]}>
+              Ao excluir esta venda, todos os produtos serão devolvidos ao
+              estoque e as parcelas pendentes serão canceladas.
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[
+            styles.saveButton,
+            (!isFormValid || isSaving) && styles.saveButtonDisabled,
+          ]}
+          onPress={handleUpdate}
+          disabled={!isFormValid || isSaving}
+        >
+          {isSaving ? (
+            <>
+              <ActivityIndicator size='small' color='#ffffff' />
+              <Text style={styles.saveButtonText}>Salvando...</Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
+              <Text style={styles.saveButtonText}>Salvar</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
       <Modal
         visible={showInstallmentModal}
         transparent
-        animationType="slide"
+        animationType='slide'
         onRequestClose={() => setShowInstallmentModal(false)}
       >
         <View style={styles.modalOverlay}>
@@ -848,7 +867,10 @@ export default function EditSale() {
                   Valor: {formatCurrency(selectedInstallment.amount.toString())}
                 </Text>
                 <Text style={styles.modalDueDate}>
-                  Vencimento: {new Date(selectedInstallment.due_date).toLocaleDateString('pt-BR')}
+                  Vencimento:{' '}
+                  {new Date(selectedInstallment.due_date).toLocaleDateString(
+                    'pt-BR'
+                  )}
                 </Text>
 
                 <Text style={styles.modalLabel}>Data de pagamento</Text>
@@ -857,16 +879,16 @@ export default function EditSale() {
                   onPress={() => setShowPaymentDatePicker(true)}
                 >
                   <Text style={styles.dateText}>
-                    {paymentDate.toLocaleDateString("pt-BR")}
+                    {paymentDate.toLocaleDateString('pt-BR')}
                   </Text>
-                  <Ionicons name="calendar-outline" size={20} color="#64748b" />
+                  <Ionicons name='calendar-outline' size={20} color='#64748b' />
                 </TouchableOpacity>
 
                 {showPaymentDatePicker && (
                   <DateTimePicker
                     value={paymentDate}
-                    mode="date"
-                    display={Platform.OS === "ios" ? "spinner" : "default"}
+                    mode='date'
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                     onChange={(e, date) => {
                       setShowPaymentDatePicker(false);
                       if (date) setPaymentDate(date);
@@ -874,19 +896,23 @@ export default function EditSale() {
                   />
                 )}
 
-                {selectedInstallment.status === "pending" ? (
+                {selectedInstallment.status === 'pending' ? (
                   <TouchableOpacity
                     style={styles.confirmButton}
                     onPress={() => handleInstallment('completed')}
                   >
-                    <Text style={styles.confirmButtonText}>Confirmar pagamento</Text>
+                    <Text style={styles.confirmButtonText}>
+                      Confirmar pagamento
+                    </Text>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
                     style={styles.revertButton}
                     onPress={() => handleInstallment('pending')}
                   >
-                    <Text style={styles.confirmButtonText}>Reverter pagamento</Text>
+                    <Text style={styles.confirmButtonText}>
+                      Reverter pagamento
+                    </Text>
                   </TouchableOpacity>
                 )}
 
@@ -901,7 +927,7 @@ export default function EditSale() {
           </View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </WorkArea>
   );
 }
 
@@ -1342,87 +1368,87 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContainer: {
-    width: "85%",
-    backgroundColor: "#ffffff",
+    width: '85%',
+    backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 20,
     elevation: 5,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "700",
-    color: "#1e293b",
+    fontWeight: '700',
+    color: '#1e293b',
     marginBottom: 12,
   },
   modalAmount: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#22c55e",
+    fontWeight: '600',
+    color: '#22c55e',
     marginBottom: 6,
   },
   modalDueDate: {
     fontSize: 14,
-    color: "#64748b",
+    color: '#64748b',
     marginBottom: 16,
   },
   modalLabel: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
+    fontWeight: '600',
+    color: '#374151',
     marginBottom: 8,
   },
   dateSelector: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#f1f5f9",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f1f5f9',
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
   },
   dateText: {
     fontSize: 16,
-    color: "#1e293b",
+    color: '#1e293b',
   },
   confirmButton: {
-    backgroundColor: "#22c55e",
+    backgroundColor: '#22c55e',
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 12,
   },
   revertButton: {
-    backgroundColor: "#f59e0b",
+    backgroundColor: '#f59e0b',
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 12,
   },
   confirmButtonText: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   modalPaidText: {
     fontSize: 15,
-    color: "#22c55e",
+    color: '#22c55e',
     marginBottom: 20,
-    textAlign: "center",
+    textAlign: 'center',
   },
   closeButton: {
-    backgroundColor: "#e2e8f0",
+    backgroundColor: '#e2e8f0',
     paddingVertical: 10,
     borderRadius: 8,
-    alignItems: "center",
+    alignItems: 'center',
   },
   closeButtonText: {
     fontSize: 15,
-    fontWeight: "600",
-    color: "#1e293b",
+    fontWeight: '600',
+    color: '#1e293b',
   },
 });

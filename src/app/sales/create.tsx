@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,16 +10,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
-} from "react-native";
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useSaleDatabase } from "@/database/models/Sale";
-import { useCustomerDatabase } from "@/database/models/Customer";
-import { useProductDatabase } from "@/database/models/Product";
-import { Input } from "@/components/Input";
-import formatCurrency from "@/components/utils/formatCurrency";
+import { useSaleDatabase } from '@/database/models/Sale';
+import { useCustomerDatabase } from '@/database/models/Customer';
+import { useProductDatabase } from '@/database/models/Product';
+import { Input } from '@/components/Input';
+import formatCurrency from '@/components/utils/formatCurrency';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { DateTime } from "luxon";
+import { DateTime } from 'luxon';
+import WorkArea from '@/components/WorkArea';
 interface Customer {
   id: number;
   name: string;
@@ -57,19 +58,21 @@ export default function CreateSale() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [items, setItems] = useState<SaleItem[]>([]);
-  const [discount, setDiscount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("money");
-  const [installments, setInstallments] = useState("1");
+  const [discount, setDiscount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('money');
+  const [installments, setInstallments] = useState('1');
   const [saleDate, setSaleDate] = useState(new Date());
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [showPaymentPicker, setShowPaymentPicker] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [productSearch, setProductSearch] = useState("");
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [productSearch, setProductSearch] = useState('');
   const [firstDueDate, setFirstDueDate] = useState(new Date());
-  const [firstDueDatePlusOneMonth, setFirstDueDatePlusOneMonth] = useState(DateTime.now().plus({ months: 1 }).toJSDate());
+  const [firstDueDatePlusOneMonth, setFirstDueDatePlusOneMonth] = useState(
+    DateTime.now().plus({ months: 1 }).toJSDate()
+  );
   const [showFirstDuePicker, setShowFirstDuePicker] = useState(false);
 
   const saleDatabase = useSaleDatabase();
@@ -82,7 +85,7 @@ export default function CreateSale() {
   }, []);
 
   useEffect(() => {
-    if (paymentMethod === "installment") {
+    if (paymentMethod === 'installment') {
       const nextMonth = new Date(saleDate);
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       setFirstDueDate(nextMonth);
@@ -94,30 +97,34 @@ export default function CreateSale() {
   const loadCustomers = async () => {
     try {
       const customersData = await customerDatabase.index();
-      setCustomers(customersData.map(customer => ({
-        id: customer.id!,
-        name: customer.name!,
-        email: customer.email,
-        phone: customer.phone,
-      })));
+      setCustomers(
+        customersData.map(customer => ({
+          id: customer.id!,
+          name: customer.name!,
+          email: customer.email,
+          phone: customer.phone,
+        }))
+      );
     } catch (error) {
-      console.error("Error loading customers:", error);
+      console.error('Error loading customers:', error);
     }
   };
 
   const loadProducts = async () => {
     try {
       const productsData = await productDatabase.index({ active: 1 });
-      setProducts(productsData.map(product => ({
-        id: product.id!,
-        name: product.name!,
-        sale_price: product.sale_price!,
-        initial_stock: product.initial_stock!,
-        current_stock: product.current_stock,
-        barcode: product.barcode,
-      })));
+      setProducts(
+        productsData.map(product => ({
+          id: product.id!,
+          name: product.name!,
+          sale_price: product.sale_price!,
+          initial_stock: product.initial_stock!,
+          current_stock: product.current_stock,
+          barcode: product.barcode,
+        }))
+      );
     } catch (error) {
-      console.error("Error loading products:", error);
+      console.error('Error loading products:', error);
     }
   };
 
@@ -127,9 +134,7 @@ export default function CreateSale() {
 
   const getCurrencyValue = (formattedValue: string): number => {
     if (!formattedValue) return 0;
-    const cleanValue = formattedValue
-      .replace(/[R$\s.]/g, '')
-      .replace(',', '.');
+    const cleanValue = formattedValue.replace(/[R$\s.]/g, '').replace(',', '.');
     return parseFloat(cleanValue) || 0;
   };
 
@@ -153,7 +158,10 @@ export default function CreateSale() {
       const availableStock = product.current_stock || product.initial_stock;
 
       if (newQuantity > availableStock) {
-        Alert.alert("Estoque insuficiente", `Apenas ${availableStock} unidades disponíveis`);
+        Alert.alert(
+          'Estoque insuficiente',
+          `Apenas ${availableStock} unidades disponíveis`
+        );
         return;
       }
 
@@ -162,7 +170,7 @@ export default function CreateSale() {
       const availableStock = product.current_stock || product.initial_stock;
 
       if (availableStock <= 0) {
-        Alert.alert("Estoque insuficiente", "Produto sem estoque disponível");
+        Alert.alert('Estoque insuficiente', 'Produto sem estoque disponível');
         return;
       }
 
@@ -185,34 +193,42 @@ export default function CreateSale() {
     }
 
     const product = products.find(p => p.id === productId);
-    const availableStock = product?.current_stock || product?.initial_stock || 0;
+    const availableStock =
+      product?.current_stock || product?.initial_stock || 0;
 
     if (newQuantity > availableStock) {
-      Alert.alert("Estoque insuficiente", `Apenas ${availableStock} unidades disponíveis`);
+      Alert.alert(
+        'Estoque insuficiente',
+        `Apenas ${availableStock} unidades disponíveis`
+      );
       return;
     }
 
-    setItems(items.map(item =>
-      item.product_id === productId
-        ? {
-          ...item,
-          quantity: newQuantity,
-          subtotal: newQuantity * item.unit_price
-        }
-        : item
-    ));
+    setItems(
+      items.map(item =>
+        item.product_id === productId
+          ? {
+              ...item,
+              quantity: newQuantity,
+              subtotal: newQuantity * item.unit_price,
+            }
+          : item
+      )
+    );
   };
 
   const updateItemPrice = (productId: number, newPrice: number) => {
-    setItems(items.map(item =>
-      item.product_id === productId
-        ? {
-          ...item,
-          unit_price: newPrice,
-          subtotal: item.quantity * newPrice
-        }
-        : item
-    ));
+    setItems(
+      items.map(item =>
+        item.product_id === productId
+          ? {
+              ...item,
+              unit_price: newPrice,
+              subtotal: item.quantity * newPrice,
+            }
+          : item
+      )
+    );
   };
 
   const removeItem = (productId: number) => {
@@ -221,17 +237,20 @@ export default function CreateSale() {
 
   const validateForm = () => {
     if (items.length === 0) {
-      Alert.alert("Erro", "Adicione pelo menos um produto à venda.");
+      Alert.alert('Erro', 'Adicione pelo menos um produto à venda.');
       return false;
     }
 
     if (getTotal() <= 0) {
-      Alert.alert("Erro", "O total da venda deve ser maior que zero.");
+      Alert.alert('Erro', 'O total da venda deve ser maior que zero.');
       return false;
     }
 
     if (paymentMethod === 'installment' && parseInt(installments) <= 1) {
-      Alert.alert("Erro", "Para pagamento parcelado, informe mais de 1 parcela.");
+      Alert.alert(
+        'Erro',
+        'Para pagamento parcelado, informe mais de 1 parcela.'
+      );
       return false;
     }
 
@@ -246,7 +265,8 @@ export default function CreateSale() {
       const subtotal = getSubtotal();
       const discountValue = getDiscountValue();
       const total = getTotal();
-      const installmentCount = paymentMethod === 'installment' ? parseInt(installments) : 1;
+      const installmentCount =
+        paymentMethod === 'installment' ? parseInt(installments) : 1;
 
       await saleDatabase.store({
         customer_id: customerId as number,
@@ -267,34 +287,35 @@ export default function CreateSale() {
         first_due_date: firstDueDate,
       });
 
-      Alert.alert(
-        "Sucesso",
-        "Venda criada com sucesso!",
-        [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ]
-      );
+      Alert.alert('Sucesso', 'Venda criada com sucesso!', [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
     } catch (error) {
-      console.error("Error creating sale:", error);
-      Alert.alert("Erro", "Falha ao criar venda. Tente novamente.");
+      console.error('Error creating sale:', error);
+      Alert.alert('Erro', 'Falha ao criar venda. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCancel = () => {
-    const hasChanges = items.length > 0 || discount.trim() || notes.trim() || customerId;
+    const hasChanges =
+      items.length > 0 || discount.trim() || notes.trim() || customerId;
 
     if (hasChanges) {
       Alert.alert(
-        "Descartar alterações?",
-        "Você tem alterações não salvas. Deseja realmente sair?",
+        'Descartar alterações?',
+        'Você tem alterações não salvas. Deseja realmente sair?',
         [
-          { text: "Continuar editando", style: "cancel" },
-          { text: "Descartar", style: "destructive", onPress: () => router.back() },
+          { text: 'Continuar editando', style: 'cancel' },
+          {
+            text: 'Descartar',
+            style: 'destructive',
+            onPress: () => router.back(),
+          },
         ]
       );
     } else {
@@ -303,9 +324,9 @@ export default function CreateSale() {
   };
 
   const getSelectedCustomerName = () => {
-    if (!customerId) return "Selecionar cliente";
+    if (!customerId) return 'Selecionar cliente';
     const customer = customers.find(c => c.id === customerId);
-    return customer ? customer.name : "Cliente não encontrado";
+    return customer ? customer.name : 'Cliente não encontrado';
   };
 
   const getSelectedPaymentMethodLabel = () => {
@@ -317,9 +338,10 @@ export default function CreateSale() {
     customer.name.toLowerCase().includes(customerSearch.toLowerCase())
   );
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-    (product.barcode && product.barcode.includes(productSearch))
+  const filteredProducts = products.filter(
+    product =>
+      product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+      (product.barcode && product.barcode.includes(productSearch))
   );
 
   const isFormValid = items.length > 0 && getTotal() > 0;
@@ -332,7 +354,7 @@ export default function CreateSale() {
           style={styles.removeItemButton}
           onPress={() => removeItem(item.product_id)}
         >
-          <Ionicons name="close" size={16} color="#ef4444" />
+          <Ionicons name='close' size={16} color='#ef4444' />
         </TouchableOpacity>
       </View>
 
@@ -340,25 +362,29 @@ export default function CreateSale() {
         <View style={styles.quantityContainer}>
           <TouchableOpacity
             style={styles.quantityButton}
-            onPress={() => updateItemQuantity(item.product_id, item.quantity - 1)}
+            onPress={() =>
+              updateItemQuantity(item.product_id, item.quantity - 1)
+            }
           >
-            <Ionicons name="remove" size={16} color="#64748b" />
+            <Ionicons name='remove' size={16} color='#64748b' />
           </TouchableOpacity>
           <Text style={styles.quantityText}>{item.quantity}</Text>
           <TouchableOpacity
             style={styles.quantityButton}
-            onPress={() => updateItemQuantity(item.product_id, item.quantity + 1)}
+            onPress={() =>
+              updateItemQuantity(item.product_id, item.quantity + 1)
+            }
           >
-            <Ionicons name="add" size={16} color="#64748b" />
+            <Ionicons name='add' size={16} color='#64748b' />
           </TouchableOpacity>
         </View>
 
         <View style={styles.priceContainer}>
           <Text style={styles.unitPrice}>
-            {formatCurrency((item.unit_price).toString())}
+            {formatCurrency(item.unit_price.toString())}
           </Text>
           <Text style={styles.subtotal}>
-            {formatCurrency((item.subtotal).toString())}
+            {formatCurrency(item.subtotal.toString())}
           </Text>
         </View>
       </View>
@@ -366,351 +392,362 @@ export default function CreateSale() {
   );
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.headerSection}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="receipt-outline" size={48} color="#FF6B35" />
-          </View>
-          <Text style={styles.title}>Nova Venda</Text>
-          <Text style={styles.subtitle}>
-            Registre uma nova venda no sistema
-          </Text>
+    <WorkArea>
+      <View style={styles.headerSection}>
+        <View style={styles.iconContainer}>
+          <Ionicons name='receipt-outline' size={48} color='#FF6B35' />
+        </View>
+        <Text style={styles.title}>Nova Venda</Text>
+        <Text style={styles.subtitle}>Registre uma nova venda no sistema</Text>
+      </View>
+
+      <View style={styles.formSection}>
+        {/* Cliente */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='person-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Cliente</Text>
         </View>
 
-        <View style={styles.formSection}>
-          {/* Cliente */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="person-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Cliente</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Cliente</Text>
-            <TouchableOpacity
-              style={styles.selector}
-              onPress={() => setShowCustomerPicker(!showCustomerPicker)}
-              disabled={isLoading}
-            >
-              <Text style={[
-                styles.selectorText,
-                !customerId && styles.selectorPlaceholder
-              ]}>
-                {getSelectedCustomerName()}
-              </Text>
-              <Ionicons
-                name={showCustomerPicker ? "chevron-up" : "chevron-down"}
-                size={20}
-                color="#64748b"
-              />
-            </TouchableOpacity>
-
-            {showCustomerPicker && (
-              <View style={styles.pickerContainer}>
-                <Input
-                  placeholder="Buscar cliente..."
-                  value={customerSearch}
-                  onChangeText={setCustomerSearch}
-                  style={styles.searchInput}
-                />
-                <ScrollView style={styles.optionsList} nestedScrollEnabled>
-                  {filteredCustomers.map((customer) => (
-                    <TouchableOpacity
-                      key={customer.id}
-                      style={[
-                        styles.option,
-                        customerId === customer.id && styles.optionSelected
-                      ]}
-                      onPress={() => {
-                        setCustomerId(customer.id);
-                        setShowCustomerPicker(false);
-                        setCustomerSearch("");
-                      }}
-                    >
-                      <Text style={[
-                        styles.optionText,
-                        customerId === customer.id && styles.optionSelectedText
-                      ]}>
-                        {customer.name}
-                      </Text>
-                      {customer.email && (
-                        <Text style={styles.optionSubtext}>{customer.email}</Text>
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </View>
-
-          {/* Produtos */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="cube-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Produtos</Text>
-          </View>
-
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Cliente</Text>
           <TouchableOpacity
-            style={styles.addProductButton}
-            onPress={() => setShowProductPicker(!showProductPicker)}
+            style={styles.selector}
+            onPress={() => setShowCustomerPicker(!showCustomerPicker)}
             disabled={isLoading}
           >
-            <Ionicons name="add" size={20} color="#FF6B35" />
-            <Text style={styles.addProductText}>Adicionar Produto</Text>
+            <Text
+              style={[
+                styles.selectorText,
+                !customerId && styles.selectorPlaceholder,
+              ]}
+            >
+              {getSelectedCustomerName()}
+            </Text>
+            <Ionicons
+              name={showCustomerPicker ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color='#64748b'
+            />
           </TouchableOpacity>
 
-          {showProductPicker && (
+          {showCustomerPicker && (
             <View style={styles.pickerContainer}>
               <Input
-                placeholder="Buscar produto ou código de barras..."
-                value={productSearch}
-                onChangeText={setProductSearch}
+                placeholder='Buscar cliente...'
+                value={customerSearch}
+                onChangeText={setCustomerSearch}
                 style={styles.searchInput}
               />
               <ScrollView style={styles.optionsList} nestedScrollEnabled>
-                {filteredProducts.map((product) => {
-                  const availableStock = product.current_stock || product.initial_stock;
-                  return (
-                    <TouchableOpacity
-                      key={product.id}
+                {filteredCustomers.map(customer => (
+                  <TouchableOpacity
+                    key={customer.id}
+                    style={[
+                      styles.option,
+                      customerId === customer.id && styles.optionSelected,
+                    ]}
+                    onPress={() => {
+                      setCustomerId(customer.id);
+                      setShowCustomerPicker(false);
+                      setCustomerSearch('');
+                    }}
+                  >
+                    <Text
                       style={[
-                        styles.option,
-                        availableStock <= 0 && styles.optionDisabled
+                        styles.optionText,
+                        customerId === customer.id && styles.optionSelectedText,
                       ]}
-                      onPress={() => availableStock > 0 && addProductToSale(product)}
-                      disabled={availableStock <= 0}
                     >
-                      <View style={styles.productOption}>
-                        <Text style={[
-                          styles.optionText,
-                          availableStock <= 0 && styles.optionDisabledText
-                        ]}>
-                          {product.name}
-                        </Text>
-                        <Text style={[
-                          styles.productPrice,
-                          availableStock <= 0 && styles.optionDisabledText
-                        ]}>
-                          {formatCurrency((product.sale_price).toString())}
-                        </Text>
-                      </View>
-                      <Text style={[
-                        styles.productStock,
-                        availableStock <= 0 && styles.stockEmpty
-                      ]}>
-                        Estoque: {availableStock}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                      {customer.name}
+                    </Text>
+                    {customer.email && (
+                      <Text style={styles.optionSubtext}>{customer.email}</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
               </ScrollView>
             </View>
           )}
+        </View>
 
-          {items.length > 0 && (
-            <View style={styles.itemsList}>
-              <FlatList
-                data={items}
-                renderItem={renderSaleItem}
-                keyExtractor={(item) => item.product_id.toString()}
-                scrollEnabled={false}
-              />
-            </View>
-          )}
+        {/* Produtos */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='cube-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Produtos</Text>
+        </View>
 
-          {/* Pagamento */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="card-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Pagamento</Text>
-          </View>
+        <TouchableOpacity
+          style={styles.addProductButton}
+          onPress={() => setShowProductPicker(!showProductPicker)}
+          disabled={isLoading}
+        >
+          <Ionicons name='add' size={20} color='#FF6B35' />
+          <Text style={styles.addProductText}>Adicionar Produto</Text>
+        </TouchableOpacity>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Forma de Pagamento</Text>
-            <TouchableOpacity
-              style={styles.selector}
-              onPress={() => setShowPaymentPicker(!showPaymentPicker)}
-              disabled={isLoading}
-            >
-              <Text style={styles.selectorText}>
-                {getSelectedPaymentMethodLabel()}
-              </Text>
-              <Ionicons
-                name={showPaymentPicker ? "chevron-up" : "chevron-down"}
-                size={20}
-                color="#64748b"
-              />
-            </TouchableOpacity>
-
-            {showPaymentPicker && (
-              <View style={styles.pickerContainer}>
-                {PAYMENT_METHODS.map((method) => (
+        {showProductPicker && (
+          <View style={styles.pickerContainer}>
+            <Input
+              placeholder='Buscar produto ou código de barras...'
+              value={productSearch}
+              onChangeText={setProductSearch}
+              style={styles.searchInput}
+            />
+            <ScrollView style={styles.optionsList} nestedScrollEnabled>
+              {filteredProducts.map(product => {
+                const availableStock =
+                  product.current_stock || product.initial_stock;
+                return (
                   <TouchableOpacity
-                    key={method.value}
+                    key={product.id}
                     style={[
                       styles.option,
-                      paymentMethod === method.value && styles.optionSelected
+                      availableStock <= 0 && styles.optionDisabled,
                     ]}
-                    onPress={() => {
-                      setPaymentMethod(method.value);
-                      setShowPaymentPicker(false);
-                    }}
+                    onPress={() =>
+                      availableStock > 0 && addProductToSale(product)
+                    }
+                    disabled={availableStock <= 0}
                   >
-                    <Text style={[
-                      styles.optionText,
-                      paymentMethod === method.value && styles.optionSelectedText
-                    ]}>
-                      {method.label}
+                    <View style={styles.productOption}>
+                      <Text
+                        style={[
+                          styles.optionText,
+                          availableStock <= 0 && styles.optionDisabledText,
+                        ]}
+                      >
+                        {product.name}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.productPrice,
+                          availableStock <= 0 && styles.optionDisabledText,
+                        ]}
+                      >
+                        {formatCurrency(product.sale_price.toString())}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.productStock,
+                        availableStock <= 0 && styles.stockEmpty,
+                      ]}
+                    >
+                      Estoque: {availableStock}
                     </Text>
                   </TouchableOpacity>
-                ))}
-              </View>
-            )}
+                );
+              })}
+            </ScrollView>
           </View>
+        )}
 
-          {paymentMethod === 'installment' && (
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Número de Parcelas</Text>
-              <Input
-                placeholder="Número de parcelas"
-                value={installments}
-                onChangeText={(text) => setInstallments(formatNumber(text))}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType="numeric"
-              />
-            </View>
-          )}
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{paymentMethod === 'installment' ? 'Data do Primeiro Vencimento' : 'Data do Pagamento'}</Text>
-            <TouchableOpacity
-              style={styles.selector}
-              onPress={() => setShowFirstDuePicker(true)}
-              disabled={isLoading}
-            >
-              <Text style={styles.selectorText}>
-                {firstDueDate.toLocaleDateString("pt-BR")}
-              </Text>
-              <Ionicons name="calendar-outline" size={20} color="#64748b" />
-            </TouchableOpacity>
-
-            {showFirstDuePicker && (
-              <DateTimePicker
-                value={paymentMethod === 'installment' ? firstDueDatePlusOneMonth : firstDueDate}
-                mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={(event, date) => {
-                  setShowFirstDuePicker(false);
-                  if (date) setFirstDueDate(date);
-                }}
-              />
-            )}
-          </View>
-
-
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Desconto</Text>
-            <Input
-              placeholder="R$ 0,00"
-              value={discount}
-              onChangeText={(text) => setDiscount(formatCurrency(text))}
-              editable={!isLoading}
-              style={styles.input}
-              keyboardType="numeric"
+        {items.length > 0 && (
+          <View style={styles.itemsList}>
+            <FlatList
+              data={items}
+              renderItem={renderSaleItem}
+              keyExtractor={item => item.product_id.toString()}
+              scrollEnabled={false}
             />
           </View>
+        )}
 
-          {/* Resumo */}
-          {items.length > 0 && (
-            <View style={styles.summaryContainer}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Subtotal:</Text>
-                <Text style={styles.summaryValue}>
-                  {formatCurrency((getSubtotal()).toString())}
-                </Text>
-              </View>
-              {getDiscountValue() > 0 && (
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Desconto:</Text>
-                  <Text style={[styles.summaryValue, styles.discountValue]}>
-                    -{formatCurrency((getDiscountValue()).toString())}
-                  </Text>
-                </View>
-              )}
-              <View style={[styles.summaryRow, styles.totalRow]}>
-                <Text style={styles.totalLabel}>Total:</Text>
-                <Text style={styles.totalValue}>
-                  {formatCurrency((getTotal()).toString())}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {/* Observações */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="document-text-outline" size={20} color="#FF6B35" />
-            <Text style={styles.sectionTitle}>Observações</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Observações</Text>
-            <Input
-              placeholder="Informações adicionais sobre a venda (opcional)"
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={3}
-              editable={!isLoading}
-              style={[styles.input, styles.textArea]}
-            />
-          </View>
-
-          <View style={styles.infoCard}>
-            <Ionicons name="information-circle-outline" size={20} color="#3b82f6" />
-            <Text style={styles.infoText}>
-              Adicione produtos à venda para continuar. O estoque será atualizado automaticamente após a conclusão.
-              {'\n\n'}💡 Para pagamento parcelado, o sistema gerará as parcelas automaticamente.
-            </Text>
-          </View>
+        {/* Pagamento */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='card-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Pagamento</Text>
         </View>
 
-        <View style={styles.actionButtons}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Forma de Pagamento</Text>
           <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={handleCancel}
+            style={styles.selector}
+            onPress={() => setShowPaymentPicker(!showPaymentPicker)}
             disabled={isLoading}
           >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
+            <Text style={styles.selectorText}>
+              {getSelectedPaymentMethodLabel()}
+            </Text>
+            <Ionicons
+              name={showPaymentPicker ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color='#64748b'
+            />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.saveButton, (!isFormValid || isLoading) && styles.saveButtonDisabled]}
-            onPress={handleStore}
-            disabled={!isFormValid || isLoading}
-          >
-            {isLoading ? (
-              <>
-                <ActivityIndicator size="small" color="#ffffff" />
-                <Text style={styles.saveButtonText}>Salvando...</Text>
-              </>
-            ) : (
-              <>
-                <Ionicons name="checkmark-outline" size={16} color="#ffffff" />
-                <Text style={styles.saveButtonText}>Finalizar Venda</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          {showPaymentPicker && (
+            <View style={styles.pickerContainer}>
+              {PAYMENT_METHODS.map(method => (
+                <TouchableOpacity
+                  key={method.value}
+                  style={[
+                    styles.option,
+                    paymentMethod === method.value && styles.optionSelected,
+                  ]}
+                  onPress={() => {
+                    setPaymentMethod(method.value);
+                    setShowPaymentPicker(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      paymentMethod === method.value &&
+                        styles.optionSelectedText,
+                    ]}
+                  >
+                    {method.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+        {paymentMethod === 'installment' && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Número de Parcelas</Text>
+            <Input
+              placeholder='Número de parcelas'
+              value={installments}
+              onChangeText={text => setInstallments(formatNumber(text))}
+              editable={!isLoading}
+              style={styles.input}
+              keyboardType='numeric'
+            />
+          </View>
+        )}
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>
+            {paymentMethod === 'installment'
+              ? 'Data do Primeiro Vencimento'
+              : 'Data do Pagamento'}
+          </Text>
+          <TouchableOpacity
+            style={styles.selector}
+            onPress={() => setShowFirstDuePicker(true)}
+            disabled={isLoading}
+          >
+            <Text style={styles.selectorText}>
+              {firstDueDate.toLocaleDateString('pt-BR')}
+            </Text>
+            <Ionicons name='calendar-outline' size={20} color='#64748b' />
+          </TouchableOpacity>
+
+          {showFirstDuePicker && (
+            <DateTimePicker
+              value={
+                paymentMethod === 'installment'
+                  ? firstDueDatePlusOneMonth
+                  : firstDueDate
+              }
+              mode='date'
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, date) => {
+                setShowFirstDuePicker(false);
+                if (date) setFirstDueDate(date);
+              }}
+            />
+          )}
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Desconto</Text>
+          <Input
+            placeholder='R$ 0,00'
+            value={discount}
+            onChangeText={text => setDiscount(formatCurrency(text))}
+            editable={!isLoading}
+            style={styles.input}
+            keyboardType='numeric'
+          />
+        </View>
+
+        {/* Resumo */}
+        {items.length > 0 && (
+          <View style={styles.summaryContainer}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal:</Text>
+              <Text style={styles.summaryValue}>
+                {formatCurrency(getSubtotal().toString())}
+              </Text>
+            </View>
+            {getDiscountValue() > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Desconto:</Text>
+                <Text style={[styles.summaryValue, styles.discountValue]}>
+                  -{formatCurrency(getDiscountValue().toString())}
+                </Text>
+              </View>
+            )}
+            <View style={[styles.summaryRow, styles.totalRow]}>
+              <Text style={styles.totalLabel}>Total:</Text>
+              <Text style={styles.totalValue}>
+                {formatCurrency(getTotal().toString())}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Observações */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='document-text-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Observações</Text>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Observações</Text>
+          <Input
+            placeholder='Informações adicionais sobre a venda (opcional)'
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            numberOfLines={3}
+            editable={!isLoading}
+            style={[styles.input, styles.textArea]}
+          />
+        </View>
+
+        <View style={styles.infoCard}>
+          <Ionicons
+            name='information-circle-outline'
+            size={20}
+            color='#3b82f6'
+          />
+          <Text style={styles.infoText}>
+            Adicione produtos à venda para continuar. O estoque será atualizado
+            automaticamente após a conclusão.
+            {'\n\n'}💡 Para pagamento parcelado, o sistema gerará as parcelas
+            automaticamente.
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[
+            styles.saveButton,
+            (!isFormValid || isLoading) && styles.saveButtonDisabled,
+          ]}
+          onPress={handleStore}
+          disabled={!isFormValid || isLoading}
+        >
+          {isLoading ? (
+            <>
+              <ActivityIndicator size='small' color='#ffffff' />
+              <Text style={styles.saveButtonText}>Salvando...</Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
+              <Text style={styles.saveButtonText}>Finalizar Venda</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    </WorkArea>
   );
 }
 
