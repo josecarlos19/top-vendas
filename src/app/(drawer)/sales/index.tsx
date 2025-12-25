@@ -170,43 +170,8 @@ export default function SalesList() {
     loadSales(1, false);
   };
 
-  const handleEdit = (sale: Sale) => {
+  const pushToSale = (sale: Sale) => {
     router.push(`/sales/${sale.id}/edit`);
-  };
-
-  const handleDelete = async (id: number) => {
-    const sale = sales.find(s => s.id === id);
-    const saleIdentifier = sale?.customer_name
-      ? `venda de ${sale.customer_name}`
-      : `venda #${id}`;
-
-    Alert.alert(
-      'Confirmar exclusão',
-      `Tem certeza que deseja excluir a ${saleIdentifier}? Esta ação não pode ser desfeita e o estoque será revertido.`,
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await saleDatabase.remove(id);
-              setSales(prev => prev.filter(s => s.id !== id));
-              setTotalCount(prev => prev - 1);
-
-              Alert.alert('Sucesso', 'Venda excluída com sucesso!');
-            } catch (error) {
-              console.error('Error deleting sale:', error);
-              loadSales(1, false);
-              Alert.alert('Erro', 'Falha ao excluir venda. Tente novamente.');
-            }
-          },
-        },
-      ]
-    );
   };
 
   useFocusEffect(
@@ -253,7 +218,7 @@ export default function SalesList() {
   const renderSale = ({ item }: { item: Sale }) => (
     <TouchableOpacity
       style={styles.saleCard}
-      onPress={() => handleEdit(item)}
+      onPress={() => pushToSale(item)}
       activeOpacity={0.7}
     >
       <View style={styles.saleHeader}>
@@ -274,22 +239,6 @@ export default function SalesList() {
             </Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={styles.moreButton}
-          onPress={() => {
-            Alert.alert('Ações', 'Escolha uma ação:', [
-              { text: 'Cancelar', style: 'cancel' },
-              { text: 'Editar', onPress: () => handleEdit(item) },
-              {
-                text: 'Excluir',
-                style: 'destructive',
-                onPress: () => handleDelete(item.id),
-              },
-            ]);
-          }}
-        >
-          <Ionicons name='ellipsis-vertical' size={16} color='#64748b' />
-        </TouchableOpacity>
       </View>
 
       <View style={styles.saleContent}>
