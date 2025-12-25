@@ -70,6 +70,7 @@ export default function CreateSale() {
     DateTime.now().plus({ months: 1 }).toJSDate()
   );
   const [showFirstDuePicker, setShowFirstDuePicker] = useState(false);
+  const [showSaleDatePicker, setShowSalePicker] = useState(false);
 
   const saleDatabase = useSaleDatabase();
   const customerDatabase = useCustomerDatabase();
@@ -528,38 +529,58 @@ export default function CreateSale() {
         )}
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>
-            {paymentMethod === 'installment'
-              ? 'Data do Primeiro Vencimento'
-              : 'Data do Pagamento'}
-          </Text>
+          <Text style={styles.label}>Data da Venda</Text>
           <TouchableOpacity
             style={styles.selector}
-            onPress={() => setShowFirstDuePicker(true)}
+            onPress={() => setShowSalePicker(true)}
             disabled={isLoading}
           >
             <Text style={styles.selectorText}>
-              {firstDueDate.toLocaleDateString('pt-BR')}
+              {saleDate.toLocaleDateString('pt-BR')}
             </Text>
             <Ionicons name='calendar-outline' size={20} color='#64748b' />
           </TouchableOpacity>
 
-          {showFirstDuePicker && (
+          {showSaleDatePicker && (
             <DateTimePicker
-              value={
-                paymentMethod === 'installment'
-                  ? firstDueDatePlusOneMonth
-                  : firstDueDate
-              }
+              value={saleDate}
               mode='date'
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               onChange={(event, date) => {
-                setShowFirstDuePicker(false);
-                if (date) setFirstDueDate(date);
+                setShowSalePicker(false);
+                if (date) setSaleDate(date);
               }}
             />
           )}
         </View>
+
+        {paymentMethod === 'installment' && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Data do Primeiro Vencimento</Text>
+            <TouchableOpacity
+              style={styles.selector}
+              onPress={() => setShowFirstDuePicker(true)}
+              disabled={isLoading}
+            >
+              <Text style={styles.selectorText}>
+                {firstDueDate.toLocaleDateString('pt-BR')}
+              </Text>
+              <Ionicons name='calendar-outline' size={20} color='#64748b' />
+            </TouchableOpacity>
+
+            {showFirstDuePicker && (
+              <DateTimePicker
+                value={firstDueDate}
+                mode='date'
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(_, date) => {
+                  setShowFirstDuePicker(false);
+                  if (date) setFirstDueDate(date);
+                }}
+              />
+            )}
+          </View>
+        )}
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Desconto</Text>

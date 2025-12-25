@@ -74,7 +74,9 @@ interface Sale {
   notes?: string;
   items?: any[];
   first_due_date?: string;
+  first_installment_id: number;
   installments?: Installment[];
+  payment_date?: string;
 }
 
 const PAYMENT_METHODS = [
@@ -91,7 +93,7 @@ const STATUS_OPTIONS = [
 
 export default function EditSale() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [sale, setSale] = useState<Sale | null>(null);
+  const [sale, setSale] = useState<Sale>();
   const [customerId, setCustomerId] = useState<number | undefined>();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -100,7 +102,6 @@ export default function EditSale() {
   const [paymentMethod, setPaymentMethod] = useState('money');
   const [installments, setInstallments] = useState('1');
   const [status, setStatus] = useState('completed');
-  const [saleDate, setSaleDate] = useState(new Date());
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -109,7 +110,7 @@ export default function EditSale() {
   const [selectedInstallment, setSelectedInstallment] =
     useState<Installment | null>(null);
   const [showInstallmentModal, setShowInstallmentModal] = useState(false);
-  const [paymentDate, setPaymentDate] = useState(new Date());
+  const [paymentDate, setPaymentDate] = useState<Date | null>(null);
   const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
 
   const saleDatabase = useSaleDatabase();
@@ -129,7 +130,6 @@ export default function EditSale() {
     try {
       setIsLoading(true);
       const foundSale = (await saleDatabase.show(+id)) as Sale | null;
-
       if (!foundSale) {
         Alert.alert('Erro', 'Venda não encontrada', [
           { text: 'OK', onPress: () => router.back() },
@@ -149,11 +149,13 @@ export default function EditSale() {
           : '1'
       );
       setStatus(foundSale.status);
-      setSaleDate(new Date(foundSale.sale_date));
       if ((foundSale as any).first_due_date) {
         setFirstDueDate(new Date((foundSale as any).first_due_date));
       } else {
         setFirstDueDate(new Date(foundSale.sale_date));
+      }
+      if ((foundSale as any).payment_date) {
+        setPaymentDate(new Date((foundSale as any).payment_date));
       }
       setNotes(foundSale.notes || '');
 
@@ -209,10 +211,6 @@ export default function EditSale() {
     }
   };
 
-  const formatNumber = (text: string) => {
-    return text.replace(/\D/g, '');
-  };
-
   const getCurrencyValue = (formattedValue: string): number => {
     if (!formattedValue) return 0;
     const cleanValue = formattedValue.replace(/[R$\s.]/g, '').replace(',', '.');
@@ -240,7 +238,7 @@ export default function EditSale() {
       await installmentDatabase.updateStatus({
         id: selectedInstallment.id,
         status,
-        payment_date: paymentDate.toISOString(),
+        payment_date: paymentDate!.toISOString(),
       });
 
       Alert.alert(
@@ -260,7 +258,7 @@ export default function EditSale() {
                       status,
                       payment_date:
                         status === 'completed'
-                          ? paymentDate.toISOString()
+                          ? paymentDate!.toISOString()
                           : undefined,
                     }
                   : inst
@@ -274,6 +272,16 @@ export default function EditSale() {
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível atualizar a parcela.');
     }
+  };
+
+  const handlePaymentDateChange = async (date: Date) => {
+    setPaymentDate(date);
+    await installmentDatabase.updateStatus({
+      id: sale!.first_installment_id,
+      status: 'completed',
+      payment_date: date.toISOString(),
+    });
+    await loadSale();
   };
 
   const validateForm = () => {
@@ -307,7 +315,6 @@ export default function EditSale() {
         id: sale.id,
         status: status as any,
         notes: notes.trim() || undefined,
-        first_due_date: firstDueDate,
       });
 
       Alert.alert('Sucesso', 'Venda atualizada com sucesso!', [
@@ -321,64 +328,6 @@ export default function EditSale() {
       Alert.alert('Erro', 'Falha ao atualizar venda. Tente novamente.');
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleDelete = () => {
-    if (!sale) return;
-
-    Alert.alert(
-      'Confirmar Exclusão',
-      `Deseja realmente excluir esta venda? Esta ação não pode ser desfeita e o estoque será revertido.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: confirmDelete,
-        },
-      ]
-    );
-  };
-
-  const confirmDelete = async () => {
-    if (!sale) return;
-
-    try {
-      await saleDatabase.remove(sale.id);
-      Alert.alert('Sucesso', 'Venda excluída com sucesso!', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (error) {
-      console.error('Error deleting sale:', error);
-      Alert.alert('Erro', 'Falha ao excluir venda');
-    }
-  };
-
-  const handleCancel = () => {
-    if (!sale) return;
-
-    const hasChanges =
-      status !== sale.status ||
-      notes !== (sale.notes || '') ||
-      firstDueDate.getTime() !==
-        new Date(sale.first_due_date || sale.sale_date).getTime();
-
-    if (hasChanges) {
-      Alert.alert(
-        'Descartar alterações?',
-        'Você tem alterações não salvas. Deseja realmente sair?',
-        [
-          { text: 'Continuar editando', style: 'cancel' },
-          {
-            text: 'Descartar',
-            style: 'destructive',
-            onPress: () => router.back(),
-          },
-        ]
-      );
-    } else {
-      router.back();
     }
   };
 
@@ -413,11 +362,6 @@ export default function EditSale() {
   }
 
   const isFormValid = items.length > 0 && getTotal() > 0;
-
-  const customerOptions = customers.map(customer => ({
-    label: customer.name,
-    value: customer.id,
-  }));
 
   const renderSaleItem = ({ item }: { item: SaleItem }) => (
     <View style={styles.saleItem}>
@@ -574,35 +518,65 @@ export default function EditSale() {
             </View>
           )}
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>
-            {paymentMethod === 'installment'
-              ? 'Data do Primeiro Vencimento'
-              : 'Data do Pagamento'}
-          </Text>
-          <TouchableOpacity
-            style={styles.selector}
-            onPress={() => setShowFirstDuePicker(true)}
-            disabled={isSaving}
-          >
-            <Text style={styles.selectorText}>
-              {firstDueDate.toLocaleDateString('pt-BR')}
-            </Text>
-            <Ionicons name='calendar-outline' size={20} color='#64748b' />
-          </TouchableOpacity>
+        {paymentMethod === 'installment' && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Data do Primeiro Vencimento</Text>
+            <TouchableOpacity
+              style={[styles.selector, styles.disabledField]}
+              onPress={() => setShowFirstDuePicker(true)}
+              disabled
+            >
+              <Text style={styles.selectorText}>
+                {firstDueDate.toLocaleDateString('pt-BR')}
+              </Text>
+              <Ionicons name='calendar-outline' size={20} color='#64748b' />
+            </TouchableOpacity>
 
-          {showFirstDuePicker && (
-            <DateTimePicker
-              value={firstDueDate}
-              mode='date'
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, date) => {
-                setShowFirstDuePicker(false);
-                if (date) setFirstDueDate(date);
-              }}
-            />
-          )}
-        </View>
+            {showFirstDuePicker && (
+              <DateTimePicker
+                value={firstDueDate}
+                mode='date'
+                disabled
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event, date) => {
+                  setShowFirstDuePicker(false);
+                  if (date) setFirstDueDate(date);
+                }}
+              />
+            )}
+          </View>
+        )}
+
+        {paymentMethod !== 'installment' && (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Data do Pagamento</Text>
+            <TouchableOpacity
+              style={[styles.selector]}
+              onPress={() => setShowPaymentDatePicker(true)}
+            >
+              <Text style={styles.selectorText}>
+                {paymentDate
+                  ? paymentDate.toLocaleDateString('pt-BR')
+                  : 'Selecione a data'}
+              </Text>
+              <Ionicons name='calendar-outline' size={20} color='#64748b' />
+            </TouchableOpacity>
+
+            {showPaymentDatePicker && (
+              <DateTimePicker
+                value={paymentDate ?? new Date()}
+                mode='date'
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event, date) => {
+                  setShowPaymentDatePicker(false);
+                  if (date) {
+                    handlePaymentDateChange(date);
+                  }
+                }}
+              />
+            )}
+          </View>
+        )}
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Desconto</Text>
@@ -611,7 +585,6 @@ export default function EditSale() {
           </View>
         </View>
 
-        {/* Resumo */}
         {items.length > 0 && (
           <View style={styles.summaryContainer}>
             <View style={styles.summaryRow}>
@@ -637,7 +610,6 @@ export default function EditSale() {
           </View>
         )}
 
-        {/* Observações */}
         <View style={styles.sectionHeader}>
           <Ionicons name='document-text-outline' size={20} color='#FF6B35' />
           <Text style={styles.sectionTitle}>Observações</Text>
@@ -713,20 +685,22 @@ export default function EditSale() {
                   )}
                 </Text>
 
-                <Text style={styles.modalLabel}>Data de pagamento</Text>
+                <Text style={styles.modalLabel}>Data do pagamento</Text>
                 <TouchableOpacity
                   style={styles.dateSelector}
                   onPress={() => setShowPaymentDatePicker(true)}
                 >
                   <Text style={styles.dateText}>
-                    {paymentDate.toLocaleDateString('pt-BR')}
+                    {paymentDate
+                      ? paymentDate.toLocaleDateString('pt-BR')
+                      : new Date().toLocaleDateString('pt-BR')}
                   </Text>
                   <Ionicons name='calendar-outline' size={20} color='#64748b' />
                 </TouchableOpacity>
 
                 {showPaymentDatePicker && (
                   <DateTimePicker
-                    value={paymentDate}
+                    value={paymentDate ? paymentDate : new Date()}
                     mode='date'
                     display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                     onChange={(e, date) => {
