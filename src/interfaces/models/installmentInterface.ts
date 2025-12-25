@@ -12,6 +12,6 @@ export interface InstallmentItemInterface {
 
 export interface InstallmenteStatusUpdateInterface {
   id: number;
-  status: 'completed' | 'pending';
+  status: 'completed' | 'pending' | 'cancelled';
   payment_date: string;
 }
