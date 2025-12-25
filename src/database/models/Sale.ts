@@ -117,22 +117,40 @@ export function useSaleDatabase() {
           sales.*,
           customers.name as customer_name,
           customers.email as customer_email,
-          customers.phone as customer_phone,
-          min(installments.due_date) as first_due_date
+          customers.phone as customer_phone
         FROM sales
         LEFT JOIN customers ON sales.customer_id = customers.id
-        JOIN installments ON installments.sale_id = sales.id
         WHERE sales.id = ? AND sales.deleted_at IS NULL`,
         [id]
       )) as
         | (SaleModelInterface & {
-            customer_name?: string;
-            customer_email?: string;
-            customer_phone?: string;
-          })
+          customer_name?: string;
+          customer_email?: string;
+          customer_phone?: string;
+        })
         | null;
 
-      if (!sale) return null;
+      if (!sale) {
+        return null
+      };
+
+      const firstInstallment = (await database.getFirstAsync(
+        `SELECT
+          id,
+          due_date,
+          payment_date
+        FROM installments
+        WHERE sale_id = ?
+        ORDER BY number ASC
+        LIMIT 1`,
+        [id]
+      )) as
+        | {
+          id: number;
+          due_date: string;
+          payment_date?: string;
+        }
+        | null;
 
       const items = await database.getAllAsync(
         `SELECT
@@ -174,6 +192,9 @@ export function useSaleDatabase() {
 
       return {
         ...sale,
+        first_installment_id: firstInstallment?.id,
+        due_date: firstInstallment?.due_date,
+        payment_date: firstInstallment?.payment_date,
         items,
         installments,
       };
@@ -288,48 +309,6 @@ export function useSaleDatabase() {
   async function update(params: SaleUpdateInterface) {
     return await database.withTransactionAsync(async () => {
       try {
-        const currentSale = (await database.getFirstAsync(
-          'SELECT installments FROM sales WHERE id = ? AND deleted_at IS NULL',
-          [params.id]
-        )) as { installments: number } | null;
-
-        if (currentSale && params.first_due_date) {
-          const oldDueDateRaw = (await database.getFirstAsync(
-            'SELECT due_date FROM installments WHERE sale_id = ? AND number = 1 order BY id asc LIMIT 1',
-            [params.id]
-          )) as { due_date: string } | null;
-          const newSaleDate = params.first_due_date;
-
-          if (!oldDueDateRaw) {
-            throw new Error('No installments found for this sale');
-          }
-          const oldDueDate: Date = DateTime.fromISO(
-            oldDueDateRaw.due_date
-          ).toJSDate();
-
-          if (oldDueDate.getTime() !== newSaleDate.getTime()) {
-            const pendingInstallments = (await database.getAllAsync(
-              "SELECT id, number FROM installments WHERE sale_id = ? AND status = 'pending' ORDER BY number",
-              [params.id]
-            )) as { id: number; number: number }[];
-
-            for (const installment of pendingInstallments) {
-              const newDueDate = DateTime.fromJSDate(newSaleDate)
-                .plus({ months: installment.number })
-                .toISODate();
-
-              const updateInstallmentStatement = await database.prepareAsync(
-                'UPDATE installments SET due_date = ? WHERE id = ?'
-              );
-              await updateInstallmentStatement.executeAsync(
-                newDueDate,
-                installment.id
-              );
-              await updateInstallmentStatement.finalizeAsync();
-            }
-          }
-        }
-
         const saleStatement = await database.prepareAsync(
           `UPDATE sales SET
             status = COALESCE(?, status),
@@ -344,7 +323,7 @@ export function useSaleDatabase() {
           params.id
         );
 
-        if(params.status === 'completed'){
+        if (params.status === 'completed') {
           const updateInstallmentsStatement = await database.prepareAsync(
             `UPDATE installments SET
               payment_date = CURRENT_DATE,
@@ -356,13 +335,28 @@ export function useSaleDatabase() {
           await updateInstallmentsStatement.finalizeAsync();
         }
 
-        if(params.status === 'cancelled'){
-          await destroyStockMovementsBySaleId(database, params.id);
-          const deleteInstallmentsStatement = await database.prepareAsync(
-            `DELETE FROM installments WHERE sale_id = ?`
+        if (params.status === 'pending') {
+          const updateInstallmentsStatement = await database.prepareAsync(
+            `UPDATE installments SET
+              payment_date = NULL,
+              status = 'pending',
+              updated_at = CURRENT_TIMESTAMP
+            WHERE sale_id = ? AND status = 'completed'`
           );
-          await deleteInstallmentsStatement.executeAsync(params.id);
-          await deleteInstallmentsStatement.finalizeAsync();
+          await updateInstallmentsStatement.executeAsync(params.id);
+          await updateInstallmentsStatement.finalizeAsync();
+        }
+
+        if (params.status === 'cancelled') {
+          await destroyStockMovementsBySaleId(database, params.id);
+          const updateInstallmentsStatement = await database.prepareAsync(
+            `UPDATE installments SET
+              status = 'cancelled',
+              updated_at = CURRENT_TIMESTAMP
+            WHERE sale_id = ? AND status = 'pending'`
+          );
+          await updateInstallmentsStatement.executeAsync(params.id);
+          await updateInstallmentsStatement.finalizeAsync();
         }
 
         await saleStatement.finalizeAsync();
