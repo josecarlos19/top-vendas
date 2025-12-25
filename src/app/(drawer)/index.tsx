@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import StatCard from '@/components/StatCard';
 import QuickAction from '@/components/QuickActions';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useReportDatabase } from '@/database/models/Report';
 
 export default function Index() {
-  const stats = [
+  const reportDatabase = useReportDatabase();
+  const [stats, setStats] = useState([
     {
       title: 'Produtos',
-      value: '127',
+      value: 0,
       icon: 'cube-outline' as keyof typeof Ionicons.glyphMap,
       color: '#3b82f6',
       backgroundColor: '#ffffff',
@@ -18,7 +20,7 @@ export default function Index() {
     },
     {
       title: 'Vendas Hoje',
-      value: '43',
+      value: 0,
       icon: 'trending-up-outline' as keyof typeof Ionicons.glyphMap,
       color: '#22c55e',
       backgroundColor: '#ffffff',
@@ -26,7 +28,7 @@ export default function Index() {
     },
     {
       title: 'Clientes',
-      value: '89',
+      value: 0,
       icon: 'people-outline' as keyof typeof Ionicons.glyphMap,
       color: '#f59e0b',
       backgroundColor: '#ffffff',
@@ -34,13 +36,13 @@ export default function Index() {
     },
     {
       title: 'Receita',
-      value: 'R$ 2.4k',
+      value: 0,
       icon: 'cash-outline' as keyof typeof Ionicons.glyphMap,
       color: '#ec4899',
       backgroundColor: '#ffffff',
       route: '/reports/revenue',
     },
-  ];
+  ]);
 
   const quickActions = [
     {
@@ -69,6 +71,27 @@ export default function Index() {
     },
   ];
 
+  useEffect(() => {
+    async function fetchReportData() {
+      try {
+        const reportData = await reportDatabase.index();
+        setStats(prevStats => [
+          { ...prevStats[0], value: reportData.totalProducts },
+          { ...prevStats[1], value: reportData.salesToday },
+          { ...prevStats[2], value: reportData.totalCustomers },
+          {
+            ...prevStats[3],
+            value: reportData.revenueToday,
+          },
+        ]);
+      } catch (error) {
+        console.error('Failed to fetch report data:', error);
+      }
+    }
+
+    fetchReportData();
+  }, []);
+
   return (
     <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -87,7 +110,15 @@ export default function Index() {
 
           <View style={styles.statsGrid}>
             {stats.map((stat, index) => (
-              <StatCard key={index} {...stat} />
+              <StatCard
+                key={index}
+                {...stat}
+                value={
+                  stat.title === 'Receita'
+                    ? `R$ ${Number(stat.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                    : String(stat.value)
+                }
+              />
             ))}
           </View>
 
