@@ -10,16 +10,13 @@ export function useInstallmentDatabase() {
     payment_date,
   }: InstallmenteStatusUpdateInterface) {
     try {
-      // Atualiza o status da parcela e obtém informações da venda em uma única transação
       await database.withTransactionAsync(async () => {
-        // Atualiza a parcela
         const updateStatement = await database.prepareAsync(
           'UPDATE installments SET status = ?, payment_date = ? WHERE id = ?'
         );
         await updateStatement.executeAsync(status!, payment_date!, id!);
         await updateStatement.finalizeAsync();
 
-        // Obtém a venda e conta parcelas pendentes em uma única query
         const saleInfo = (await database.getFirstAsync(
           `
           SELECT
@@ -40,7 +37,6 @@ export function useInstallmentDatabase() {
 
         if (!saleInfo) return;
 
-        // Determina o novo status da venda
         const newSaleStatus =
           saleInfo.pending_count === 0 && status === 'completed'
             ? 'completed'
@@ -48,7 +44,6 @@ export function useInstallmentDatabase() {
               ? 'pending'
               : null;
 
-        // Atualiza a venda apenas se o status mudou
         if (newSaleStatus && newSaleStatus !== saleInfo.sale_status) {
           const updateSaleStatement = await database.prepareAsync(
             'UPDATE sales SET status = ? WHERE id = ?'
