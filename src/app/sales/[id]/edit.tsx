@@ -112,6 +112,7 @@ export default function EditSale() {
   const [showInstallmentModal, setShowInstallmentModal] = useState(false);
   const [paymentDate, setPaymentDate] = useState<Date | null>(null);
   const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
+  const [saleDate, setSaleDate] = useState<Date | null>(null);
 
   const saleDatabase = useSaleDatabase();
   const installmentDatabase = useInstallmentDatabase();
@@ -138,6 +139,9 @@ export default function EditSale() {
       }
 
       setSale(foundSale);
+      setSaleDate(
+        foundSale!.sale_date ? new Date(foundSale!.sale_date) : new Date()
+      );
       setCustomerId(foundSale.customer_id);
       setDiscount(
         foundSale.discount ? formatCurrency(foundSale.discount.toString()) : ''
@@ -459,6 +463,19 @@ export default function EditSale() {
                 paymentMethod}
             </Text>
           </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Data da Venda</Text>
+          <TouchableOpacity
+            style={[styles.selector, styles.disabledField]}
+            disabled
+          >
+            <Text style={[styles.selectorText]}>
+              {saleDate!.toLocaleDateString('pt-BR')}
+            </Text>
+            <Ionicons name='calendar-outline' size={20} color='#64748b' />
+          </TouchableOpacity>
         </View>
 
         {paymentMethod === 'installment' && (
