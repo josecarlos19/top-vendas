@@ -38,7 +38,6 @@ export interface SaleUpdateInterface extends BaseModelInterface {
   id: number;
   status?: 'pending' | 'completed' | 'cancelled';
   notes?: string;
-  first_due_date?: Date;
 }
 
 export interface SaleSearchInterface {
