@@ -74,6 +74,11 @@ function CustomDrawerContent(props: any) {
       name: 'Relatórios',
       route: '/(drawer)/reports-list',
       icon: 'stats-chart-outline' as keyof typeof Ionicons.glyphMap,
+    },
+    {
+      name: 'Backup',
+      route: '/(drawer)/backup',
+      icon: 'cloud-outline' as keyof typeof Ionicons.glyphMap,
     }
   ];
 
@@ -275,6 +280,14 @@ export default function DrawerLayout() {
           options={{
             title: 'Relatórios',
             headerTitle: 'Relatórios',
+          }}
+        />
+
+        <Drawer.Screen
+          name='backup'
+          options={{
+            title: 'Backup',
+            headerTitle: 'Backup & Restauração',
           }}
         />
       </Drawer>
