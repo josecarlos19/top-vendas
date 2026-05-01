@@ -176,14 +176,7 @@ export function useSaleDatabase() {
 
       const installments = await database.getAllAsync(
         `SELECT
-          id,
-          number,
-          amount,
-          due_date,
-          payment_date,
-          paid_amount,
-          status,
-          notes
+          *
         FROM installments
         WHERE sale_id = ?
         ORDER BY number`,
@@ -209,9 +202,15 @@ export function useSaleDatabase() {
       try {
         const saleStatement = await database.prepareAsync(
           `INSERT INTO sales (
-            customer_id, subtotal, discount, total,
-            payment_method, installments, status, sale_date, notes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            customer_id,
+            subtotal,
+            discount,
+            total,
+            payment_method,
+            status,
+            sale_date,
+            notes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
         );
 
         const saleResult = await saleStatement.executeAsync(
@@ -220,7 +219,6 @@ export function useSaleDatabase() {
           params.discount || 0,
           params.total,
           params.payment_method,
-          params.installments || 1,
           params.status || 'pending',
           params.sale_date
             ? params.sale_date.toISOString()
