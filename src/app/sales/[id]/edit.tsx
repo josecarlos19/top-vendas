@@ -434,7 +434,7 @@ export default function EditSale() {
 
         {/* Produtos */}
         <View style={styles.sectionHeader}>
-          <Ionicons name='cube-outline' size={20} color='#FF6B35' />
+          <Ionicons name='bag-outline' size={20} color='#FF6B35' />
           <Text style={styles.sectionTitle}>Produtos</Text>
         </View>
 

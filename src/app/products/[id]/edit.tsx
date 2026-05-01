@@ -320,7 +320,7 @@ export default function EditProduct() {
       />
       <View style={styles.headerSection}>
         <View style={styles.iconContainer}>
-          <Ionicons name='cube-outline' size={48} color='#FF6B35' />
+          <Ionicons name='bag-outline' size={48} color='#FF6B35' />
         </View>
         <Text style={styles.title}>Editar Produto</Text>
         <Text style={styles.subtitle}>Atualize as informações do produto</Text>

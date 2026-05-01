@@ -204,10 +204,10 @@ export default function CreateSale() {
       items.map(item =>
         item.product_id === productId
           ? {
-              ...item,
-              quantity: newQuantity,
-              subtotal: newQuantity * item.unit_price,
-            }
+            ...item,
+            quantity: newQuantity,
+            subtotal: newQuantity * item.unit_price,
+          }
           : item
       )
     );
@@ -218,10 +218,10 @@ export default function CreateSale() {
       items.map(item =>
         item.product_id === productId
           ? {
-              ...item,
-              unit_price: newPrice,
-              subtotal: item.quantity * newPrice,
-            }
+            ...item,
+            unit_price: newPrice,
+            subtotal: item.quantity * newPrice,
+          }
           : item
       )
     );
@@ -418,7 +418,7 @@ export default function CreateSale() {
         />
 
         <View style={styles.sectionHeader}>
-          <Ionicons name='cube-outline' size={20} color='#FF6B35' />
+          <Ionicons name='bag-outline' size={20} color='#FF6B35' />
           <Text style={styles.sectionTitle}>Produtos</Text>
         </View>
 

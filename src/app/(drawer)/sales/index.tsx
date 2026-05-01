@@ -267,7 +267,7 @@ export default function SalesList() {
           </View>
 
           <View style={styles.saleDetailRow}>
-            <Ionicons name='cube-outline' size={16} color='#64748b' />
+            <Ionicons name='bag-outline' size={16} color='#64748b' />
             <Text style={styles.saleDetailText}>
               {item.items?.length || 0} item
               {(item.items?.length || 0) !== 1 ? 's' : ''}

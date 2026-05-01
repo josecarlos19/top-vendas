@@ -13,7 +13,7 @@ export default function Index() {
     {
       title: 'Produtos',
       value: 0,
-      icon: 'cube-outline' as keyof typeof Ionicons.glyphMap,
+      icon: 'bag-outline' as keyof typeof Ionicons.glyphMap,
       color: '#3b82f6',
       backgroundColor: '#ffffff',
       route: '/products',
@@ -21,10 +21,10 @@ export default function Index() {
     {
       title: 'Vendas Hoje',
       value: 0,
-      icon: 'trending-up-outline' as keyof typeof Ionicons.glyphMap,
+      icon: 'cart-outline' as keyof typeof Ionicons.glyphMap,
       color: '#22c55e',
       backgroundColor: '#ffffff',
-      route: '/reports/daily-sales',
+      route: '/sales',
     },
     {
       title: 'Clientes',
@@ -47,13 +47,13 @@ export default function Index() {
   const quickActions = [
     {
       title: 'Nova Venda',
-      icon: 'card-outline' as keyof typeof Ionicons.glyphMap,
+      icon: 'cart-outline' as keyof typeof Ionicons.glyphMap,
       color: '#667eea',
       route: '/sales/create',
     },
     {
       title: 'Novo Produto',
-      icon: 'add-circle-outline' as keyof typeof Ionicons.glyphMap,
+      icon: 'bag-add-outline' as keyof typeof Ionicons.glyphMap,
       color: '#06b6d4',
       route: '/products/create',
     },
@@ -65,7 +65,7 @@ export default function Index() {
     },
     {
       title: 'Relatórios',
-      icon: 'analytics-outline' as keyof typeof Ionicons.glyphMap,
+      icon: 'stats-chart-outline' as keyof typeof Ionicons.glyphMap,
       color: '#f59e0b',
       route: '/(drawer)/reports',
     },
@@ -118,6 +118,7 @@ export default function Index() {
                     ? `R$ ${Number(stat.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                     : String(stat.value)
                 }
+                route={stat.route}
               />
             ))}
           </View>

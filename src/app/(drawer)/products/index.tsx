@@ -240,7 +240,7 @@ export default function ProductsList() {
 
   const renderEmpty = () => (
     <View style={styles.emptyState}>
-      <Ionicons name='cube-outline' size={64} color='#cbd5e1' />
+      <Ionicons name='bag-outline' size={64} color='#cbd5e1' />
       <Text style={styles.emptyTitle}>Nenhum produto encontrado</Text>
       <Text style={styles.emptySubtitle}>
         {searchText || selectedCategory || showLowStock
@@ -301,7 +301,7 @@ export default function ProductsList() {
                   style={[
                     styles.categoryFilter,
                     selectedCategory === category.id &&
-                      styles.categoryFilterActive,
+                    styles.categoryFilterActive,
                   ]}
                   onPress={() =>
                     setSelectedCategory(
@@ -313,7 +313,7 @@ export default function ProductsList() {
                     style={[
                       styles.categoryFilterText,
                       selectedCategory === category.id &&
-                        styles.categoryFilterTextActive,
+                      styles.categoryFilterTextActive,
                     ]}
                   >
                     {category.name}

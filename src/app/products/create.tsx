@@ -213,7 +213,7 @@ export default function CreateProduct() {
     <WorkArea>
       <View style={styles.headerSection}>
         <View style={styles.iconContainer}>
-          <Ionicons name='cube-outline' size={48} color='#FF6B35' />
+          <Ionicons name='bag-outline' size={48} color='#FF6B35' />
         </View>
         <Text style={styles.title}>Novo Produto</Text>
         <Text style={styles.subtitle}>Cadastre um novo produto no estoque</Text>

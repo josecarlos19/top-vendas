@@ -58,7 +58,7 @@ function CustomDrawerContent(props: any) {
     {
       name: 'Produtos',
       route: '/(drawer)/products',
-      icon: 'pricetag-outline' as keyof typeof Ionicons.glyphMap,
+      icon: 'bag-outline' as keyof typeof Ionicons.glyphMap,
     },
     {
       name: 'Clientes',
@@ -70,6 +70,11 @@ function CustomDrawerContent(props: any) {
       route: '/(drawer)/sales',
       icon: 'cart-outline' as keyof typeof Ionicons.glyphMap,
     },
+    {
+      name: 'Relatórios',
+      route: '/(drawer)/reports',
+      icon: 'stats-chart-outline' as keyof typeof Ionicons.glyphMap,
+    }
   ];
 
   const handleNavigation = (route: string) => {
@@ -262,7 +267,7 @@ export default function DrawerLayout() {
             title: 'Produtos',
             headerTitle: 'Produtos',
             drawerIcon: ({ color, size }) => (
-              <Ionicons name='pricetag-outline' size={size} color={color} />
+              <Ionicons name='bag-outline' size={size} color={color} />
             ),
           }}
         />
