@@ -254,20 +254,20 @@ export default function EditSale() {
       setSale(prev =>
         prev
           ? {
-              ...prev,
-              installments: prev.installments?.map(inst =>
-                inst.id === selectedInstallment.id
-                  ? {
-                      ...inst,
-                      status,
-                      payment_date:
-                        status === 'completed'
-                          ? paymentDate!.toISOString()
-                          : undefined,
-                    }
-                  : inst
-              ),
-            }
+            ...prev,
+            installments: prev.installments?.map(inst =>
+              inst.id === selectedInstallment.id
+                ? {
+                  ...inst,
+                  status,
+                  payment_date:
+                    status === 'completed'
+                      ? paymentDate!.toISOString()
+                      : undefined,
+                }
+                : inst
+            ),
+          }
           : prev
       );
 
@@ -742,7 +742,7 @@ export default function EditSale() {
                     onPress={() => handleInstallment('pending')}
                   >
                     <Text style={styles.confirmButtonText}>
-                      Reverter pagamento
+                      Estornar pagamento
                     </Text>
                   </TouchableOpacity>
                 )}
