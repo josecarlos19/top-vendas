@@ -23,7 +23,6 @@ async function databaseExists(): Promise<boolean> {
     const info = await FileSystem.getInfoAsync(dbUri);
     return info.exists;
   } catch (error) {
-    console.log('Erro ao verificar banco:', error);
     return false;
   }
 }
@@ -36,30 +35,13 @@ export async function exportDatabase(): Promise<string> {
   try {
     const dbUri = getDatabaseUri();
 
-    console.log('Tentando acessar banco em:', dbUri);
-
     // Verifica se o banco de dados existe
     const exists = await databaseExists();
     if (!exists) {
-      // Lista os arquivos para debug
-      console.log('=== DEBUG: Listando arquivos ===');
-      console.log('defaultDatabaseDirectory:', defaultDatabaseDirectory);
-      console.log('URI do banco:', dbUri);
-
-      try {
-        const dirUri = `file://${defaultDatabaseDirectory}`;
-        const contents = await FileSystem.readDirectoryAsync(dirUri);
-        console.log('Conteúdo do diretório SQLite:', contents);
-      } catch (e) {
-        console.log('Erro ao listar diretório:', e);
-      }
-
       throw new Error(
         'Banco de dados não encontrado. Caminho esperado: ' + dbUri
       );
     }
-
-    console.log('Banco de dados encontrado em:', dbUri);
 
     // Cria o nome do arquivo de backup com data/hora em horário local (UTC-3)
     const now = new Date();
@@ -69,19 +51,14 @@ export async function exportDatabase(): Promise<string> {
     const backupFileName = `top-vendas-backup-${timestamp}.db`;
     const backupUri = `${FileSystem.documentDirectory}${backupFileName}`;
 
-    console.log('Criando backup em:', backupUri);
-
     // Copia o banco de dados para o arquivo de backup
     await FileSystem.copyAsync({
       from: dbUri,
       to: backupUri,
     });
 
-    console.log('Backup criado com sucesso!');
-
     return backupUri;
   } catch (error) {
-    console.error('Erro ao exportar banco de dados:', error);
     throw error;
   }
 }
@@ -101,7 +78,6 @@ export async function shareBackup(backupPath: string): Promise<void> {
       dialogTitle: 'Compartilhar backup do Top Vendas',
     });
   } catch (error) {
-    console.error('Erro ao compartilhar backup:', error);
     throw error;
   }
 }
@@ -124,7 +100,6 @@ export async function pickBackupFile(): Promise<string | null> {
 
     return result.assets[0].uri;
   } catch (error) {
-    console.error('Erro ao selecionar arquivo:', error);
     throw error;
   }
 }
@@ -173,7 +148,7 @@ export async function importDatabase(backupUri: string): Promise<boolean> {
           });
           await FileSystem.deleteAsync(tempBackupUri, { idempotent: true });
         } catch (restoreError) {
-          console.error('Erro ao restaurar backup temporário:', restoreError);
+          // Silently fail restore
         }
         throw error;
       }
@@ -187,7 +162,6 @@ export async function importDatabase(backupUri: string): Promise<boolean> {
 
     return true;
   } catch (error) {
-    console.error('Erro ao importar banco de dados:', error);
     throw error;
   }
 }
@@ -214,7 +188,6 @@ export async function validateBackupFile(uri: string): Promise<boolean> {
     const headerBytes = atob(header);
     return headerBytes.startsWith('SQLite format 3');
   } catch (error) {
-    console.error('Erro ao validar arquivo:', error);
     return false;
   }
 }
@@ -316,7 +289,6 @@ export async function listBackups(): Promise<
     // Ordena por data, mais recente primeiro
     return backups.sort((a, b) => b.date.getTime() - a.date.getTime());
   } catch (error) {
-    console.error('Erro ao listar backups:', error);
     return [];
   }
 }
@@ -329,7 +301,6 @@ export async function deleteBackup(backupPath: string): Promise<void> {
   try {
     await FileSystem.deleteAsync(backupPath, { idempotent: true });
   } catch (error) {
-    console.error('Erro ao deletar backup:', error);
     throw error;
   }
 }
