@@ -24,6 +24,7 @@ export function useReportDatabase() {
         SELECT COUNT(*) as count
         FROM sales
         WHERE DATE(sale_date, 'localtime') = DATE('now', 'localtime')
+        AND status <> 'cancelled'
         AND deleted_at IS NULL
         `
       )) as { count: number };
