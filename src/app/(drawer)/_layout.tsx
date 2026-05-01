@@ -72,7 +72,7 @@ function CustomDrawerContent(props: any) {
     },
     {
       name: 'Relatórios',
-      route: '/(drawer)/reports',
+      route: '/(drawer)/reports-list',
       icon: 'stats-chart-outline' as keyof typeof Ionicons.glyphMap,
     }
   ];
@@ -129,7 +129,9 @@ function CustomDrawerContent(props: any) {
             const isActive =
               item.route === '/(drawer)'
                 ? pathname === '/'
-                : pathname.includes(item.route.split('/').pop() || '');
+                : item.name === 'Relatórios'
+                  ? pathname.includes('reports-list') || pathname.includes('reports-stack')
+                  : pathname.includes(item.route.split('/').pop() || '');
 
             return (
               <TouchableOpacity
@@ -233,9 +235,6 @@ export default function DrawerLayout() {
           options={{
             title: 'Dashboard',
             headerTitle: 'Home',
-            drawerIcon: ({ color, size }) => (
-              <Ionicons name='home-outline' size={size} color={color} />
-            ),
           }}
         />
 
@@ -244,9 +243,6 @@ export default function DrawerLayout() {
           options={{
             title: 'Categorias',
             headerTitle: 'Categorias',
-            drawerIcon: ({ color, size }) => (
-              <Ionicons name='folder-outline' size={size} color={color} />
-            ),
           }}
         />
 
@@ -255,9 +251,6 @@ export default function DrawerLayout() {
           options={{
             title: 'Clientes',
             headerTitle: 'Clientes',
-            drawerIcon: ({ color, size }) => (
-              <Ionicons name='people-outline' size={size} color={color} />
-            ),
           }}
         />
 
@@ -266,9 +259,6 @@ export default function DrawerLayout() {
           options={{
             title: 'Produtos',
             headerTitle: 'Produtos',
-            drawerIcon: ({ color, size }) => (
-              <Ionicons name='bag-outline' size={size} color={color} />
-            ),
           }}
         />
 
@@ -277,9 +267,22 @@ export default function DrawerLayout() {
           options={{
             title: 'Vendas',
             headerTitle: 'Vendas',
-            drawerIcon: ({ color, size }) => (
-              <Ionicons name='cart-outline' size={size} color={color} />
-            ),
+          }}
+        />
+
+        <Drawer.Screen
+          name='reports-list'
+          options={{
+            title: 'Relatórios',
+            headerTitle: 'Relatórios',
+          }}
+        />
+
+        <Drawer.Screen
+          name='reports-stack'
+          options={{
+            headerShown: false,
+            drawerItemStyle: { height: 0 },
           }}
         />
       </Drawer>

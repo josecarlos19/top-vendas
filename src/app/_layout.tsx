@@ -71,41 +71,6 @@ export default function RootLayout() {
               title: 'Editar Venda',
             }}
           />
-          <Stack.Screen
-            name='reports/index'
-            options={{
-              presentation: 'card',
-              title: 'Relatórios',
-            }}
-          />
-          <Stack.Screen
-            name='reports/sales-by-period'
-            options={{
-              presentation: 'card',
-              title: 'Vendas por Período',
-            }}
-          />
-          <Stack.Screen
-            name='reports/sales-by-customer'
-            options={{
-              presentation: 'card',
-              title: 'Vendas por Cliente',
-            }}
-          />
-          <Stack.Screen
-            name='reports/top-products'
-            options={{
-              presentation: 'card',
-              title: 'Produtos Mais Vendidos',
-            }}
-          />
-          <Stack.Screen
-            name='reports/top-categories'
-            options={{
-              presentation: 'card',
-              title: 'Categorias Mais Vendidas',
-            }}
-          />
         </Stack>
       </SQLiteProvider>
     </SafeAreaProvider>

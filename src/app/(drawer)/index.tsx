@@ -67,7 +67,7 @@ export default function Index() {
       title: 'Relatórios',
       icon: 'stats-chart-outline' as keyof typeof Ionicons.glyphMap,
       color: '#f59e0b',
-      route: '/(drawer)/reports',
+      route: '/(drawer)/reports-list',
     },
   ];
 
