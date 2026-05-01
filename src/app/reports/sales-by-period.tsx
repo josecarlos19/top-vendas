@@ -103,7 +103,7 @@ export default function SalesByPeriod() {
 
       setSales(filteredSales);
     } catch (error) {
-      console.error('Erro ao carregar vendas:', error);
+      // Error silently handled
     } finally {
       setIsLoading(false);
     }
@@ -176,72 +176,51 @@ export default function SalesByPeriod() {
     >
       <View style={styles.saleHeader}>
         <View style={styles.saleHeaderLeft}>
-          <View
+          {item.customer_name && (
+            <Text style={styles.customerName} numberOfLines={1}>
+              {item.customer_name}
+            </Text>
+          )}
+        </View>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: getStatusBackgroundColor(item.status) },
+          ]}
+        >
+          <Text
             style={[
-              styles.statusBadge,
-              { backgroundColor: getStatusBackgroundColor(item.status) },
+              styles.statusText,
+              { color: getStatusColor(item.status) },
             ]}
           >
-            <Text
-              style={[
-                styles.statusText,
-                { color: getStatusColor(item.status) },
-              ]}
-            >
-              {STATUS_LABELS[item.status] || item.status}
-            </Text>
-          </View>
+            {STATUS_LABELS[item.status] || item.status}
+          </Text>
         </View>
       </View>
 
       <View style={styles.saleContent}>
-        {item.customer_name && (
-          <View style={styles.customerInfo}>
-            <Ionicons name="person-outline" size={16} color="#64748b" />
-            <Text style={styles.customerName}>{item.customer_name}</Text>
-          </View>
-        )}
-
-        <View style={styles.saleDetails}>
-          <View style={styles.saleDetailRow}>
-            <Ionicons name="calendar-outline" size={16} color="#64748b" />
-            <Text style={styles.saleDetailText}>
-              {formatDate(item.sale_date)}
-            </Text>
-          </View>
-
-          <View style={styles.saleDetailRow}>
-            <Ionicons name="card-outline" size={16} color="#64748b" />
-            <Text style={styles.saleDetailText}>
-              {PAYMENT_METHOD_LABELS[item.payment_method] ||
-                item.payment_method}
-              {item.installments > 1 && ` (${item.installments}x)`}
-            </Text>
-          </View>
-
-          <View style={styles.saleDetailRow}>
-            <Ionicons name="bag-outline" size={16} color="#64748b" />
-            <Text style={styles.saleDetailText}>
-              {item.items?.length || 0} item
-              {(item.items?.length || 0) !== 1 ? 's' : ''}
-            </Text>
-          </View>
+        <View style={styles.saleInfo}>
+          <Text style={styles.saleDetailText}>
+            {formatDate(item.sale_date)} • {PAYMENT_METHOD_LABELS[item.payment_method] || item.payment_method}
+            {item.installments > 1 && ` (${item.installments}x)`}
+          </Text>
         </View>
 
         <View style={styles.saleFooter}>
-          {item.discount > 0 && (
-            <View style={styles.discountInfo}>
-              <Text style={styles.originalTotal}>
-                {formatCurrency(item.subtotal.toString())}
-              </Text>
+          <Text style={styles.itemCount}>
+            {item.items?.length || 0} {(item.items?.length || 0) === 1 ? 'item' : 'itens'}
+          </Text>
+          <View style={styles.priceContainer}>
+            {item.discount > 0 && (
               <Text style={styles.discountAmount}>
                 -{formatCurrency(item.discount.toString())}
               </Text>
-            </View>
-          )}
-          <Text style={styles.totalAmount}>
-            {formatCurrency(item.total.toString())}
-          </Text>
+            )}
+            <Text style={styles.totalAmount}>
+              {formatCurrency(item.total.toString())}
+            </Text>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -283,7 +262,7 @@ export default function SalesByPeriod() {
               <ActivityIndicator color="#ffffff" size="small" />
             ) : (
               <>
-                <Ionicons name="search" size={20} color="#ffffff" />
+                <Ionicons name="search" size={16} color="#ffffff" />
                 <Text style={styles.searchButtonText}>Buscar</Text>
               </>
             )}
@@ -318,7 +297,7 @@ export default function SalesByPeriod() {
         <View style={styles.totalsContainer}>
           <View style={styles.totalRow}>
             <View style={styles.totalItem}>
-              <Ionicons name="checkmark-circle" size={20} color="#22c55e" />
+              <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>Total Recebido</Text>
                 <Text style={[styles.totalValue, { color: '#22c55e' }]}>
@@ -332,7 +311,7 @@ export default function SalesByPeriod() {
             </View>
 
             <View style={styles.totalItem}>
-              <Ionicons name="time" size={20} color="#f59e0b" />
+              <Ionicons name="time" size={18} color="#f59e0b" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>A Receber</Text>
                 <Text style={[styles.totalValue, { color: '#f59e0b' }]}>
@@ -348,7 +327,7 @@ export default function SalesByPeriod() {
 
           <View style={styles.totalRow}>
             <View style={styles.totalItem}>
-              <Ionicons name="cash" size={20} color="#3b82f6" />
+              <Ionicons name="cash" size={18} color="#3b82f6" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>Total Geral</Text>
                 <Text style={[styles.totalValue, { color: '#3b82f6' }]}>
@@ -362,7 +341,7 @@ export default function SalesByPeriod() {
             </View>
 
             <View style={styles.totalItem}>
-              <Ionicons name="pricetag" size={20} color="#ec4899" />
+              <Ionicons name="pricetag" size={18} color="#ec4899" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>Total Desconto</Text>
                 <Text style={[styles.totalValue, { color: '#ec4899' }]}>
@@ -399,135 +378,123 @@ const styles = StyleSheet.create({
   },
   filterSection: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-    gap: 12,
+    borderBottomColor: '#e2e8f0',
+    gap: 6,
   },
   searchButton: {
     backgroundColor: '#3b82f6',
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 6,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
   searchButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
   },
   resultsContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#f8fafc',
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: '#e2e8f0',
   },
   resultsText: {
-    fontSize: 14,
+    fontSize: 11,
     color: '#64748b',
     fontWeight: '500',
   },
   listContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 15,
-    paddingBottom: 20,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   emptyListContainer: {
     flexGrow: 1,
   },
   saleCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 6,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 1,
+    elevation: 1,
   },
   saleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 6,
   },
   saleHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    flex: 1,
+    marginRight: 8,
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
   },
   saleContent: {
-    gap: 12,
+    gap: 5,
   },
-  customerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+  saleInfo: {
+    marginBottom: 5,
   },
   customerName: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
     color: '#1e293b',
   },
-  saleDetails: {
-    gap: 8,
-  },
-  saleDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   saleDetailText: {
-    fontSize: 14,
+    fontSize: 11,
     color: '#64748b',
   },
   saleFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 12,
+    paddingTop: 6,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
   },
-  discountInfo: {
-    alignItems: 'flex-start',
+  itemCount: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '500',
   },
-  originalTotal: {
-    fontSize: 12,
-    color: '#94a3b8',
-    textDecorationLine: 'line-through',
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   discountAmount: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#ec4899',
     fontWeight: '600',
   },
   totalAmount: {
-    fontSize: 20,
+    fontSize: 14,
     fontWeight: '700',
     color: '#1e293b',
   },
@@ -535,18 +502,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 10,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 6,
   },
   totalRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   totalItem: {
     flex: 1,
@@ -554,8 +521,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
@@ -563,13 +530,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   totalLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#64748b',
     fontWeight: '500',
     marginBottom: 2,
   },
   totalValue: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
   loadingOverlay: {

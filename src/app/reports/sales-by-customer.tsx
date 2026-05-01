@@ -94,7 +94,7 @@ export default function SalesByCustomer() {
         }));
       setCustomers(activeCustomers);
     } catch (error) {
-      console.error('Erro ao carregar clientes:', error);
+      // Error silently handled
     } finally {
       setIsLoadingCustomers(false);
     }
@@ -155,7 +155,7 @@ export default function SalesByCustomer() {
 
       setSales(filteredSales);
     } catch (error) {
-      console.error('Erro ao carregar vendas:', error);
+      // Error silently handled
     } finally {
       setIsLoading(false);
     }
@@ -225,60 +225,42 @@ export default function SalesByCustomer() {
       activeOpacity={0.7}
     >
       <View style={styles.saleHeader}>
-        <View style={styles.saleHeaderLeft}>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: getStatusBackgroundColor(item.status) },
-            ]}
-          >
-            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-              {STATUS_LABELS[item.status] || item.status}
-            </Text>
-          </View>
+        <Text style={styles.saleDate}>{formatDate(item.sale_date)}</Text>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: getStatusBackgroundColor(item.status) },
+          ]}
+        >
+          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+            {STATUS_LABELS[item.status] || item.status}
+          </Text>
         </View>
       </View>
 
       <View style={styles.saleContent}>
-        <View style={styles.saleDetails}>
-          <View style={styles.saleDetailRow}>
-            <Ionicons name="calendar-outline" size={16} color="#64748b" />
-            <Text style={styles.saleDetailText}>
-              Data: {formatDate(item.sale_date)}
-            </Text>
-          </View>
-
-          <View style={styles.saleDetailRow}>
-            <Ionicons name="card-outline" size={16} color="#64748b" />
-            <Text style={styles.saleDetailText}>
-              {PAYMENT_METHOD_LABELS[item.payment_method] || item.payment_method}
-            </Text>
-          </View>
-
+        <View style={styles.saleInfo}>
+          <Text style={styles.paymentMethod}>
+            {PAYMENT_METHOD_LABELS[item.payment_method] || item.payment_method}
+          </Text>
           {item.notes && (
-            <View style={styles.saleDetailRow}>
-              <Ionicons name="document-text-outline" size={16} color="#64748b" />
-              <Text style={styles.saleDetailText} numberOfLines={2}>
-                {item.notes}
-              </Text>
-            </View>
+            <Text style={styles.saleNotes} numberOfLines={1}>
+              {item.notes}
+            </Text>
           )}
         </View>
 
         <View style={styles.saleFooter}>
-          {item.discount > 0 && (
-            <View style={styles.discountInfo}>
-              <Text style={styles.originalTotal}>
-                {formatCurrency((item.subtotal / 100).toString())}
-              </Text>
+          <View style={styles.priceContainer}>
+            {item.discount > 0 && (
               <Text style={styles.discountAmount}>
-                Desconto: -{formatCurrency((item.discount / 100).toString())}
+                -{formatCurrency((item.discount / 100).toString())}
               </Text>
-            </View>
-          )}
-          <Text style={styles.totalAmount}>
-            {formatCurrency((item.total / 100).toString())}
-          </Text>
+            )}
+            <Text style={styles.totalAmount}>
+              {formatCurrency((item.total / 100).toString())}
+            </Text>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -355,7 +337,7 @@ export default function SalesByCustomer() {
             >
               <Ionicons
                 name="search"
-                size={20}
+                size={16}
                 color={!selectedCustomerId ? '#94a3b8' : '#ffffff'}
               />
               <Text
@@ -400,7 +382,7 @@ export default function SalesByCustomer() {
         <View style={styles.totalsContainer}>
           <View style={styles.totalRow}>
             <View style={styles.totalItem}>
-              <Ionicons name="checkmark-circle" size={24} color="#22c55e" />
+              <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>Total Recebido</Text>
                 <Text
@@ -416,7 +398,7 @@ export default function SalesByCustomer() {
             </View>
 
             <View style={styles.totalItem}>
-              <Ionicons name="time" size={24} color="#f59e0b" />
+              <Ionicons name="time" size={18} color="#f59e0b" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>A Receber</Text>
                 <Text
@@ -434,7 +416,7 @@ export default function SalesByCustomer() {
 
           <View style={styles.totalRow}>
             <View style={styles.totalItem}>
-              <Ionicons name="cash" size={24} color="#3b82f6" />
+              <Ionicons name="cash" size={18} color="#3b82f6" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>Total Geral</Text>
                 <Text
@@ -450,7 +432,7 @@ export default function SalesByCustomer() {
             </View>
 
             <View style={styles.totalItem}>
-              <Ionicons name="pricetag" size={24} color="#ec4899" />
+              <Ionicons name="pricetag" size={18} color="#ec4899" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>Total Desconto</Text>
                 <Text
@@ -492,62 +474,62 @@ const styles = StyleSheet.create({
   },
   filterSection: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
-    gap: 16,
+    gap: 6,
   },
   pickerContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 8,
+    padding: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   pickerLabel: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '500',
-    color: '#475569',
-    marginBottom: 8,
+    color: '#64748b',
+    marginBottom: 4,
   },
   pickerWrapper: {
     backgroundColor: '#f8fafc',
-    borderRadius: 8,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     overflow: 'hidden',
   },
   picker: {
-    height: 50,
+    height: 40,
   },
   pickerLoading: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 12,
+    paddingVertical: 10,
+    gap: 6,
   },
   pickerLoadingText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#64748b',
   },
   searchButton: {
     backgroundColor: '#3b82f6',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 6,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
   searchButtonDisabled: {
     backgroundColor: '#e2e8f0',
@@ -556,21 +538,21 @@ const styles = StyleSheet.create({
   },
   searchButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
   },
   searchButtonTextDisabled: {
     color: '#94a3b8',
   },
   resultsContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#f8fafc',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
   resultsText: {
-    fontSize: 14,
+    fontSize: 11,
     color: '#64748b',
     fontWeight: '500',
   },
@@ -578,84 +560,82 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   emptyListContainer: {
     flexGrow: 1,
   },
   saleCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 6,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 1,
+    elevation: 1,
   },
   saleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 6,
   },
-  saleHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  saleDate: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1e293b',
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
   },
   saleContent: {
-    gap: 12,
+    gap: 5,
   },
-  saleDetails: {
-    gap: 8,
+  saleInfo: {
+    gap: 3,
   },
-  saleDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  paymentMethod: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '500',
   },
-  saleDetailText: {
-    fontSize: 14,
-    color: '#475569',
+  saleNotes: {
+    fontSize: 10,
+    color: '#94a3b8',
+    fontStyle: 'italic',
   },
   saleFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingTop: 12,
+    paddingTop: 6,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
   },
-  discountInfo: {
-    alignItems: 'flex-start',
-  },
-  originalTotal: {
-    fontSize: 12,
-    color: '#94a3b8',
-    textDecorationLine: 'line-through',
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   discountAmount: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#ec4899',
     fontWeight: '600',
   },
   totalAmount: {
-    fontSize: 20,
+    fontSize: 14,
     fontWeight: '700',
     color: '#1e293b',
   },
@@ -664,26 +644,26 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 12,
+    paddingVertical: 12,
+    gap: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 6,
   },
   totalRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   totalItem: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
     backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
@@ -691,13 +671,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   totalLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#64748b',
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   totalValue: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
   loadingOverlay: {

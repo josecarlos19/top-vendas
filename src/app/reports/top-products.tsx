@@ -122,7 +122,7 @@ export default function TopProducts() {
 
       setProductSales(productsWithPercentage);
     } catch (error) {
-      console.error('Erro ao carregar vendas de produtos:', error);
+      // Error silently handled
     } finally {
       setIsLoading(false);
     }

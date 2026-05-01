@@ -145,7 +145,7 @@ export default function TopCategories() {
 
       setCategorySales(categoriesWithPercentage);
     } catch (error) {
-      console.error('Erro ao carregar vendas por categoria:', error);
+      // Error silently handled
     } finally {
       setIsLoading(false);
     }
