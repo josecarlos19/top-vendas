@@ -18,28 +18,28 @@ const reportOptions: ReportOption[] = [
     description: 'Visualize as vendas em um período específico com totais consolidados',
     icon: 'calendar-outline',
     color: '#3b82f6',
-    route: '/(drawer)/reports-stack/sales-by-period',
+    route: '/reports/sales-by-period',
   },
   {
     title: 'Vendas por Cliente',
     description: 'Analise as vendas de um cliente específico em um período',
     icon: 'person-outline',
     color: '#22c55e',
-    route: '/(drawer)/reports-stack/sales-by-customer',
+    route: '/reports/sales-by-customer',
   },
   {
     title: 'Produto Mais Vendido',
     description: 'Gráfico com os produtos mais vendidos por quantidade',
     icon: 'pie-chart-outline',
     color: '#f59e0b',
-    route: '/(drawer)/reports-stack/top-products',
+    route: '/reports/top-products',
   },
   {
     title: 'Categoria Mais Vendida',
     description: 'Gráfico com as categorias mais vendidas por quantidade',
     icon: 'stats-chart-outline',
     color: '#ec4899',
-    route: '/(drawer)/reports-stack/top-categories',
+    route: '/reports/top-categories',
   },
 ];
 

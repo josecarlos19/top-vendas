@@ -71,6 +71,12 @@ export default function RootLayout() {
               title: 'Editar Venda',
             }}
           />
+          <Stack.Screen
+            name='reports'
+            options={{
+              headerShown: false,
+            }}
+          />
         </Stack>
       </SQLiteProvider>
     </SafeAreaProvider>

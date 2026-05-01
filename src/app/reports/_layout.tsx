@@ -7,29 +7,28 @@ export default function ReportsLayout() {
         headerStyle: { backgroundColor: '#fff' },
         headerTintColor: '#000',
         headerTitleStyle: { fontWeight: '600' },
-        presentation: 'card',
       }}
     >
       <Stack.Screen
-        name='sales-by-period'
+        name="sales-by-period"
         options={{
           title: 'Vendas por Período',
         }}
       />
       <Stack.Screen
-        name='sales-by-customer'
+        name="sales-by-customer"
         options={{
           title: 'Vendas por Cliente',
         }}
       />
       <Stack.Screen
-        name='top-products'
+        name="top-products"
         options={{
           title: 'Produtos Mais Vendidos',
         }}
       />
       <Stack.Screen
-        name='top-categories'
+        name="top-categories"
         options={{
           title: 'Categorias Mais Vendidas',
         }}

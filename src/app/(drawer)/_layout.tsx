@@ -130,7 +130,7 @@ function CustomDrawerContent(props: any) {
               item.route === '/(drawer)'
                 ? pathname === '/'
                 : item.name === 'Relatórios'
-                  ? pathname.includes('reports-list') || pathname.includes('reports-stack')
+                  ? pathname.includes('reports')
                   : pathname.includes(item.route.split('/').pop() || '');
 
             return (
@@ -275,14 +275,6 @@ export default function DrawerLayout() {
           options={{
             title: 'Relatórios',
             headerTitle: 'Relatórios',
-          }}
-        />
-
-        <Drawer.Screen
-          name='reports-stack'
-          options={{
-            headerShown: false,
-            drawerItemStyle: { height: 0 },
           }}
         />
       </Drawer>
