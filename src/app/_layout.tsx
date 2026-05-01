@@ -8,17 +8,18 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SQLiteProvider databaseName='top-vendas.db' onInit={initializeDatabase}>
-        <StatusBar style='dark' />
-        <Stack>
+        <StatusBar style='dark' translucent={false} backgroundColor='#fff' />
+        <Stack screenOptions={{
+          headerStyle: { backgroundColor: '#fff' },
+          headerTintColor: '#000',
+          headerTitleStyle: { fontWeight: '600' },
+        }}>
           <Stack.Screen name='(drawer)' options={{ headerShown: false }} />
           <Stack.Screen
             name='categories/create'
             options={{
               presentation: 'card',
               title: 'Nova Categoria',
-              headerStyle: { backgroundColor: '#fff' },
-              headerTintColor: '#000',
-              headerTitleStyle: { fontWeight: '600' },
             }}
           />
           <Stack.Screen
@@ -26,9 +27,6 @@ export default function RootLayout() {
             options={{
               presentation: 'card',
               title: 'Editar Categoria',
-              headerStyle: { backgroundColor: '#fff' },
-              headerTintColor: '#000',
-              headerTitleStyle: { fontWeight: '600' },
             }}
           />
           <Stack.Screen
@@ -36,9 +34,6 @@ export default function RootLayout() {
             options={{
               presentation: 'card',
               title: 'Novo Cliente',
-              headerStyle: { backgroundColor: '#fff' },
-              headerTintColor: '#000',
-              headerTitleStyle: { fontWeight: '600' },
             }}
           />
           <Stack.Screen
@@ -46,9 +41,6 @@ export default function RootLayout() {
             options={{
               presentation: 'card',
               title: 'Editar Cliente',
-              headerStyle: { backgroundColor: '#fff' },
-              headerTintColor: '#000',
-              headerTitleStyle: { fontWeight: '600' },
             }}
           />
           <Stack.Screen
@@ -56,9 +48,6 @@ export default function RootLayout() {
             options={{
               presentation: 'card',
               title: 'Novo Produto',
-              headerStyle: { backgroundColor: '#fff' },
-              headerTintColor: '#000',
-              headerTitleStyle: { fontWeight: '600' },
             }}
           />
           <Stack.Screen
@@ -66,9 +55,6 @@ export default function RootLayout() {
             options={{
               presentation: 'card',
               title: 'Editar Produto',
-              headerStyle: { backgroundColor: '#fff' },
-              headerTintColor: '#000',
-              headerTitleStyle: { fontWeight: '600' },
             }}
           />
           <Stack.Screen
@@ -76,9 +62,6 @@ export default function RootLayout() {
             options={{
               presentation: 'card',
               title: 'Nova Venda',
-              headerStyle: { backgroundColor: '#fff' },
-              headerTintColor: '#000',
-              headerTitleStyle: { fontWeight: '600' },
             }}
           />
           <Stack.Screen
@@ -86,9 +69,6 @@ export default function RootLayout() {
             options={{
               presentation: 'card',
               title: 'Editar Venda',
-              headerStyle: { backgroundColor: '#fff' },
-              headerTintColor: '#000',
-              headerTitleStyle: { fontWeight: '600' },
             }}
           />
         </Stack>

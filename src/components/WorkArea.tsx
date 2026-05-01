@@ -17,20 +17,27 @@ export default function WorkArea({
 }) {
   if (noScrollView) {
     return (
-      <SafeAreaView edges={['bottom']} style={[styles.sav]}>
+      <SafeAreaView edges={['bottom']} style={styles.sav}>
         {children}
       </SafeAreaView>
     );
   }
+
   return (
-    <SafeAreaView edges={['bottom']} style={[styles.sav]}>
-      <KeyboardAvoidingView style={[styles.keyboard]} behavior={'padding'}>
+    <SafeAreaView edges={['bottom']} style={styles.sav}>
+      <KeyboardAvoidingView
+        style={styles.keyboard}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
         <ScrollView
-          style={[styles.scroll]}
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
           keyboardDismissMode='interactive'
           keyboardShouldPersistTaps='handled'
+          showsVerticalScrollIndicator={false}
         >
-          <View style={styles.content}>{children}</View>
+          {children}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -40,14 +47,17 @@ export default function WorkArea({
 const styles = StyleSheet.create({
   sav: {
     flex: 1,
+    backgroundColor: '#f8fafc',
   },
   scroll: {
-    overflow: 'visible',
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
+    paddingBottom: 40,
   },
   keyboard: {
     flex: 1,
-  },
-  content: {
-    padding: 20,
   },
 });
