@@ -232,7 +232,7 @@ export default function CreateProduct() {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Nome do Produto *</Text>
           <Input
-            placeholder='Ex: iPhone 15, Camiseta Polo, Notebook...'
+            placeholder='Nome do produto'
             value={name}
             onChangeText={setName}
             editable={!isLoading}

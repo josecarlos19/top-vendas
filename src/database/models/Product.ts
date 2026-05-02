@@ -143,9 +143,9 @@ export function useProductDatabase() {
       );
       return result as
         | (ProductModelInterface & {
-            category_name?: string;
-            current_stock: number;
-          })
+          category_name?: string;
+          current_stock: number;
+        })
         | null;
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -211,7 +211,7 @@ export function useProductDatabase() {
     const statement = await database.prepareAsync(
       `UPDATE products SET
         name = ?, barcode = ?, reference = ?, description = ?, cost_price = ?,
-        sale_price = ?, wholesale_price = ?, initial_stock = ?, minimum_stock = ?,
+        sale_price = ?, wholesale_price = ?, minimum_stock = ?,
         category_id = ?, supplier = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND deleted_at IS NULL`
     );
@@ -224,19 +224,14 @@ export function useProductDatabase() {
         params.cost_price || null,
         params.sale_price || 0,
         params.wholesale_price || null,
-        params.initial_stock || 0,
         params.minimum_stock || 0,
         params.category_id || null,
         params.supplier || null,
         params.id
       );
 
-      await updateInitialStockMovement(database, {
-        product_id: params.id,
-        quantity: params.initial_stock,
-        unit_value: params.sale_price,
-        total_value: (params.initial_stock || 0) * (params.sale_price || 0),
-      });
+      // Não mais atualiza o initial_stock e stock_movement inicial
+      // O estoque agora é controlado apenas por movimentações
 
       return await show(params.id);
     } catch (error) {

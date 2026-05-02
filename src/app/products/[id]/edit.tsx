@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { useSQLiteContext } from 'expo-sqlite';
+import { storeStockMovement } from '@/database/utils/stockMovementUtils';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { useProductDatabase } from '@/database/models/Product';
@@ -17,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import WorkArea from '@/components/WorkArea';
 import { HeaderDeleteButton } from '@/components/HeaderDeleteButton';
 import CustomPicker from '@/components/CustomPicker';
+import StockAdjustmentModal, { StockAdjustmentType } from '@/components/modals/StockAdjustmentModal';
 
 interface Category {
   id: number;
@@ -33,6 +36,7 @@ interface Product {
   sale_price: number;
   wholesale_price?: number;
   initial_stock: number;
+  current_stock: number;
   minimum_stock: number;
   category_id?: number;
   supplier?: string;
@@ -59,9 +63,11 @@ export default function EditProduct() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  const [showStockAdjustModal, setShowStockAdjustModal] = useState(false);
 
   const productDatabase = useProductDatabase();
   const categoryDatabase = useCategoryDatabase();
+  const database = useSQLiteContext();
 
   const handleDelete = useCallback(async () => {
     if (!product) return;
@@ -111,7 +117,8 @@ export default function EditProduct() {
           ? formatCurrency(foundProduct.wholesale_price.toString())
           : ''
       );
-      setCurrentStock(foundProduct.initial_stock.toString());
+      // Removido: não mais setamos currentStock do initial_stock
+      // setCurrentStock(foundProduct.initial_stock.toString());
       setMinimumStock(foundProduct.minimum_stock.toString());
       setCategoryId(foundProduct.category_id);
       setSupplier(foundProduct.supplier || '');
@@ -141,6 +148,55 @@ export default function EditProduct() {
     return text.replace(/\D/g, '');
   };
 
+  const handleStockAdjust = async (params: {
+    type: StockAdjustmentType;
+    quantity: number;
+    notes: string;
+  }) => {
+    if (!product) return;
+
+    try {
+      let quantity = 0;
+      let type: 'stock_in' | 'sale' | 'return' | 'adjustment' = 'adjustment';
+      let notes = params.notes;
+
+      if (params.type === 'add') {
+        quantity = params.quantity;
+        type = 'stock_in';
+        notes = `Entrada: ${notes}`;
+      } else if (params.type === 'remove') {
+        quantity = -params.quantity;
+        type = 'adjustment';
+        notes = `Saída: ${notes}`;
+      } else if (params.type === 'set') {
+        const currentStockValue = product.current_stock || 0;
+        const difference = params.quantity - currentStockValue;
+        quantity = difference;
+        type = difference > 0 ? 'stock_in' : 'adjustment';
+        notes = `Ajuste para ${params.quantity}: ${notes}`;
+      }
+
+      await storeStockMovement(database, {
+        sale_id: null,
+        product_id: product.id,
+        type: type,
+        quantity: quantity,
+        unit_value: product.cost_price || 0,
+        total_value: quantity * (product.cost_price || 0),
+        notes: notes,
+      });
+
+      Alert.alert('Sucesso', 'Estoque ajustado com sucesso!');
+
+      // Recarregar produto para atualizar o estoque
+      await loadProduct();
+    } catch (error) {
+      console.error('Error adjusting stock:', error);
+      Alert.alert('Erro', 'Falha ao ajustar estoque');
+      throw error;
+    }
+  };
+
   const getCurrencyValue = (formattedValue: string): number => {
     if (!formattedValue) return 0;
     const cleanValue = formattedValue.replace(/[R$\s.]/g, '').replace(',', '.');
@@ -166,11 +222,6 @@ export default function EditProduct() {
 
     if (!minimumStock || isNaN(parseInt(minimumStock))) {
       Alert.alert('Erro', 'O estoque mínimo deve ser um número válido.');
-      return false;
-    }
-
-    if (!currentStock || isNaN(parseInt(minimumStock))) {
-      Alert.alert('Erro', 'O estoque inicial deve ser um número válido.');
       return false;
     }
 
@@ -225,7 +276,7 @@ export default function EditProduct() {
         cost_price: costPriceValue,
         sale_price: salePriceValue,
         wholesale_price: wholesalePriceValue,
-        initial_stock: currentStock ? parseInt(currentStock) : 0,
+        // initial_stock não é mais atualizado aqui
         minimum_stock: minimumStock ? parseInt(minimumStock) : 0,
         category_id: categoryId,
         supplier: supplier.trim() || undefined,
@@ -368,7 +419,7 @@ export default function EditProduct() {
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Nome do Produto *</Text>
           <Input
-            placeholder='Ex: iPhone 15, Camiseta Polo, Notebook...'
+            placeholder='Nome do produto'
             value={name}
             onChangeText={setName}
             editable={!isSaving}
@@ -450,19 +501,25 @@ export default function EditProduct() {
           <Text style={styles.sectionTitle}>Controle de Estoque</Text>
         </View>
 
-        <View style={styles.row}>
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Estoque Inicial</Text>
-            <Input
-              placeholder='0'
-              value={currentStock}
-              onChangeText={text => setCurrentStock(formatNumber(text))}
-              editable={!isSaving}
-              style={styles.input}
-              keyboardType='numeric'
-            />
+        <View style={styles.stockInfoContainer}>
+          <View style={styles.stockCurrentBox}>
+            <Text style={styles.stockCurrentLabel}>Estoque Atual</Text>
+            <Text style={styles.stockCurrentValue}>
+              {product?.current_stock || 0} unidades
+            </Text>
           </View>
 
+          <TouchableOpacity
+            style={styles.adjustStockButton}
+            onPress={() => setShowStockAdjustModal(true)}
+            disabled={isSaving}
+          >
+            <Ionicons name='create-outline' size={16} color='#ffffff' />
+            <Text style={styles.adjustStockButtonText}>Ajustar Estoque</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.row}>
           <View style={styles.inputHalf}>
             <Text style={styles.label}>Estoque Mínimo</Text>
             <Input
@@ -526,6 +583,15 @@ export default function EditProduct() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Modal de Ajuste de Estoque */}
+      <StockAdjustmentModal
+        visible={showStockAdjustModal}
+        productName={product?.name || ''}
+        currentStock={product?.current_stock || 0}
+        onClose={() => setShowStockAdjustModal(false)}
+        onConfirm={handleStockAdjust}
+      />
     </WorkArea>
   );
 }
@@ -840,6 +906,44 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  stockInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8fafc',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginBottom: 20,
+  },
+  stockCurrentBox: {
+    flex: 1,
+  },
+  stockCurrentLabel: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  stockCurrentValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1e293b',
+  },
+  adjustStockButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    gap: 6,
+  },
+  adjustStockButtonText: {
+    fontSize: 14,
     fontWeight: '600',
     color: '#ffffff',
   },

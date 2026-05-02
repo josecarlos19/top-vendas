@@ -2,16 +2,23 @@ import { useSQLiteContext } from "expo-sqlite";
 import { StockMovementInterface } from "@/interfaces/models/stockMovementInterface";
 
 function validateStockMovementParams(params: Partial<StockMovementInterface>) {
-  if (!params.product_id || !params.quantity || !params.unit_value) {
-    throw new Error("Missing required parameters for updating stock movement");
+  if (!params.product_id || params.quantity === undefined || params.quantity === null) {
+    throw new Error("Missing required parameters for stock movement");
   }
 
-  if (params.quantity < 0 || params.unit_value < 0) {
-    throw new Error("Quantity and unit value must be non-negative");
+  // unit_value pode ser 0 (ex: ajustes sem custo)
+  if (params.unit_value === undefined || params.unit_value === null) {
+    throw new Error("Missing unit_value for stock movement");
   }
 
-  if (params.quantity === 0 && params.unit_value === 0) {
-    throw new Error("At least one of quantity or unit value must be provided");
+  // unit_value não pode ser negativo
+  if (params.unit_value < 0) {
+    throw new Error("Unit value cannot be negative");
+  }
+
+  // quantity pode ser negativa (para saídas e ajustes negativos)
+  if (params.quantity === 0) {
+    throw new Error("Quantity cannot be zero");
   }
 }
 
