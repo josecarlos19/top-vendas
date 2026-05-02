@@ -85,7 +85,54 @@ export function useReportDatabase() {
     }
   }
 
+  async function getLast7DaysSales() {
+    try {
+      const salesData = await database.getAllAsync<{
+        date: string;
+        total_sales: number;
+      }>(
+        `
+        SELECT
+          DATE(sale_date, 'localtime') as date,
+          COUNT(*) as total_sales
+        FROM sales
+        WHERE DATE(sale_date, 'localtime') >= DATE('now', 'localtime', '-6 days')
+          AND status <> 'cancelled'
+          AND deleted_at IS NULL
+        GROUP BY DATE(sale_date, 'localtime')
+        ORDER BY date ASC
+        `
+      );
+
+      const result: Array<{ date: string; totalSales: number }> = [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const salesMap = new Map<string, number>();
+      salesData.forEach(row => {
+        salesMap.set(row.date, row.total_sales);
+      });
+
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        result.push({
+          date: dateStr,
+          totalSales: salesMap.get(dateStr) || 0,
+        });
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching last 7 days sales:', error);
+      throw new Error('Failed to fetch last 7 days sales');
+    }
+  }
+
   return {
     index,
+    getLast7DaysSales,
   };
 }

@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import StatCard from '@/components/StatCard';
 import QuickAction from '@/components/QuickActions';
+import BarChart from '@/components/BarChart';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useReportDatabase } from '@/database/models/Report';
 
 export default function Index() {
   const reportDatabase = useReportDatabase();
+  const [chartData, setChartData] = useState<
+    Array<{ date: string; totalSales: number }>
+  >([]);
+  const [isLoadingChart, setIsLoadingChart] = useState(true);
   const [stats, setStats] = useState([
     {
       title: 'Produtos',
@@ -89,7 +94,20 @@ export default function Index() {
       }
     }
 
+    async function fetchChartData() {
+      try {
+        setIsLoadingChart(true);
+        const salesData = await reportDatabase.getLast7DaysSales();
+        setChartData(salesData);
+      } catch (error) {
+        console.error('Failed to fetch chart data:', error);
+      } finally {
+        setIsLoadingChart(false);
+      }
+    }
+
     fetchReportData();
+    fetchChartData();
   }, []);
 
   return (
@@ -136,11 +154,14 @@ export default function Index() {
             <Text style={styles.sectionTitle}>
               📈 Vendas dos Últimos 7 Dias
             </Text>
-            <View style={styles.chartPlaceholder}>
-              <Ionicons name='analytics-outline' size={48} color='#94a3b8' />
-              <Text style={styles.chartText}>Gráfico de vendas</Text>
-              <Text style={styles.chartSubtext}>Em breve</Text>
-            </View>
+            {isLoadingChart ? (
+              <View style={styles.chartPlaceholder}>
+                <ActivityIndicator size='large' color='#667eea' />
+                <Text style={styles.chartText}>Carregando dados...</Text>
+              </View>
+            ) : (
+              <BarChart data={chartData} />
+            )}
           </View>
 
           <View style={styles.bottomSpacing} />
