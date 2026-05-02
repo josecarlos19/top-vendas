@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "top-vendas",
+    "name": "Top Vendas",
     "slug": "top-vendas",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,7 +14,12 @@
       "backgroundColor": "#4C56EB"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "splash": {
+        "image": "./assets/images/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#4C56EB"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +27,12 @@
         "backgroundColor": "#4C56EB"
       },
       "package": "com.josecarlos19.topvendas",
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "splash": {
+        "image": "./assets/images/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#4C56EB"
+      }
     },
     "web": {
       "bundler": "metro",
