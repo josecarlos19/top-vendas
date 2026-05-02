@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import StatCard from '@/components/StatCard';
-import QuickAction from '@/components/QuickActions';
 import BarChart from '@/components/BarChart';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useReportDatabase } from '@/database/models/Report';
@@ -50,33 +49,6 @@ export default function Index() {
       route: '/reports/sales-by-period',
     },
   ]);
-
-  const quickActions = [
-    {
-      title: 'Nova Venda',
-      icon: 'cart-outline' as keyof typeof Ionicons.glyphMap,
-      color: '#667eea',
-      route: '/sales/create',
-    },
-    {
-      title: 'Novo Produto',
-      icon: 'bag-add-outline' as keyof typeof Ionicons.glyphMap,
-      color: '#06b6d4',
-      route: '/products/create',
-    },
-    {
-      title: 'Novo Cliente',
-      icon: 'person-add-outline' as keyof typeof Ionicons.glyphMap,
-      color: '#10b981',
-      route: '/customers/create',
-    },
-    {
-      title: 'Relatórios',
-      icon: 'stats-chart-outline' as keyof typeof Ionicons.glyphMap,
-      color: '#f59e0b',
-      route: '/(drawer)/reports-list',
-    },
-  ];
 
   useEffect(() => {
     loadRevenueVisibility();
@@ -182,15 +154,6 @@ export default function Index() {
                 route={stat.route}
               />
             ))}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>⚡ Ações Rápidas</Text>
-            <View style={styles.actionsGrid}>
-              {quickActions.map((action, index) => (
-                <QuickAction key={index} {...action} />
-              ))}
-            </View>
           </View>
 
           <View style={styles.section}>

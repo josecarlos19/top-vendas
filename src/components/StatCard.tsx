@@ -31,48 +31,54 @@ export default function StatCard({
       onPress={() => router.push(route as any)}
       style={[styles.statCard, { backgroundColor }]}
     >
-      <View style={styles.statHeader}>
+      <View style={styles.statRow}>
         <View style={[styles.statIcon, { backgroundColor: color + '20' }]}>
-          <Ionicons name={icon} size={24} color={color} />
+          <Ionicons name={icon} size={18} color={color} />
+        </View>
+        <View>
+          <Text style={styles.statValue}>{value}</Text>
+          <Text style={styles.statLabel}>{title}</Text>
         </View>
       </View>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{title}</Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   statCard: {
-    width: (width - 56) / 2,
+    width: (width - 72) / 2, // menor largura
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12, // menor borda
+    padding: 12, // menos padding
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  statHeader: {
-    marginBottom: 12,
+  statRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8, // menos espaço
   },
   statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 28, // menor ícone
+    height: 28,
+    borderRadius: 7,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 8,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 18, // menor fonte
     fontWeight: '700',
     color: '#1e293b',
-    marginBottom: 4,
+    marginBottom: 0,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 10, // menor fonte
     color: '#64748b',
     fontWeight: '500',
+    marginTop: 2,
   },
 });
