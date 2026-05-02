@@ -13,6 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import CollapsibleSection from '../CollapsibleSection';
 
 export type StockAdjustmentType = 'add' | 'remove' | 'set';
 
@@ -216,8 +217,12 @@ export default function StockAdjustmentModal({
                   />
                 </View>
 
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Observações (opcional)</Text>
+                <CollapsibleSection
+                  title='Observações (opcional)'
+                  icon='document-text-outline'
+                  iconColor='#64748b'
+                  defaultCollapsed={true}
+                >
                   <TextInput
                     style={[styles.modalInput, styles.modalTextArea]}
                     placeholder='Motivo do ajuste'
@@ -226,7 +231,7 @@ export default function StockAdjustmentModal({
                     multiline
                     numberOfLines={3}
                   />
-                </View>
+                </CollapsibleSection>
               </ScrollView>
 
               <View style={styles.modalFooter}>
