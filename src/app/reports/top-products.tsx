@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { PieChart } from 'react-native-gifted-charts';
-import { useSaleDatabase } from '@/database/models/Sale';
+import { useReportDatabase } from '@/database/models/Report';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PeriodFilter from '@/components/PeriodFilter';
 
@@ -34,84 +34,30 @@ export default function TopProducts() {
   });
   const [endDate, setEndDate] = useState(new Date());
 
-  const saleDatabase = useSaleDatabase();
+  const reportDatabase = useReportDatabase();
 
   const loadProductSales = async () => {
     try {
       setIsLoading(true);
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
 
-      // Buscar todas as vendas
-      const allSales = await saleDatabase.index();
-
-      // Filtrar vendas por período e excluir canceladas
-      const filteredSales = allSales.filter((sale) => {
-        // Verificar se sale_date existe
-        if (!sale.sale_date) {
-          return false;
-        }
-
-        const saleDate = new Date(sale.sale_date);
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-
-        // Normalizar para comparar apenas datas (sem hora)
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-        saleDate.setHours(0, 0, 0, 0);
-
-        return (
-          saleDate >= start &&
-          saleDate <= end &&
-          sale.status !== 'cancelled'
-        );
-      });
-
-      // Agrupar produtos por ID e somar quantidades
-      const productMap = new Map<number, { name: string; quantity: number }>();
-
-      filteredSales.forEach((sale) => {
-        if (sale.items && sale.items.length > 0) {
-          sale.items.forEach((item: any) => {
-            const productId = item.product_id;
-            const productName = item.product_name || 'Produto sem nome';
-            const quantity = item.quantity || 0;
-
-            if (productMap.has(productId)) {
-              const existing = productMap.get(productId)!;
-              existing.quantity += quantity;
-            } else {
-              productMap.set(productId, {
-                name: productName,
-                quantity,
-              });
-            }
-          });
-        }
-      });
-
-      // Converter para array e ordenar por quantidade
-      const productsArray = Array.from(productMap.entries()).map(
-        ([id, data]) => ({
-          product_id: id,
-          product_name: data.name,
-          quantity: data.quantity,
-        })
+      const result = await reportDatabase.getTopProducts(
+        startDateStr,
+        endDateStr,
+        5
       );
 
-      productsArray.sort((a, b) => b.quantity - a.quantity);
-
-      // Pegar apenas os 5 primeiros
-      const top5Products = productsArray.slice(0, 5);
-
-      // Calcular total e percentuais
-      const totalQuantity = top5Products.reduce(
+      const totalQuantity = result.reduce(
         (sum, product) => sum + product.quantity,
         0
       );
 
-      const productsWithPercentage: ProductSale[] = top5Products.map(
+      const productsWithPercentage: ProductSale[] = result.map(
         (product, index) => ({
-          ...product,
+          product_id: product.product_id,
+          product_name: product.product_name,
+          quantity: product.quantity,
           percentage:
             totalQuantity > 0
               ? (product.quantity / totalQuantity) * 100
@@ -122,7 +68,7 @@ export default function TopProducts() {
 
       setProductSales(productsWithPercentage);
     } catch (error) {
-      // Error silently handled
+      console.error('Error loading product sales:', error);
     } finally {
       setIsLoading(false);
     }

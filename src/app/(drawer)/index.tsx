@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import StatCard from '@/components/StatCard';
@@ -7,9 +7,11 @@ import QuickAction from '@/components/QuickActions';
 import BarChart from '@/components/BarChart';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useReportDatabase } from '@/database/models/Report';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Index() {
   const reportDatabase = useReportDatabase();
+  const [isRevenueHidden, setIsRevenueHidden] = useState(false);
   const [chartData, setChartData] = useState<
     Array<{ date: string; totalSales: number }>
   >([]);
@@ -45,7 +47,7 @@ export default function Index() {
       icon: 'cash-outline' as keyof typeof Ionicons.glyphMap,
       color: '#ec4899',
       backgroundColor: '#ffffff',
-      route: '/reports/revenue',
+      route: '/reports/sales-by-period',
     },
   ]);
 
@@ -77,6 +79,8 @@ export default function Index() {
   ];
 
   useEffect(() => {
+    loadRevenueVisibility();
+
     async function fetchReportData() {
       try {
         const reportData = await reportDatabase.index();
@@ -110,6 +114,25 @@ export default function Index() {
     fetchChartData();
   }, []);
 
+  const loadRevenueVisibility = async () => {
+    try {
+      const hidden = await AsyncStorage.getItem('@revenue_hidden');
+      setIsRevenueHidden(hidden === 'true');
+    } catch (error) {
+      console.error('Error loading revenue visibility:', error);
+    }
+  };
+
+  const toggleRevenueVisibility = async () => {
+    try {
+      const newState = !isRevenueHidden;
+      await AsyncStorage.setItem('@revenue_hidden', String(newState));
+      setIsRevenueHidden(newState);
+    } catch (error) {
+      console.error('Error toggling revenue visibility:', error);
+    }
+  };
+
   return (
     <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -126,6 +149,24 @@ export default function Index() {
             </Text>
           </LinearGradient>
 
+          <View style={styles.headerRow}>
+            <Text style={styles.sectionTitle}>📊 Estatísticas</Text>
+            <TouchableOpacity
+              onPress={toggleRevenueVisibility}
+              style={styles.toggleButton}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={isRevenueHidden ? 'eye-off-outline' : 'eye-outline'}
+                size={20}
+                color="#64748b"
+              />
+              <Text style={styles.toggleButtonText}>
+                {isRevenueHidden ? 'Mostrar' : 'Ocultar'} receita
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.statsGrid}>
             {stats.map((stat, index) => (
               <StatCard
@@ -133,7 +174,9 @@ export default function Index() {
                 {...stat}
                 value={
                   stat.title === 'Receita'
-                    ? `R$ ${Number(stat.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                    ? isRevenueHidden
+                      ? '••••••'
+                      : `R$ ${Number(stat.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                     : String(stat.value)
                 }
                 route={stat.route}
@@ -142,7 +185,7 @@ export default function Index() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>⚡ Ações Rápidas</Text>
+            <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>⚡ Ações Rápidas</Text>
             <View style={styles.actionsGrid}>
               {quickActions.map((action, index) => (
                 <QuickAction key={index} {...action} />
@@ -151,7 +194,7 @@ export default function Index() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
+            <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>
               📈 Vendas dos Últimos 7 Dias
             </Text>
             {isLoadingChart ? (
@@ -180,7 +223,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   welcomeSection: {
-    margin: 20,
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 0,
     borderRadius: 16,
     padding: 24,
   },
@@ -195,11 +240,36 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.9)',
     lineHeight: 20,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  toggleButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#64748b',
+  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: 20,
     gap: 16,
+    marginBottom: 8,
   },
   section: {
     marginTop: 24,
@@ -209,6 +279,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#1e293b',
+  },
+  sectionTitleWithMargin: {
     marginBottom: 16,
   },
   actionsGrid: {

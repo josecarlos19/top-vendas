@@ -6,11 +6,10 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useSaleDatabase } from '@/database/models/Sale';
+import { useReportDatabase } from '@/database/models/Report';
 import formatCurrency from '@/components/utils/formatCurrency';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PeriodFilter from '@/components/PeriodFilter';
@@ -26,10 +25,7 @@ interface Sale {
   installments: number;
   status: string;
   sale_date: string;
-  notes?: string;
-  items?: any[];
-  created_at: string;
-  updated_at: string;
+  items_count: number;
 }
 
 const PAYMENT_METHOD_LABELS: { [key: string]: string } = {
@@ -51,59 +47,25 @@ export default function SalesByPeriod() {
   const [isLoading, setIsLoading] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
-    date.setDate(1); // Primeiro dia do mês atual
+    date.setDate(1);
     return date;
   });
   const [endDate, setEndDate] = useState(new Date());
 
-  const saleDatabase = useSaleDatabase();
+  const reportDatabase = useReportDatabase();
 
   const loadSales = async () => {
     try {
       setIsLoading(true);
-
-      // Buscar todas as vendas sem paginação
-      const allSales = await saleDatabase.index();
-
-      // Filtrar vendas por período
-      const filteredSales = allSales
-        .filter((sale) => {
-          // Verificar se sale_date existe
-          if (!sale.sale_date) {
-            return false;
-          }
-
-          const saleDate = new Date(sale.sale_date);
-          const start = new Date(startDate);
-          const end = new Date(endDate);
-
-          // Normalizar para comparar apenas datas (sem hora)
-          start.setHours(0, 0, 0, 0);
-          end.setHours(23, 59, 59, 999);
-          saleDate.setHours(0, 0, 0, 0);
-
-          return saleDate >= start && saleDate <= end;
-        })
-        .map((sale) => ({
-          id: sale.id!,
-          customer_id: sale.customer_id,
-          customer_name: sale.customer_name,
-          subtotal: sale.subtotal || 0,
-          discount: sale.discount || 0,
-          total: sale.total || 0,
-          payment_method: sale.payment_method || 'money',
-          installments: sale.installments || 1,
-          status: sale.status || 'pending',
-          sale_date: sale.sale_date!.toString(),
-          notes: sale.notes,
-          items: sale.items,
-          created_at: sale.created_at?.toString() || '',
-          updated_at: sale.updated_at?.toString() || '',
-        }));
-
-      setSales(filteredSales);
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+      const result = await reportDatabase.getSalesByPeriod(
+        startDateStr,
+        endDateStr
+      );
+      setSales(result);
     } catch (error) {
-      // Error silently handled
+      console.error('Error loading sales:', error);
     } finally {
       setIsLoading(false);
     }
@@ -151,7 +113,6 @@ export default function SalesByPeriod() {
     router.push(`/sales/${sale.id}/edit`);
   };
 
-  // Calcular totais
   const totalReceived = sales
     .filter((sale) => sale.status === 'completed')
     .reduce((sum, sale) => sum + sale.total, 0);
@@ -209,7 +170,7 @@ export default function SalesByPeriod() {
 
         <View style={styles.saleFooter}>
           <Text style={styles.itemCount}>
-            {item.items?.length || 0} {(item.items?.length || 0) === 1 ? 'item' : 'itens'}
+            {item.items_count} {item.items_count === 1 ? 'item' : 'itens'}
           </Text>
           <View style={styles.priceContainer}>
             {item.discount > 0 && (
@@ -243,7 +204,6 @@ export default function SalesByPeriod() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      {/* Filtros e Conteúdo */}
       <View style={styles.content}>
         <View style={styles.filterSection}>
           <PeriodFilter
@@ -269,7 +229,6 @@ export default function SalesByPeriod() {
           </TouchableOpacity>
         </View>
 
-        {/* Lista de Vendas */}
         {sales.length > 0 && (
           <View style={styles.resultsContainer}>
             <Text style={styles.resultsText}>
@@ -292,7 +251,6 @@ export default function SalesByPeriod() {
         />
       </View>
 
-      {/* Totalizadores Fixos */}
       {sales.length > 0 && !isLoading && (
         <View style={styles.totalsContainer}>
           <View style={styles.totalRow}>
@@ -357,7 +315,6 @@ export default function SalesByPeriod() {
         </View>
       )}
 
-      {/* Loading Overlay */}
       {isLoading && sales.length === 0 && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#3b82f6" />

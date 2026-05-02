@@ -8,11 +8,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { useReportDatabase } from '@/database/models/Report';
 import { PieChart } from 'react-native-gifted-charts';
-import { useSaleDatabase } from '@/database/models/Sale';
-import { useProductDatabase } from '@/database/models/Product';
-import { useCategoryDatabase } from '@/database/models/Category';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PeriodFilter from '@/components/PeriodFilter';
 
@@ -31,110 +28,35 @@ export default function TopCategories() {
   const [isLoading, setIsLoading] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
-    date.setDate(1); // Primeiro dia do mês atual
+    date.setDate(1);
     return date;
   });
   const [endDate, setEndDate] = useState(new Date());
 
-  const saleDatabase = useSaleDatabase();
-  const productDatabase = useProductDatabase();
-  const categoryDatabase = useCategoryDatabase();
+  const reportDatabase = useReportDatabase();
 
   const loadCategorySales = async () => {
     try {
       setIsLoading(true);
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
 
-      // Buscar todas as vendas
-      const allSales = await saleDatabase.index();
-
-      // Filtrar vendas por período e excluir canceladas
-      const filteredSales = allSales.filter((sale) => {
-        // Verificar se sale_date existe
-        if (!sale.sale_date) {
-          return false;
-        }
-
-        const saleDate = new Date(sale.sale_date);
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-
-        // Normalizar para comparar apenas datas (sem hora)
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-        saleDate.setHours(0, 0, 0, 0);
-
-        return (
-          saleDate >= start &&
-          saleDate <= end &&
-          sale.status !== 'cancelled'
-        );
-      });
-
-      // Buscar todos os produtos e categorias uma única vez
-      const allProducts = await productDatabase.index();
-      const allCategories = await categoryDatabase.index();
-
-      // Criar mapas para acesso rápido
-      const productMap = new Map(
-        allProducts.map((p) => [p.id, p.category_id || null])
-      );
-      const categoryMap = new Map(
-        allCategories.map((c) => [c.id, c.name])
+      const result = await reportDatabase.getTopCategories(
+        startDateStr,
+        endDateStr,
+        5
       );
 
-      // Agrupar por categoria e somar quantidades
-      const categoryQuantityMap = new Map<number | null, { name: string; quantity: number }>();
-
-      filteredSales.forEach((sale) => {
-        if (sale.items && sale.items.length > 0) {
-          sale.items.forEach((item: any) => {
-            const productId = item.product_id;
-            const quantity = item.quantity || 0;
-
-            // Buscar category_id do produto
-            const categoryId = productMap.get(productId) || null;
-
-            // Buscar nome da categoria ou usar "Sem Categoria"
-            const categoryName = categoryId
-              ? (categoryMap.get(categoryId) || 'Sem Categoria')
-              : 'Sem Categoria';
-
-            if (categoryQuantityMap.has(categoryId)) {
-              const existing = categoryQuantityMap.get(categoryId)!;
-              existing.quantity += quantity;
-            } else {
-              categoryQuantityMap.set(categoryId, {
-                name: categoryName,
-                quantity,
-              });
-            }
-          });
-        }
-      });
-
-      // Converter para array e ordenar por quantidade
-      const categoriesArray = Array.from(categoryQuantityMap.entries()).map(
-        ([id, data]) => ({
-          category_id: id,
-          category_name: data.name,
-          quantity: data.quantity,
-        })
-      );
-
-      categoriesArray.sort((a, b) => b.quantity - a.quantity);
-
-      // Pegar apenas as 5 primeiras
-      const top5Categories = categoriesArray.slice(0, 5);
-
-      // Calcular total e percentuais
-      const totalQuantity = top5Categories.reduce(
+      const totalQuantity = result.reduce(
         (sum, category) => sum + category.quantity,
         0
       );
 
-      const categoriesWithPercentage: CategorySale[] = top5Categories.map(
+      const categoriesWithPercentage: CategorySale[] = result.map(
         (category, index) => ({
-          ...category,
+          category_id: category.category_id === 0 ? null : category.category_id,
+          category_name: category.category_name,
+          quantity: category.quantity,
           percentage:
             totalQuantity > 0
               ? (category.quantity / totalQuantity) * 100
@@ -145,7 +67,7 @@ export default function TopCategories() {
 
       setCategorySales(categoriesWithPercentage);
     } catch (error) {
-      // Error silently handled
+      console.error('Error loading category sales:', error);
     } finally {
       setIsLoading(false);
     }
@@ -192,9 +114,7 @@ export default function TopCategories() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      {/* Content */}
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-        {/* Filtros */}
         <View style={styles.filterSection}>
           <PeriodFilter
             startDate={startDate}
@@ -212,7 +132,6 @@ export default function TopCategories() {
           </TouchableOpacity>
         </View>
 
-        {/* Gráfico e Legenda */}
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#3b82f6" />
@@ -220,7 +139,6 @@ export default function TopCategories() {
           </View>
         ) : categorySales.length > 0 ? (
           <View style={styles.resultsContainer}>
-            {/* Gráfico */}
             <View style={styles.chartContainer}>
               <PieChart
                 data={pieData}
@@ -246,7 +164,6 @@ export default function TopCategories() {
               />
             </View>
 
-            {/* Legenda */}
             {renderLegend()}
           </View>
         ) : (

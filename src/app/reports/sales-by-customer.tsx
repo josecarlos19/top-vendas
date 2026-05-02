@@ -6,13 +6,11 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
-import { useSaleDatabase } from '@/database/models/Sale';
-import { useCustomerDatabase } from '@/database/models/Customer';
+import { useReportDatabase } from '@/database/models/Report';
 import formatCurrency from '@/components/utils/formatCurrency';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PeriodFilter from '@/components/PeriodFilter';
@@ -29,18 +27,12 @@ interface Sale {
   status: string;
   sale_date: string;
   notes?: string;
-  items?: any[];
-  created_at: string;
-  updated_at: string;
+  items_count: number;
 }
 
 interface Customer {
   id: number;
   name: string;
-  email?: string;
-  phone?: string;
-  mobile?: string;
-  active: number;
 }
 
 const PAYMENT_METHOD_LABELS: { [key: string]: string } = {
@@ -65,13 +57,12 @@ export default function SalesByCustomer() {
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
-    date.setDate(1); // Primeiro dia do mês atual
+    date.setDate(1);
     return date;
   });
   const [endDate, setEndDate] = useState(new Date());
 
-  const saleDatabase = useSaleDatabase();
-  const customerDatabase = useCustomerDatabase();
+  const reportDatabase = useReportDatabase();
 
   useEffect(() => {
     loadCustomers();
@@ -80,21 +71,10 @@ export default function SalesByCustomer() {
   const loadCustomers = async () => {
     try {
       setIsLoadingCustomers(true);
-      const allCustomers = await customerDatabase.index();
-      // Filtrar apenas clientes ativos e converter para o tipo Customer
-      const activeCustomers = allCustomers
-        .filter((customer) => customer.active === 1 && customer.id !== undefined)
-        .map((customer) => ({
-          id: customer.id!,
-          name: customer.name || '',
-          email: customer.email,
-          phone: customer.phone,
-          mobile: customer.mobile,
-          active: customer.active || 1,
-        }));
-      setCustomers(activeCustomers);
+      const result = await reportDatabase.getActiveCustomers();
+      setCustomers(result);
     } catch (error) {
-      // Error silently handled
+      console.error('Error loading customers:', error);
     } finally {
       setIsLoadingCustomers(false);
     }
@@ -107,55 +87,16 @@ export default function SalesByCustomer() {
 
     try {
       setIsLoading(true);
-
-      // Buscar todas as vendas sem paginação
-      const allSales = await saleDatabase.index();
-
-      // Filtrar vendas por cliente e período
-      const filteredSales = allSales
-        .filter((sale) => {
-          // Filtro por cliente
-          if (sale.customer_id !== selectedCustomerId) {
-            return false;
-          }
-
-          // Verificar se sale_date existe
-          if (!sale.sale_date) {
-            return false;
-          }
-
-          // Filtro por período
-          const saleDate = new Date(sale.sale_date);
-          const start = new Date(startDate);
-          const end = new Date(endDate);
-
-          // Normalizar para comparar apenas datas (sem hora)
-          start.setHours(0, 0, 0, 0);
-          end.setHours(23, 59, 59, 999);
-          saleDate.setHours(0, 0, 0, 0);
-
-          return saleDate >= start && saleDate <= end;
-        })
-        .map((sale) => ({
-          id: sale.id!,
-          customer_id: sale.customer_id,
-          customer_name: sale.customer_name,
-          subtotal: sale.subtotal || 0,
-          discount: sale.discount || 0,
-          total: sale.total || 0,
-          payment_method: sale.payment_method || 'money',
-          installments: sale.installments || 1,
-          status: sale.status || 'pending',
-          sale_date: sale.sale_date!.toString(),
-          notes: sale.notes,
-          items: sale.items,
-          created_at: sale.created_at?.toString() || '',
-          updated_at: sale.updated_at?.toString() || '',
-        }));
-
-      setSales(filteredSales);
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+      const result = await reportDatabase.getSalesByCustomer(
+        selectedCustomerId,
+        startDateStr,
+        endDateStr
+      );
+      setSales(result);
     } catch (error) {
-      // Error silently handled
+      console.error('Error loading sales:', error);
     } finally {
       setIsLoading(false);
     }
@@ -203,7 +144,6 @@ export default function SalesByCustomer() {
     router.push(`/sales/${id}/edit`);
   };
 
-  // Cálculos dos totais
   const totalReceived = sales
     .filter((sale) => sale.status === 'completed')
     .reduce((sum, sale) => sum + sale.total, 0);
@@ -242,6 +182,7 @@ export default function SalesByCustomer() {
         <View style={styles.saleInfo}>
           <Text style={styles.paymentMethod}>
             {PAYMENT_METHOD_LABELS[item.payment_method] || item.payment_method}
+            {item.installments > 1 && ` (${item.installments}x)`}
           </Text>
           {item.notes && (
             <Text style={styles.saleNotes} numberOfLines={1}>
@@ -251,14 +192,17 @@ export default function SalesByCustomer() {
         </View>
 
         <View style={styles.saleFooter}>
+          <Text style={styles.itemCount}>
+            {item.items_count} {item.items_count === 1 ? 'item' : 'itens'}
+          </Text>
           <View style={styles.priceContainer}>
             {item.discount > 0 && (
               <Text style={styles.discountAmount}>
-                -{formatCurrency((item.discount / 100).toString())}
+                -{formatCurrency(item.discount.toString())}
               </Text>
             )}
             <Text style={styles.totalAmount}>
-              {formatCurrency((item.total / 100).toString())}
+              {formatCurrency(item.total.toString())}
             </Text>
           </View>
         </View>
@@ -266,128 +210,119 @@ export default function SalesByCustomer() {
     </TouchableOpacity>
   );
 
-  const renderEmpty = () => (
-    <View style={styles.emptyState}>
-      <Ionicons name="receipt-outline" size={64} color="#cbd5e1" />
-      <Text style={styles.emptyTitle}>Nenhuma venda encontrada</Text>
-      <Text style={styles.emptySubtitle}>
-        {selectedCustomerId
-          ? 'Não há vendas para este cliente no período selecionado.'
-          : 'Selecione um cliente e clique em "Buscar" para ver as vendas.'}
-      </Text>
-    </View>
-  );
+  const renderEmpty = () => {
+    if (isLoading) return null;
 
-  const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
+    return (
+      <View style={styles.emptyState}>
+        <Ionicons name="receipt-outline" size={64} color="#cbd5e1" />
+        <Text style={styles.emptyTitle}>Nenhuma venda encontrada</Text>
+        <Text style={styles.emptySubtitle}>
+          {selectedCustomerId
+            ? 'Não há vendas para este cliente no período selecionado.'
+            : 'Selecione um cliente e clique em Buscar.'}
+        </Text>
+      </View>
+    );
+  };
+
+  const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      {/* Content */}
       <View style={styles.content}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Filter Section */}
-          <View style={styles.filterSection}>
-            <PeriodFilter
-              startDate={startDate}
-              endDate={endDate}
-              onStartDateChange={setStartDate}
-              onEndDateChange={setEndDate}
-            />
-
-            {/* Customer Picker */}
-            <View style={styles.pickerContainer}>
-              <Text style={styles.pickerLabel}>Cliente</Text>
-              {isLoadingCustomers ? (
-                <View style={styles.pickerLoading}>
-                  <ActivityIndicator size="small" color="#3b82f6" />
-                  <Text style={styles.pickerLoadingText}>Carregando clientes...</Text>
-                </View>
-              ) : (
-                <View style={styles.pickerWrapper}>
-                  <Picker
-                    selectedValue={selectedCustomerId}
-                    onValueChange={(value) => setSelectedCustomerId(value)}
-                    style={styles.picker}
-                  >
-                    <Picker.Item label="Selecione um cliente" value={null} />
-                    {customers.map((customer) => (
-                      <Picker.Item
-                        key={customer.id}
-                        label={customer.name}
-                        value={customer.id}
-                      />
-                    ))}
-                  </Picker>
-                </View>
-              )}
-            </View>
-
-            {/* Search Button */}
-            <TouchableOpacity
-              style={[
-                styles.searchButton,
-                !selectedCustomerId && styles.searchButtonDisabled,
-              ]}
-              onPress={loadSales}
-              activeOpacity={0.7}
-              disabled={!selectedCustomerId || isLoading}
-            >
-              <Ionicons
-                name="search"
-                size={16}
-                color={!selectedCustomerId ? '#94a3b8' : '#ffffff'}
-              />
-              <Text
-                style={[
-                  styles.searchButtonText,
-                  !selectedCustomerId && styles.searchButtonTextDisabled,
-                ]}
-              >
-                {isLoading ? 'Buscando...' : 'Buscar'}
-              </Text>
-            </TouchableOpacity>
+        <View style={styles.filterSection}>
+          <View style={styles.pickerContainer}>
+            <Text style={styles.pickerLabel}>Cliente</Text>
+            {isLoadingCustomers ? (
+              <View style={styles.pickerLoading}>
+                <ActivityIndicator size="small" color="#3b82f6" />
+                <Text style={styles.pickerLoadingText}>Carregando clientes...</Text>
+              </View>
+            ) : (
+              <View style={styles.pickerWrapper}>
+                <Picker
+                  selectedValue={selectedCustomerId}
+                  onValueChange={(itemValue) => setSelectedCustomerId(itemValue)}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="Selecione um cliente" value={null} />
+                  {customers.map((customer) => (
+                    <Picker.Item
+                      key={customer.id}
+                      label={customer.name}
+                      value={customer.id}
+                    />
+                  ))}
+                </Picker>
+              </View>
+            )}
           </View>
 
-          {/* Results */}
-          {sales.length > 0 && (
-            <View style={styles.resultsContainer}>
-              <Text style={styles.resultsText}>
-                {sales.length} {sales.length === 1 ? 'venda encontrada' : 'vendas encontradas'}
-              </Text>
-            </View>
-          )}
+          <PeriodFilter
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+          />
 
-          {/* Sales List */}
-          <View style={styles.listWrapper}>
-            <FlatList
-              data={sales}
-              renderItem={renderSale}
-              keyExtractor={(item) => item.id.toString()}
-              contentContainerStyle={[
-                styles.listContainer,
-                sales.length === 0 && styles.emptyListContainer,
-              ]}
-              ListEmptyComponent={renderEmpty}
-              scrollEnabled={false}
-            />
+          <TouchableOpacity
+            style={[
+              styles.searchButton,
+              !selectedCustomerId && styles.searchButtonDisabled,
+            ]}
+            onPress={loadSales}
+            disabled={isLoading || !selectedCustomerId}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#ffffff" size="small" />
+            ) : (
+              <>
+                <Ionicons name="search" size={16} color="#ffffff" />
+                <Text
+                  style={[
+                    styles.searchButtonText,
+                    !selectedCustomerId && styles.searchButtonTextDisabled,
+                  ]}
+                >
+                  Buscar
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {sales.length > 0 && (
+          <View style={styles.resultsContainer}>
+            <Text style={styles.resultsText}>
+              {sales.length} venda{sales.length !== 1 ? 's' : ''} de {selectedCustomer?.name}
+            </Text>
           </View>
-        </ScrollView>
+        )}
+
+        <View style={styles.listWrapper}>
+          <FlatList
+            data={sales}
+            renderItem={renderSale}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={[
+              styles.listContainer,
+              sales.length === 0 && styles.emptyListContainer,
+            ]}
+            ListEmptyComponent={renderEmpty}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
       </View>
 
-      {/* Totals Footer */}
-      {sales.length > 0 && (
+      {sales.length > 0 && !isLoading && (
         <View style={styles.totalsContainer}>
           <View style={styles.totalRow}>
             <View style={styles.totalItem}>
               <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>Total Recebido</Text>
-                <Text
-                  style={[styles.totalValue, { color: '#22c55e' }]}
-                >
+                <Text style={[styles.totalValue, { color: '#22c55e' }]}>
                   {(totalReceived / 100).toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
@@ -401,9 +336,7 @@ export default function SalesByCustomer() {
               <Ionicons name="time" size={18} color="#f59e0b" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>A Receber</Text>
-                <Text
-                  style={[styles.totalValue, { color: '#f59e0b' }]}
-                >
+                <Text style={[styles.totalValue, { color: '#f59e0b' }]}>
                   {(totalPending / 100).toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
@@ -419,9 +352,7 @@ export default function SalesByCustomer() {
               <Ionicons name="cash" size={18} color="#3b82f6" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>Total Geral</Text>
-                <Text
-                  style={[styles.totalValue, { color: '#3b82f6' }]}
-                >
+                <Text style={[styles.totalValue, { color: '#3b82f6' }]}>
                   {(totalGeneral / 100).toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
@@ -435,9 +366,7 @@ export default function SalesByCustomer() {
               <Ionicons name="pricetag" size={18} color="#ec4899" />
               <View style={styles.totalInfo}>
                 <Text style={styles.totalLabel}>Total Desconto</Text>
-                <Text
-                  style={[styles.totalValue, { color: '#ec4899' }]}
-                >
+                <Text style={[styles.totalValue, { color: '#ec4899' }]}>
                   {(totalDiscount / 100).toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL',
@@ -450,8 +379,7 @@ export default function SalesByCustomer() {
         </View>
       )}
 
-      {/* Loading Overlay */}
-      {isLoading && (
+      {isLoading && sales.length === 0 && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#3b82f6" />
           <Text style={styles.loadingOverlayText}>Carregando vendas...</Text>
@@ -469,21 +397,18 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
-  },
   filterSection: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
-    gap: 6,
+    gap: 16,
   },
   pickerContainer: {
     backgroundColor: '#ffffff',
     borderRadius: 8,
-    padding: 8,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -491,10 +416,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   pickerLabel: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: '#64748b',
-    marginBottom: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 8,
   },
   pickerWrapper: {
     backgroundColor: '#f8fafc',
@@ -504,138 +429,143 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   picker: {
-    height: 40,
+    height: 50,
   },
   pickerLoading: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    gap: 6,
+    paddingVertical: 12,
+    gap: 8,
   },
   pickerLoadingText: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#64748b',
   },
   searchButton: {
     backgroundColor: '#3b82f6',
-    borderRadius: 6,
-    paddingVertical: 8,
+    borderRadius: 8,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
     shadowColor: '#3b82f6',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
     elevation: 3,
   },
   searchButtonDisabled: {
-    backgroundColor: '#e2e8f0',
+    backgroundColor: '#cbd5e1',
     shadowColor: '#000',
     shadowOpacity: 0.1,
   },
   searchButtonText: {
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '600',
   },
   searchButtonTextDisabled: {
     color: '#94a3b8',
   },
   resultsContainer: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: '#f8fafc',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
   resultsText: {
-    fontSize: 11,
+    fontSize: 14,
     color: '#64748b',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   listWrapper: {
     flex: 1,
   },
   listContainer: {
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   emptyListContainer: {
     flexGrow: 1,
   },
   saleCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 6,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 1,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   saleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 12,
   },
   saleDate: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#1e293b',
   },
   statusBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   statusText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
   },
   saleContent: {
-    gap: 5,
+    gap: 12,
   },
   saleInfo: {
-    gap: 3,
+    gap: 4,
   },
   paymentMethod: {
-    fontSize: 11,
+    fontSize: 14,
     color: '#64748b',
     fontWeight: '500',
   },
   saleNotes: {
-    fontSize: 10,
+    fontSize: 13,
     color: '#94a3b8',
     fontStyle: 'italic',
   },
   saleFooter: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 6,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
+  },
+  itemCount: {
+    fontSize: 13,
+    color: '#64748b',
+    fontWeight: '500',
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
   },
   discountAmount: {
-    fontSize: 10,
+    fontSize: 13,
     color: '#ec4899',
     fontWeight: '600',
   },
   totalAmount: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1e293b',
   },
@@ -644,8 +574,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 10,
+    paddingVertical: 16,
+    gap: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.08,
@@ -654,16 +584,16 @@ const styles = StyleSheet.create({
   },
   totalRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   totalItem: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     backgroundColor: '#f8fafc',
-    padding: 10,
-    borderRadius: 8,
+    padding: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
@@ -671,13 +601,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   totalLabel: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#64748b',
-    fontWeight: '500',
-    marginBottom: 2,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   totalValue: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
   },
   loadingOverlay: {
@@ -686,35 +616,35 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(248, 250, 252, 0.95)',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 999,
+    zIndex: 1000,
   },
   loadingOverlayText: {
-    marginTop: 12,
+    marginTop: 16,
     fontSize: 16,
     color: '#64748b',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 64,
-    paddingHorizontal: 32,
+    paddingVertical: 80,
+    paddingHorizontal: 40,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#475569',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1e293b',
     marginTop: 16,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: '#94a3b8',
+    fontSize: 15,
+    color: '#64748b',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
   },
 });
