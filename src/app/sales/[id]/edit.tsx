@@ -21,7 +21,7 @@ import formatCurrency from '@/components/utils/formatCurrency';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useInstallmentDatabase } from '@/database/models/Installment';
 import WorkArea from '@/components/WorkArea';
-import CustomPicker from '@/components/CustomPicker';
+import SearchableSelect from '@/components/SearchableSelect';
 import { formatDate } from '@/database/utils/formatDate';
 
 type statusTypes = 'completed' | 'pending';
@@ -407,13 +407,12 @@ export default function EditSale() {
           <Text style={styles.sectionTitle}>Status</Text>
         </View>
 
-        <CustomPicker
+        <SearchableSelect
           label='Status da Venda'
           selectedValue={status}
           onValueChange={value => setStatus(value as string)}
           options={STATUS_OPTIONS}
           enabled={!isSaving}
-          emptyOption={false}
         />
 
         {/* Cliente */}

@@ -18,7 +18,7 @@ import formatCurrency from '@/components/utils/formatCurrency';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import WorkArea from '@/components/WorkArea';
 import { HeaderDeleteButton } from '@/components/HeaderDeleteButton';
-import CustomPicker from '@/components/CustomPicker';
+import SearchableSelect from '@/components/SearchableSelect';
 import StockAdjustmentModal, { StockAdjustmentType } from '@/components/modals/StockAdjustmentModal';
 
 interface Category {
@@ -358,6 +358,11 @@ export default function EditProduct() {
   const isFormValid =
     name.trim() && salePrice.trim() && getCurrencyValue(salePrice) > 0;
 
+  const categoryOptions = categories.map(category => ({
+    label: category.name,
+    value: category.id,
+  }));
+
   return (
     <WorkArea>
       <HeaderDeleteButton
@@ -449,19 +454,14 @@ export default function EditProduct() {
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <CustomPicker
-            label='Categoria'
-            selectedValue={categoryId}
-            onValueChange={value => setCategoryId(value as number)}
-            options={categories.map(category => ({
-              label: category.name,
-              value: category.id,
-            }))}
-            enabled={!isLoading}
-            placeholder='Selecionar categoria'
-          />
-        </View>
+        <SearchableSelect
+          label='Categoria'
+          selectedValue={categoryId}
+          onValueChange={value => setCategoryId(value as number)}
+          options={categoryOptions}
+          enabled={!isSaving}
+          placeholder='Selecionar categoria'
+        />
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Descrição</Text>

@@ -7,9 +7,9 @@ export interface SaleModelInterface extends BaseModelInterface {
   discount?: number;
   total?: number;
   payment_method?:
-    | 'cash'
-    | 'pix'
-    | 'installment';
+  | 'cash'
+  | 'pix'
+  | 'installment';
   installments?: number;
   status?: 'pending' | 'completed' | 'cancelled';
   sale_date?: Date;
@@ -23,15 +23,16 @@ export interface SaleStoreInterface extends BaseModelInterface {
   discount?: number;
   total: number;
   payment_method:
-    | 'cash'
-    | 'pix'
-    | 'installment';
+  | 'cash'
+  | 'pix'
+  | 'installment';
   installments: number;
   status?: 'pending' | 'completed' | 'cancelled';
   sale_date?: Date;
   notes?: string;
   itens: SaleItemStoreInterface[];
   first_due_date: Date;
+  payment_date?: Date;
 }
 
 export interface SaleUpdateInterface extends BaseModelInterface {
@@ -44,4 +45,8 @@ export interface SaleSearchInterface {
   q?: string;
   page?: number;
   perPage?: number;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  paymentMethod?: string;
 }

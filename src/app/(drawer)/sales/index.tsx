@@ -19,6 +19,9 @@ import WorkArea from '@/components/WorkArea';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SearchBar } from '@/components/SearchBar';
+import SaleCard from '@/components/SaleCard';
+import PeriodFilter from '@/components/PeriodFilter';
+import SearchableSelect from '@/components/SearchableSelect';
 
 interface Sale {
   id: number;
@@ -33,23 +36,10 @@ interface Sale {
   sale_date: string;
   notes?: string;
   items?: any[];
+  items_count: number;
   created_at: string;
   updated_at: string;
 }
-
-const PAYMENT_METHOD_LABELS: { [key: string]: string } = {
-  money: 'Dinheiro',
-  card: 'Cartão',
-  pix: 'PIX',
-  transfer: 'Transferência',
-  installment: 'Parcelado',
-};
-
-const STATUS_LABELS: { [key: string]: string } = {
-  pending: 'Pendente',
-  completed: 'Concluída',
-  cancelled: 'Cancelada',
-};
 
 export default function SalesList() {
   const [sales, setSales] = useState<Sale[]>([]);
@@ -62,6 +52,39 @@ export default function SalesList() {
   const [hasMoreData, setHasMoreData] = useState(true);
   const perPage = 10;
   const saleDatabase = useSaleDatabase();
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+
+  const statusOptions = [
+    { label: 'Pendente', value: 'pending' },
+    { label: 'Concluída', value: 'completed' },
+    { label: 'Cancelada', value: 'cancelled' },
+  ];
+
+  const paymentMethodOptions = [
+    { label: 'Dinheiro', value: 'cash' },
+    { label: 'PIX', value: 'pix' },
+    { label: 'Parcelado', value: 'installment' },
+  ];
+
+  useEffect(() => {
+    if (!isFirstLoad && (startDate || endDate || selectedStatus || selectedPaymentMethod)) {
+      setCurrentPage(1);
+      setHasMoreData(true);
+      loadSales(1, false);
+    }
+  }, [startDate, endDate, selectedStatus, selectedPaymentMethod]);
+
+  useEffect(() => {
+    if (isFirstLoad) {
+      setIsFirstLoad(false);
+    }
+  }, []);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -92,10 +115,28 @@ export default function SalesList() {
         searchParams.q = searchText.trim();
       }
 
+      if (startDate) {
+        searchParams.startDate = startDate.toISOString().split('T')[0];
+      }
+      if (endDate) {
+        searchParams.endDate = endDate.toISOString().split('T')[0];
+      }
+
+      if (selectedStatus) {
+        searchParams.status = selectedStatus;
+      }
+      if (selectedPaymentMethod) {
+        searchParams.paymentMethod = selectedPaymentMethod;
+      }
+
       const [data, count] = await Promise.all([
         saleDatabase.index(searchParams),
         saleDatabase.count({
           q: searchParams.q,
+          startDate: searchParams.startDate,
+          endDate: searchParams.endDate,
+          status: searchParams.status,
+          paymentMethod: searchParams.paymentMethod,
         }),
       ]);
 
@@ -115,6 +156,7 @@ export default function SalesList() {
             sale_date: item.sale_date,
             notes: item.notes || undefined,
             items: item.items || [],
+            items_count: item.items?.length || 0,
             created_at: item.created_at,
             updated_at: item.updated_at,
           })),
@@ -134,6 +176,7 @@ export default function SalesList() {
             sale_date: item.sale_date,
             notes: item.notes || undefined,
             items: item.items || [],
+            items_count: item.items?.length || 0,
             created_at: item.created_at,
             updated_at: item.updated_at,
           }))
@@ -177,121 +220,14 @@ export default function SalesList() {
   useFocusEffect(
     useCallback(() => {
       loadSales(1, false);
-    }, [])
+    }, [startDate, endDate, selectedStatus, selectedPaymentMethod, searchText])
   );
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return '#22c55e';
-      case 'pending':
-        return '#f59e0b';
-      case 'cancelled':
-        return '#ef4444';
-      default:
-        return '#64748b';
-    }
-  };
-
-  const getStatusBackgroundColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return '#dcfce7';
-      case 'pending':
-        return '#fef3c7';
-      case 'cancelled':
-        return '#fecaca';
-      default:
-        return '#f1f5f9';
-    }
-  };
-
   const renderSale = ({ item }: { item: Sale }) => (
-    <TouchableOpacity
-      style={styles.saleCard}
+    <SaleCard
+      sale={item}
       onPress={() => pushToSale(item)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.saleHeader}>
-        <View style={styles.saleHeaderLeft}>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: getStatusBackgroundColor(item.status) },
-            ]}
-          >
-            <Text
-              style={[
-                styles.statusText,
-                { color: getStatusColor(item.status) },
-              ]}
-            >
-              {STATUS_LABELS[item.status] || item.status}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.saleContent}>
-        {item.customer_name && (
-          <View style={styles.customerInfo}>
-            <Ionicons name='person-outline' size={16} color='#64748b' />
-            <Text style={styles.customerName}>{item.customer_name}</Text>
-          </View>
-        )}
-
-        <View style={styles.saleDetails}>
-          <View style={styles.saleDetailRow}>
-            <Ionicons name='calendar-outline' size={16} color='#64748b' />
-            <Text style={styles.saleDetailText}>
-              {formatDate(item.sale_date)}
-            </Text>
-          </View>
-
-          <View style={styles.saleDetailRow}>
-            <Ionicons name='card-outline' size={16} color='#64748b' />
-            <Text style={styles.saleDetailText}>
-              {PAYMENT_METHOD_LABELS[item.payment_method] ||
-                item.payment_method}
-              {item.installments > 1 && ` (${item.installments}x)`}
-            </Text>
-          </View>
-
-          <View style={styles.saleDetailRow}>
-            <Ionicons name='bag-outline' size={16} color='#64748b' />
-            <Text style={styles.saleDetailText}>
-              {item.items?.length || 0} item
-              {(item.items?.length || 0) !== 1 ? 's' : ''}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.saleFooter}>
-          {item.discount > 0 && (
-            <View style={styles.discountInfo}>
-              <Text style={styles.originalTotal}>
-                {formatCurrency(item.subtotal.toString())}
-              </Text>
-              <Text style={styles.discountAmount}>
-                -{formatCurrency(item.discount.toString())}
-              </Text>
-            </View>
-          )}
-          <Text style={styles.totalAmount}>
-            {formatCurrency(item.total.toString())}
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+    />
   );
 
   const renderFooter = () => {
@@ -352,6 +288,98 @@ export default function SalesList() {
   return (
     <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
       <View style={styles.container}>
+        {/* Seção de filtros */}
+        <View style={styles.filterSection}>
+          {/* Botão para mostrar/ocultar filtro de data */}
+          <TouchableOpacity
+            style={styles.filterToggleButton}
+            onPress={() => setShowDateFilter(!showDateFilter)}
+          >
+            <Ionicons
+              name={showDateFilter ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color='#64748b'
+            />
+            <Text style={styles.filterToggleText}>
+              Filtrar por período
+            </Text>
+            {(startDate || endDate || selectedStatus || selectedPaymentMethod) && (
+              <View style={styles.filterActiveBadge}>
+                <Ionicons name='checkmark-circle' size={16} color='#22c55e' />
+              </View>
+            )}
+          </TouchableOpacity>
+
+          {/* PeriodFilter - mostrado condicionalmente */}
+          {showDateFilter && (
+            <View style={styles.periodFilterContainer}>
+              <PeriodFilter
+                startDate={startDate || new Date()}
+                endDate={endDate || new Date()}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+              />
+
+              {/* Filtros adicionais */}
+              <SearchableSelect
+                label="Status"
+                selectedValue={selectedStatus ?? undefined}
+                onValueChange={(value) => setSelectedStatus(value as string)}
+                options={statusOptions}
+                placeholder="Todos os status"
+              />
+
+              <SearchableSelect
+                label="Forma de Pagamento"
+                selectedValue={selectedPaymentMethod ?? undefined}
+                onValueChange={(value) => setSelectedPaymentMethod(value as string)}
+                options={paymentMethodOptions}
+                placeholder="Todas as formas"
+              />
+
+              {/* Botões de ação */}
+              <View style={styles.filterActions}>
+                <TouchableOpacity
+                  style={styles.clearFilterButton}
+                  onPress={() => {
+                    setStartDate(null);
+                    setEndDate(null);
+                    setSelectedStatus(null);
+                    setSelectedPaymentMethod(null);
+                    setCurrentPage(1);
+                    setHasMoreData(true);
+                  }}
+                  disabled={!startDate && !endDate && !selectedStatus && !selectedPaymentMethod}
+                >
+                  <Ionicons name='close-circle-outline' size={16} color={(!startDate && !endDate && !selectedStatus && !selectedPaymentMethod) ? '#cbd5e1' : '#64748b'} />
+                  <Text style={[styles.clearFilterButtonText, (!startDate && !endDate && !selectedStatus && !selectedPaymentMethod) && styles.disabledText]}>
+                    Limpar
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.applyFilterButton}
+                  onPress={() => {
+                    setCurrentPage(1);
+                    setHasMoreData(true);
+                    loadSales(1, false);
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color='#ffffff' size='small' />
+                  ) : (
+                    <>
+                      <Ionicons name='search' size={16} color='#ffffff' />
+                      <Text style={styles.applyFilterButtonText}>Buscar</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+
         <SearchBar
           value={searchText}
           onChangeText={handleSearch}
@@ -412,6 +440,77 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
+  },
+  filterSection: {
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  filterToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  filterToggleText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1e293b',
+    flex: 1,
+  },
+  filterActiveBadge: {
+    marginLeft: 'auto',
+  },
+  periodFilterContainer: {
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    gap: 8,
+  },
+  filterActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  clearFilterButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#f8fafc',
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  clearFilterButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  disabledText: {
+    color: '#cbd5e1',
+  },
+  applyFilterButton: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#3b82f6',
+    paddingVertical: 8,
+    borderRadius: 6,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  applyFilterButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#ffffff',
   },
   header: {
     backgroundColor: '#ffffff',
@@ -494,101 +593,6 @@ const styles = StyleSheet.create({
   },
   emptyListContainer: {
     flexGrow: 1,
-  },
-  saleCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  saleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  saleHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  saleId: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1e293b',
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  moreButton: {
-    padding: 8,
-  },
-  saleContent: {
-    gap: 12,
-  },
-  customerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  customerName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#334155',
-  },
-  saleDetails: {
-    gap: 8,
-  },
-  saleDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  saleDetailText: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-  saleFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-  },
-  discountInfo: {
-    alignItems: 'flex-end',
-  },
-  originalTotal: {
-    fontSize: 14,
-    color: '#64748b',
-    textDecorationLine: 'line-through',
-  },
-  discountAmount: {
-    fontSize: 12,
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-  totalAmount: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FF6B35',
   },
   loadingFooter: {
     flexDirection: 'row',

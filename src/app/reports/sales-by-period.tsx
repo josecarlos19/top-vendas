@@ -10,9 +10,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useReportDatabase } from '@/database/models/Report';
-import formatCurrency from '@/components/utils/formatCurrency';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PeriodFilter from '@/components/PeriodFilter';
+import SaleCard from '@/components/SaleCard';
 
 interface Sale {
   id: number;
@@ -27,20 +27,6 @@ interface Sale {
   sale_date: string;
   items_count: number;
 }
-
-const PAYMENT_METHOD_LABELS: { [key: string]: string } = {
-  money: 'Dinheiro',
-  card: 'Cartão',
-  pix: 'PIX',
-  transfer: 'Transferência',
-  installment: 'Parcelado',
-};
-
-const STATUS_LABELS: { [key: string]: string } = {
-  pending: 'Pendente',
-  completed: 'Concluída',
-  cancelled: 'Cancelada',
-};
 
 export default function SalesByPeriod() {
   const [sales, setSales] = useState<Sale[]>([]);
@@ -71,45 +57,7 @@ export default function SalesByPeriod() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    } catch {
-      return dateString;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return '#22c55e';
-      case 'pending':
-        return '#f59e0b';
-      case 'cancelled':
-        return '#ef4444';
-      default:
-        return '#94a3b8';
-    }
-  };
-
-  const getStatusBackgroundColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return '#dcfce7';
-      case 'pending':
-        return '#fef3c7';
-      case 'cancelled':
-        return '#fee2e2';
-      default:
-        return '#f1f5f9';
-    }
-  };
-
-  const pushToSale = (sale: Sale) => {
+  const pushToSale = (sale: { id: number }) => {
     router.push(`/sales/${sale.id}/edit`);
   };
 
@@ -130,61 +78,7 @@ export default function SalesByPeriod() {
     .reduce((sum, sale) => sum + sale.discount, 0);
 
   const renderSale = ({ item }: { item: Sale }) => (
-    <TouchableOpacity
-      style={styles.saleCard}
-      onPress={() => pushToSale(item)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.saleHeader}>
-        <View style={styles.saleHeaderLeft}>
-          {item.customer_name && (
-            <Text style={styles.customerName} numberOfLines={1}>
-              {item.customer_name}
-            </Text>
-          )}
-        </View>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusBackgroundColor(item.status) },
-          ]}
-        >
-          <Text
-            style={[
-              styles.statusText,
-              { color: getStatusColor(item.status) },
-            ]}
-          >
-            {STATUS_LABELS[item.status] || item.status}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.saleContent}>
-        <View style={styles.saleInfo}>
-          <Text style={styles.saleDetailText}>
-            {formatDate(item.sale_date)} • {PAYMENT_METHOD_LABELS[item.payment_method] || item.payment_method}
-            {item.installments > 1 && ` (${item.installments}x)`}
-          </Text>
-        </View>
-
-        <View style={styles.saleFooter}>
-          <Text style={styles.itemCount}>
-            {item.items_count} {item.items_count === 1 ? 'item' : 'itens'}
-          </Text>
-          <View style={styles.priceContainer}>
-            {item.discount > 0 && (
-              <Text style={styles.discountAmount}>
-                -{formatCurrency(item.discount.toString())}
-              </Text>
-            )}
-            <Text style={styles.totalAmount}>
-              {formatCurrency(item.total.toString())}
-            </Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
+    <SaleCard sale={item} onPress={pushToSale} />
   );
 
   const renderEmpty = () => {
@@ -379,81 +273,6 @@ const styles = StyleSheet.create({
   },
   emptyListContainer: {
     flexGrow: 1,
-  },
-  saleCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 1,
-    elevation: 1,
-  },
-  saleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  saleHeaderLeft: {
-    flex: 1,
-    marginRight: 8,
-  },
-  statusBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 4,
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  saleContent: {
-    gap: 5,
-  },
-  saleInfo: {
-    marginBottom: 5,
-  },
-  customerName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  saleDetailText: {
-    fontSize: 11,
-    color: '#64748b',
-  },
-  saleFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-  },
-  itemCount: {
-    fontSize: 11,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  discountAmount: {
-    fontSize: 10,
-    color: '#ec4899',
-    fontWeight: '600',
-  },
-  totalAmount: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1e293b',
   },
   totalsContainer: {
     backgroundColor: '#ffffff',

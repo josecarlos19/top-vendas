@@ -4,20 +4,27 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
   Alert,
   RefreshControl,
-  TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCategoryDatabase } from '@/database/models/Category';
 import { CategorySearchInterface } from '@/interfaces/models/categoryInterface';
-import CategoryItem, { Category } from '@/components/Category/CategoryItem';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import CategoryCard from '@/components/CategoryCard';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { SearchBar } from '@/components/SearchBar';
+
+interface Category {
+  id: number;
+  name: string;
+  description?: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function CategoriesList() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -122,29 +129,21 @@ export default function CategoriesList() {
     loadCategories(1, false);
   };
 
-  const handleEdit = (category: Category) => {
+  const pushToCategory = (category: Category) => {
     router.push(`/categories/${category.id}/edit`);
-  };
-
-  const handleDelete = async (id: number) => {
-    try {
-      await categoryDatabase.remove(id);
-      await loadCategories(1, false);
-      Alert.alert('Sucesso', 'Categoria excluída com sucesso!');
-    } catch (error) {
-      console.error('Error deleting category:', error);
-      Alert.alert('Erro', 'Falha ao excluir categoria');
-    }
   };
 
   useFocusEffect(
     useCallback(() => {
       loadCategories(1, false);
-    }, [])
+    }, [searchText])
   );
 
   const renderCategory = ({ item }: { item: Category }) => (
-    <CategoryItem category={item} onEdit={handleEdit} onDelete={handleDelete} />
+    <CategoryCard
+      category={item}
+      onPress={() => pushToCategory(item)}
+    />
   );
 
   const renderFooter = () => {
@@ -219,40 +218,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-
-  searchInputContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1e293b',
-  },
-  filterButton: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterButtonActive: {
-    backgroundColor: '#FF6B35',
-    borderColor: '#FF6B35',
-  },
   resultsContainer: {
     paddingHorizontal: 20,
     paddingBottom: 16,
@@ -285,7 +250,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
   },
-
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -297,39 +261,5 @@ const styles = StyleSheet.create({
     color: '#475569',
     marginTop: 16,
     marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  createFirstButton: {
-    backgroundColor: '#FF6B35',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginTop: 24,
-  },
-  createFirstButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FF6B35',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
   },
 });

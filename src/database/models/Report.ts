@@ -169,7 +169,7 @@ export function useReportDatabase() {
           s.discount,
           s.total,
           s.payment_method,
-          s.installments,
+          COALESCE((SELECT COUNT(*) FROM installments WHERE sale_id = s.id), 1) as installments,
           s.status,
           s.sale_date,
           s.notes,
@@ -215,7 +215,7 @@ export function useReportDatabase() {
           s.discount,
           s.total,
           s.payment_method,
-          s.installments,
+          COALESCE((SELECT COUNT(*) FROM installments WHERE sale_id = s.id), 1) as installments,
           s.status,
           s.sale_date,
           (SELECT COUNT(*) FROM sale_items WHERE sale_id = s.id) as items_count

@@ -9,11 +9,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Picker } from '@react-native-picker/picker';
 import { useReportDatabase } from '@/database/models/Report';
-import formatCurrency from '@/components/utils/formatCurrency';
+import SearchableSelect from '@/components/SearchableSelect';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PeriodFilter from '@/components/PeriodFilter';
+import SaleCard from '@/components/SaleCard';
 
 interface Sale {
   id: number;
@@ -34,20 +34,6 @@ interface Customer {
   id: number;
   name: string;
 }
-
-const PAYMENT_METHOD_LABELS: { [key: string]: string } = {
-  money: 'Dinheiro',
-  card: 'Cartão',
-  pix: 'PIX',
-  transfer: 'Transferência',
-  installment: 'Parcelado',
-};
-
-const STATUS_LABELS: { [key: string]: string } = {
-  pending: 'Pendente',
-  completed: 'Concluída',
-  cancelled: 'Cancelada',
-};
 
 export default function SalesByCustomer() {
   const [sales, setSales] = useState<Sale[]>([]);
@@ -102,47 +88,14 @@ export default function SalesByCustomer() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    } catch {
-      return dateString;
-    }
+  const pushToSale = (sale: { id: number }) => {
+    router.push(`/sales/${sale.id}/edit`);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return '#22c55e';
-      case 'pending':
-        return '#f59e0b';
-      case 'cancelled':
-        return '#ef4444';
-      default:
-        return '#64748b';
-    }
-  };
-
-  const getStatusBackgroundColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return '#dcfce7';
-      case 'pending':
-        return '#fef3c7';
-      case 'cancelled':
-        return '#fee2e2';
-      default:
-        return '#f1f5f9';
-    }
-  };
-
-  const pushToSale = (id: number) => {
-    router.push(`/sales/${id}/edit`);
-  };
+  const customerOptions = customers.map(customer => ({
+    label: customer.name,
+    value: customer.id,
+  }));
 
   const totalReceived = sales
     .filter((sale) => sale.status === 'completed')
@@ -159,55 +112,7 @@ export default function SalesByCustomer() {
     .reduce((sum, sale) => sum + sale.discount, 0);
 
   const renderSale = ({ item }: { item: Sale }) => (
-    <TouchableOpacity
-      style={styles.saleCard}
-      onPress={() => pushToSale(item.id)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.saleHeader}>
-        <Text style={styles.saleDate}>{formatDate(item.sale_date)}</Text>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusBackgroundColor(item.status) },
-          ]}
-        >
-          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-            {STATUS_LABELS[item.status] || item.status}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.saleContent}>
-        <View style={styles.saleInfo}>
-          <Text style={styles.paymentMethod}>
-            {PAYMENT_METHOD_LABELS[item.payment_method] || item.payment_method}
-            {item.installments > 1 && ` (${item.installments}x)`}
-          </Text>
-          {item.notes && (
-            <Text style={styles.saleNotes} numberOfLines={1}>
-              {item.notes}
-            </Text>
-          )}
-        </View>
-
-        <View style={styles.saleFooter}>
-          <Text style={styles.itemCount}>
-            {item.items_count} {item.items_count === 1 ? 'item' : 'itens'}
-          </Text>
-          <View style={styles.priceContainer}>
-            {item.discount > 0 && (
-              <Text style={styles.discountAmount}>
-                -{formatCurrency(item.discount.toString())}
-              </Text>
-            )}
-            <Text style={styles.totalAmount}>
-              {formatCurrency(item.total.toString())}
-            </Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
+    <SaleCard sale={item} onPress={pushToSale} />
   );
 
   const renderEmpty = () => {
@@ -232,32 +137,14 @@ export default function SalesByCustomer() {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.content}>
         <View style={styles.filterSection}>
-          <View style={styles.pickerContainer}>
-            <Text style={styles.pickerLabel}>Cliente</Text>
-            {isLoadingCustomers ? (
-              <View style={styles.pickerLoading}>
-                <ActivityIndicator size="small" color="#3b82f6" />
-                <Text style={styles.pickerLoadingText}>Carregando clientes...</Text>
-              </View>
-            ) : (
-              <View style={styles.pickerWrapper}>
-                <Picker
-                  selectedValue={selectedCustomerId}
-                  onValueChange={(itemValue) => setSelectedCustomerId(itemValue)}
-                  style={styles.picker}
-                >
-                  <Picker.Item label="Selecione um cliente" value={null} />
-                  {customers.map((customer) => (
-                    <Picker.Item
-                      key={customer.id}
-                      label={customer.name}
-                      value={customer.id}
-                    />
-                  ))}
-                </Picker>
-              </View>
-            )}
-          </View>
+          <SearchableSelect
+            label="Cliente"
+            selectedValue={selectedCustomerId ?? undefined}
+            onValueChange={(value) => setSelectedCustomerId(value as number)}
+            options={customerOptions}
+            placeholder="Selecione um cliente"
+            enabled={!isLoadingCustomers}
+          />
 
           <PeriodFilter
             startDate={startDate}
@@ -405,43 +292,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e2e8f0',
     gap: 16,
   },
-  pickerContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  pickerLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#334155',
-    marginBottom: 8,
-  },
-  pickerWrapper: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    overflow: 'hidden',
-  },
-  picker: {
-    height: 50,
-  },
-  pickerLoading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    gap: 8,
-  },
-  pickerLoadingText: {
-    fontSize: 14,
-    color: '#64748b',
-  },
   searchButton: {
     backgroundColor: '#3b82f6',
     borderRadius: 8,
@@ -491,83 +341,6 @@ const styles = StyleSheet.create({
   },
   emptyListContainer: {
     flexGrow: 1,
-  },
-  saleCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  saleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  saleDate: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1e293b',
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  saleContent: {
-    gap: 12,
-  },
-  saleInfo: {
-    gap: 4,
-  },
-  paymentMethod: {
-    fontSize: 14,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  saleNotes: {
-    fontSize: 13,
-    color: '#94a3b8',
-    fontStyle: 'italic',
-  },
-  saleFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-  },
-  itemCount: {
-    fontSize: 13,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  discountAmount: {
-    fontSize: 13,
-    color: '#ec4899',
-    fontWeight: '600',
-  },
-  totalAmount: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1e293b',
   },
   totalsContainer: {
     backgroundColor: '#ffffff',

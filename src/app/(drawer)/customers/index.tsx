@@ -13,8 +13,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCustomerDatabase } from '@/database/models/Customer';
 import { CustomerSearchInterface } from '@/interfaces/models/customerInterface';
-import CustomerItem, { Customer } from '@/components/Customer/CustomerItem';
+import { Customer } from '@/components/Customer/CustomerItem';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
+import CustomerCard from '@/components/CustomerCard';
 import { SearchBar } from '@/components/SearchBar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -141,7 +142,7 @@ export default function CustomersList() {
     loadCustomers(1, false);
   };
 
-  const handleRedirect = (customer: Customer) => {
+  const handleRedirect = (customer: { id: number }) => {
     router.push(`/customers/${customer.id}/edit`);
   };
 
@@ -195,11 +196,14 @@ export default function CustomersList() {
   useFocusEffect(
     useCallback(() => {
       loadCustomers(1, false);
-    }, [])
+    }, [searchText])
   );
 
   const renderCustomer = ({ item }: { item: Customer }) => (
-    <CustomerItem customer={item} onClick={handleRedirect} />
+    <CustomerCard
+      customer={item}
+      onPress={handleRedirect}
+    />
   );
 
   const renderFooter = () => {

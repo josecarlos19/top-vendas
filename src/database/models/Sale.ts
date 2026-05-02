@@ -32,6 +32,26 @@ export function useSaleDatabase() {
         queryParams.push(`%${params.q}%`, `%${params.q}%`);
       }
 
+      if (params?.startDate) {
+        query += ` AND DATE(sales.sale_date) >= DATE(?)`;
+        queryParams.push(params.startDate);
+      }
+
+      if (params?.endDate) {
+        query += ` AND DATE(sales.sale_date) <= DATE(?)`;
+        queryParams.push(params.endDate);
+      }
+
+      if (params?.status) {
+        query += ` AND sales.status = ?`;
+        queryParams.push(params.status);
+      }
+
+      if (params?.paymentMethod) {
+        query += ` AND sales.payment_method = ?`;
+        queryParams.push(params.paymentMethod);
+      }
+
       query += ' ORDER BY sales.sale_date DESC, sales.created_at DESC';
 
       if (params?.page && params?.perPage) {
@@ -98,6 +118,26 @@ export function useSaleDatabase() {
           sales.notes LIKE ?
         )`;
         queryParams.push(`%${params.q}%`, `%${params.q}%`);
+      }
+
+      if (params?.startDate) {
+        query += ` AND DATE(sales.sale_date) >= DATE(?)`;
+        queryParams.push(params.startDate);
+      }
+
+      if (params?.endDate) {
+        query += ` AND DATE(sales.sale_date) <= DATE(?)`;
+        queryParams.push(params.endDate);
+      }
+
+      if (params?.status) {
+        query += ` AND sales.status = ?`;
+        queryParams.push(params.status);
+      }
+
+      if (params?.paymentMethod) {
+        query += ` AND sales.payment_method = ?`;
+        queryParams.push(params.paymentMethod);
       }
 
       const result = (await database.getFirstAsync(query, queryParams)) as {
@@ -280,17 +320,20 @@ export function useSaleDatabase() {
           }
           const installmentStatement = await database.prepareAsync(
             `INSERT INTO installments (
-            sale_id, number, amount, due_date, status, notes
-          ) VALUES (?, ?, ?, ?, ?, ?)`
+            sale_id, number, amount, due_date, status, payment_date, notes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)`
           );
 
-          for (const installment of installments) {
+          for (let i = 0; i < installments.length; i++) {
+            const installment = installments[i];
+            const isFirstAndPaid = i === 0 && params.payment_date && params.status === 'completed';
             await installmentStatement.executeAsync(
               installment.sale_id,
               installment.number,
               installment.amount,
               installment.due_date,
-              installment.status || 'pending',
+              isFirstAndPaid ? 'completed' : installment.status || 'pending',
+              isFirstAndPaid && params.payment_date ? params.payment_date.toISOString() : null,
               installment.notes || null
             );
           }

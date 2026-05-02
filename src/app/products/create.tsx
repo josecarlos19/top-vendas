@@ -17,7 +17,7 @@ import { useCategoryDatabase } from '@/database/models/Category';
 import { Input } from '@/components/Input';
 import formatCurrency from '@/components/utils/formatCurrency';
 import WorkArea from '@/components/WorkArea';
-import CustomPicker from '@/components/CustomPicker';
+import SearchableSelect from '@/components/SearchableSelect';
 
 interface Category {
   id: number;
@@ -38,7 +38,6 @@ export default function CreateProduct() {
   const [supplier, setSupplier] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
   const productDatabase = useProductDatabase();
   const categoryDatabase = useCategoryDatabase();
@@ -200,12 +199,6 @@ export default function CreateProduct() {
     }
   };
 
-  const getSelectedCategoryName = () => {
-    if (!categoryId) return 'Selecionar categoria';
-    const category = categories.find(cat => cat.id === categoryId);
-    return category ? category.name : 'Selecionar categoria';
-  };
-
   const isFormValid =
     name.trim() && salePrice.trim() && getCurrencyValue(salePrice) > 0;
 
@@ -265,17 +258,19 @@ export default function CreateProduct() {
           </View>
         </View>
 
-        <CustomPicker
-          label='Categoria'
-          selectedValue={categoryId}
-          onValueChange={value => setCategoryId(value as number)}
-          options={categories.map(category => ({
-            label: category.name,
-            value: category.id,
-          }))}
-          enabled={!isLoading}
-          placeholder='Selecionar categoria'
-        />
+        <View style={styles.inputGroup}>
+          <SearchableSelect
+            label='Categoria'
+            options={categories.map(cat => ({
+              label: cat.name,
+              value: cat.id,
+            }))}
+            selectedValue={categoryId}
+            onValueChange={(value: string | number) => setCategoryId(value as number)}
+            placeholder='Selecionar categoria'
+            enabled={!isLoading}
+          />
+        </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Descrição</Text>

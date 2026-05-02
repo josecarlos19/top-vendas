@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
+  Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -20,7 +21,7 @@ import formatCurrency from '@/components/utils/formatCurrency';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { DateTime } from 'luxon';
 import WorkArea from '@/components/WorkArea';
-import CustomPicker from '@/components/CustomPicker';
+import SearchableSelect from '@/components/SearchableSelect';
 
 interface Customer {
   id: number;
@@ -63,14 +64,15 @@ export default function CreateSale() {
   const [saleDate, setSaleDate] = useState(new Date());
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showProductPicker, setShowProductPicker] = useState(false);
-  const [productSearch, setProductSearch] = useState('');
   const [firstDueDate, setFirstDueDate] = useState(new Date());
   const [firstDueDatePlusOneMonth, setFirstDueDatePlusOneMonth] = useState(
     DateTime.now().plus({ months: 1 }).toJSDate()
   );
   const [showFirstDuePicker, setShowFirstDuePicker] = useState(false);
   const [showSaleDatePicker, setShowSalePicker] = useState(false);
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>();
+  const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
+  const [markAsCompleted, setMarkAsCompleted] = useState(false);
 
   const saleDatabase = useSaleDatabase();
   const customerDatabase = useCustomerDatabase();
@@ -147,7 +149,10 @@ export default function CreateSale() {
     return Math.max(0, getSubtotal() - getDiscountValue());
   };
 
-  const addProductToSale = (product: Product) => {
+  const addProductToSale = (productId: number | string) => {
+    const product = products.find(p => p.id === Number(productId));
+    if (!product) return;
+
     const existingItem = items.find(item => item.product_id === product.id);
 
     if (existingItem) {
@@ -180,7 +185,6 @@ export default function CreateSale() {
       };
       setItems([...items, newItem]);
     }
-    setShowProductPicker(false);
   };
 
   const updateItemQuantity = (productId: number, newQuantity: number) => {
@@ -271,7 +275,7 @@ export default function CreateSale() {
         total,
         payment_method: paymentMethod as any,
         installments: installmentCount,
-        status: 'pending',
+        status: markAsCompleted ? 'completed' : 'pending',
         sale_date: saleDate,
         notes: notes.trim() || undefined,
         itens: items.map(item => ({
@@ -281,6 +285,7 @@ export default function CreateSale() {
           subtotal: item.subtotal,
         })),
         first_due_date: firstDueDate,
+        payment_date: markAsCompleted ? paymentDate : undefined,
       });
 
       Alert.alert('Sucesso', 'Venda criada com sucesso!', [
@@ -319,18 +324,20 @@ export default function CreateSale() {
     }
   };
 
-  const filteredProducts = products.filter(
-    product =>
-      product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-      (product.barcode && product.barcode.includes(productSearch))
-  );
-
   const isFormValid = items.length > 0 && getTotal() > 0;
 
   const customerOptions = customers.map(customer => ({
     label: customer.name,
     value: customer.id,
   }));
+
+  const productOptions = products.map(product => {
+    const availableStock = product.current_stock || product.initial_stock;
+    return {
+      label: `${product.name} - ${formatCurrency(product.sale_price.toString())} (Estoque: ${availableStock})`,
+      value: product.id,
+    };
+  });
 
   const renderSaleItem = ({ item }: { item: SaleItem }) => (
     <View style={styles.saleItem}>
@@ -407,14 +414,13 @@ export default function CreateSale() {
           <Text style={styles.sectionTitle}>Cliente</Text>
         </View>
 
-        <CustomPicker
+        <SearchableSelect
           label='Cliente'
           selectedValue={customerId}
           onValueChange={value => setCustomerId(value as number)}
           options={customerOptions}
           enabled={!isLoading}
           placeholder='Selecione um cliente'
-          emptyOption={false}
         />
 
         <View style={styles.sectionHeader}>
@@ -422,71 +428,14 @@ export default function CreateSale() {
           <Text style={styles.sectionTitle}>Produtos</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.addProductButton}
-          onPress={() => setShowProductPicker(!showProductPicker)}
-          disabled={isLoading}
-        >
-          <Ionicons name='add' size={20} color='#FF6B35' />
-          <Text style={styles.addProductText}>Adicionar Produto</Text>
-        </TouchableOpacity>
-
-        {showProductPicker && (
-          <View style={styles.pickerContainer}>
-            <Input
-              placeholder='Buscar produto ou código de barras...'
-              value={productSearch}
-              onChangeText={setProductSearch}
-              style={styles.searchInput}
-            />
-            <ScrollView style={styles.optionsList} nestedScrollEnabled>
-              {filteredProducts.map(product => {
-                const availableStock =
-                  product.current_stock || product.initial_stock;
-                return (
-                  <TouchableOpacity
-                    key={product.id}
-                    style={[
-                      styles.option,
-                      availableStock <= 0 && styles.optionDisabled,
-                    ]}
-                    onPress={() =>
-                      availableStock > 0 && addProductToSale(product)
-                    }
-                    disabled={availableStock <= 0}
-                  >
-                    <View style={styles.productOption}>
-                      <Text
-                        style={[
-                          styles.optionText,
-                          availableStock <= 0 && styles.optionDisabledText,
-                        ]}
-                      >
-                        {product.name}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.productPrice,
-                          availableStock <= 0 && styles.optionDisabledText,
-                        ]}
-                      >
-                        {formatCurrency(product.sale_price.toString())}
-                      </Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.productStock,
-                        availableStock <= 0 && styles.stockEmpty,
-                      ]}
-                    >
-                      Estoque: {availableStock}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        )}
+        <SearchableSelect
+          label='Adicionar Produto'
+          selectedValue={undefined}
+          onValueChange={addProductToSale}
+          options={productOptions}
+          enabled={!isLoading}
+          placeholder='Buscar produto ou código de barras...'
+        />
 
         {items.length > 0 && (
           <View style={styles.itemsList}>
@@ -505,13 +454,12 @@ export default function CreateSale() {
           <Text style={styles.sectionTitle}>Pagamento</Text>
         </View>
 
-        <CustomPicker
+        <SearchableSelect
           label='Forma de Pagamento'
           selectedValue={paymentMethod}
           onValueChange={value => setPaymentMethod(value as string)}
           options={PAYMENT_METHODS}
           enabled={!isLoading}
-          emptyOption={false}
         />
 
         {paymentMethod === 'installment' && (
@@ -581,6 +529,55 @@ export default function CreateSale() {
             )}
           </View>
         )}
+
+        <View style={styles.inputGroup}>
+          <View style={styles.switchContainer}>
+            <View style={styles.switchLabelContainer}>
+              <Ionicons name='checkmark-circle-outline' size={20} color='#22c55e' />
+              <Text style={styles.label}>Marcar como Concluída</Text>
+            </View>
+            <Switch
+              value={markAsCompleted}
+              onValueChange={(value) => {
+                setMarkAsCompleted(value);
+                if (value && !paymentDate) {
+                  setPaymentDate(new Date());
+                }
+              }}
+              trackColor={{ false: '#cbd5e1', true: '#86efac' }}
+              thumbColor={markAsCompleted ? '#22c55e' : '#f1f5f9'}
+              disabled={isLoading}
+            />
+          </View>
+
+          {markAsCompleted && (
+            <View style={styles.paymentDateContainer}>
+              <Text style={styles.subLabel}>Data do Pagamento</Text>
+              <TouchableOpacity
+                style={styles.selector}
+                onPress={() => setShowPaymentDatePicker(true)}
+                disabled={isLoading}
+              >
+                <Text style={styles.selectorText}>
+                  {(paymentDate || new Date()).toLocaleDateString('pt-BR')}
+                </Text>
+                <Ionicons name='calendar-outline' size={20} color='#64748b' />
+              </TouchableOpacity>
+
+              {showPaymentDatePicker && (
+                <DateTimePicker
+                  value={paymentDate || new Date()}
+                  mode='date'
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(_, date) => {
+                    setShowPaymentDatePicker(false);
+                    if (date) setPaymentDate(date);
+                  }}
+                />
+              )}
+            </View>
+          )}
+        </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Desconto</Text>
@@ -715,6 +712,27 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#374151',
     marginBottom: 8,
+  },
+  subLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+    marginTop: 12,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  switchLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  paymentDateContainer: {
+    marginTop: 8,
   },
   input: {
     backgroundColor: '#ffffff',

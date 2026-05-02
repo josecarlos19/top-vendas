@@ -16,10 +16,30 @@ import { router, useFocusEffect } from 'expo-router';
 import { useProductDatabase } from '@/database/models/Product';
 import { useCategoryDatabase } from '@/database/models/Category';
 import { ProductSearchInterface } from '@/interfaces/models/productInterface';
-import ProductItem, { Product } from '@/components/Product/ProductItem';
+import ProductCard from '@/components/ProductCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { SearchBar } from '@/components/SearchBar';
+
+interface Product {
+  id: number;
+  name: string;
+  barcode?: string;
+  reference?: string;
+  description?: string;
+  cost_price: number;
+  sale_price: number;
+  wholesale_price?: number;
+  initial_stock: number;
+  current_stock: number;
+  minimum_stock?: number;
+  category_id?: number;
+  category_name?: string;
+  supplier?: string;
+  active: number;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export default function ProductsList() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,6 +52,7 @@ export default function ProductsList() {
   >();
   const [showLowStock, setShowLowStock] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -192,7 +213,7 @@ export default function ProductsList() {
     loadProducts(1, false);
   };
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = (product: { id: number }) => {
     router.push(`/products/${product.id}/edit`);
   };
 
@@ -216,15 +237,28 @@ export default function ProductsList() {
     return count;
   };
 
+  useEffect(() => {
+    if (!isFirstLoad && (selectedCategory || showLowStock || showInactive)) {
+      setCurrentPage(1);
+      setHasMoreData(true);
+      loadProducts(1, false);
+    }
+  }, [selectedCategory, showLowStock, showInactive]);
+
+  useEffect(() => {
+    if (isFirstLoad) {
+      setIsFirstLoad(false);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
-      clearFilters();
       loadProducts(1, false);
-    }, [])
+    }, [selectedCategory, showLowStock, showInactive, searchText])
   );
 
   const renderProduct = ({ item }: { item: Product }) => (
-    <ProductItem product={item} onEdit={handleEdit} />
+    <ProductCard product={item} onPress={handleEdit} />
   );
 
   const renderFooter = () => {
