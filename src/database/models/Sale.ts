@@ -17,7 +17,14 @@ export function useSaleDatabase() {
       let query = `
         SELECT
           sales.*,
-          customers.name as customer_name
+          customers.name as customer_name,
+          (
+            SELECT due_date
+            FROM installments
+            WHERE installments.sale_id = sales.id
+            ORDER BY number ASC
+            LIMIT 1
+          ) as due_date
         FROM sales
         LEFT JOIN customers ON sales.customer_id = customers.id
         WHERE sales.deleted_at IS NULL
@@ -42,14 +49,72 @@ export function useSaleDatabase() {
         queryParams.push(params.endDate);
       }
 
-      if (params?.status) {
-        query += ` AND sales.status = ?`;
-        queryParams.push(params.status);
+      if (params?.dueDateStart) {
+        query += ` AND (
+          SELECT due_date
+          FROM installments
+          WHERE installments.sale_id = sales.id
+          ORDER BY number ASC
+          LIMIT 1
+        ) >= DATE(?)`;
+        queryParams.push(params.dueDateStart);
       }
 
-      if (params?.paymentMethod) {
-        query += ` AND sales.payment_method = ?`;
-        queryParams.push(params.paymentMethod);
+      if (params?.dueDateEnd) {
+        query += ` AND (
+          SELECT due_date
+          FROM installments
+          WHERE installments.sale_id = sales.id
+          ORDER BY number ASC
+          LIMIT 1
+        ) <= DATE(?)`;
+        queryParams.push(params.dueDateEnd);
+      }
+
+      // Filtro de status: suporta múltiplos valores ou exclui canceladas por padrão
+      if (params?.status && params.status.length > 0) {
+        const placeholders = params.status.map(() => '?').join(',');
+        query += ` AND sales.status IN (${placeholders})`;
+        queryParams.push(...params.status);
+      } else {
+        // Por padrão, não mostrar vendas canceladas
+        query += ` AND sales.status != 'cancelled'`;
+      }
+
+      // Filtro de forma de pagamento: suporta múltiplos valores
+      if (params?.paymentMethod && params.paymentMethod.length > 0) {
+        const placeholders = params.paymentMethod.map(() => '?').join(',');
+        query += ` AND sales.payment_method IN (${placeholders})`;
+        queryParams.push(...params.paymentMethod);
+      }
+
+      // Filtro por cliente
+      if (params?.customerId) {
+        query += ` AND sales.customer_id = ?`;
+        queryParams.push(params.customerId);
+      }
+
+      // Filtro por data de pagamento (primeira parcela paga)
+      if (params?.paymentDateStart) {
+        query += ` AND (
+          SELECT payment_date
+          FROM installments
+          WHERE installments.sale_id = sales.id
+          ORDER BY number ASC
+          LIMIT 1
+        ) >= DATE(?)`;
+        queryParams.push(params.paymentDateStart);
+      }
+
+      if (params?.paymentDateEnd) {
+        query += ` AND (
+          SELECT payment_date
+          FROM installments
+          WHERE installments.sale_id = sales.id
+          ORDER BY number ASC
+          LIMIT 1
+        ) <= DATE(?)`;
+        queryParams.push(params.paymentDateEnd);
       }
 
       query += ' ORDER BY sales.sale_date DESC, sales.created_at DESC';
@@ -130,14 +195,72 @@ export function useSaleDatabase() {
         queryParams.push(params.endDate);
       }
 
-      if (params?.status) {
-        query += ` AND sales.status = ?`;
-        queryParams.push(params.status);
+      if (params?.dueDateStart) {
+        query += ` AND (
+          SELECT due_date
+          FROM installments
+          WHERE installments.sale_id = sales.id
+          ORDER BY number ASC
+          LIMIT 1
+        ) >= DATE(?)`;
+        queryParams.push(params.dueDateStart);
       }
 
-      if (params?.paymentMethod) {
-        query += ` AND sales.payment_method = ?`;
-        queryParams.push(params.paymentMethod);
+      if (params?.dueDateEnd) {
+        query += ` AND (
+          SELECT due_date
+          FROM installments
+          WHERE installments.sale_id = sales.id
+          ORDER BY number ASC
+          LIMIT 1
+        ) <= DATE(?)`;
+        queryParams.push(params.dueDateEnd);
+      }
+
+      // Filtro de status: suporta múltiplos valores ou exclui canceladas por padrão
+      if (params?.status && params.status.length > 0) {
+        const placeholders = params.status.map(() => '?').join(',');
+        query += ` AND sales.status IN (${placeholders})`;
+        queryParams.push(...params.status);
+      } else {
+        // Por padrão, não mostrar vendas canceladas
+        query += ` AND sales.status != 'cancelled'`;
+      }
+
+      // Filtro de forma de pagamento: suporta múltiplos valores
+      if (params?.paymentMethod && params.paymentMethod.length > 0) {
+        const placeholders = params.paymentMethod.map(() => '?').join(',');
+        query += ` AND sales.payment_method IN (${placeholders})`;
+        queryParams.push(...params.paymentMethod);
+      }
+
+      // Filtro por cliente
+      if (params?.customerId) {
+        query += ` AND sales.customer_id = ?`;
+        queryParams.push(params.customerId);
+      }
+
+      // Filtro por data de pagamento (primeira parcela paga)
+      if (params?.paymentDateStart) {
+        query += ` AND (
+          SELECT payment_date
+          FROM installments
+          WHERE installments.sale_id = sales.id
+          ORDER BY number ASC
+          LIMIT 1
+        ) >= DATE(?)`;
+        queryParams.push(params.paymentDateStart);
+      }
+
+      if (params?.paymentDateEnd) {
+        query += ` AND (
+          SELECT payment_date
+          FROM installments
+          WHERE installments.sale_id = sales.id
+          ORDER BY number ASC
+          LIMIT 1
+        ) <= DATE(?)`;
+        queryParams.push(params.paymentDateEnd);
       }
 
       const result = (await database.getFirstAsync(query, queryParams)) as {
@@ -426,12 +549,17 @@ export function useSaleDatabase() {
     });
   }
 
+  async function updateStatus(id: number, status: 'pending' | 'completed' | 'cancelled') {
+    return await update({ id, status });
+  }
+
   return {
     index,
     count,
     show,
     store,
     update,
+    updateStatus,
     remove,
   };
 }

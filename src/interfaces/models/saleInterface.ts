@@ -47,6 +47,11 @@ export interface SaleSearchInterface {
   perPage?: number;
   startDate?: string;
   endDate?: string;
-  status?: string;
-  paymentMethod?: string;
+  dueDateStart?: string;
+  dueDateEnd?: string;
+  paymentDateStart?: string;
+  paymentDateEnd?: string;
+  status?: string[];
+  paymentMethod?: string[];
+  customerId?: number;
 }

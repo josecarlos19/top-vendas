@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useSaleDatabase } from '@/database/models/Sale';
+import { useCustomerDatabase } from '@/database/models/Customer';
 import { SaleSearchInterface } from '@/interfaces/models/saleInterface';
 import formatCurrency from '@/components/utils/formatCurrency';
 import WorkArea from '@/components/WorkArea';
@@ -22,6 +23,9 @@ import { SearchBar } from '@/components/SearchBar';
 import SaleCard from '@/components/SaleCard';
 import PeriodFilter from '@/components/PeriodFilter';
 import SearchableSelect from '@/components/SearchableSelect';
+import MultipleStatusFilter from '@/components/MultipleStatusFilter';
+import SalePreviewModal from '@/components/modals/SalePreviewModal';
+import SalesFilters from '@/components/SalesFilters';
 
 interface Sale {
   id: number;
@@ -52,39 +56,63 @@ export default function SalesList() {
   const [hasMoreData, setHasMoreData] = useState(true);
   const perPage = 10;
   const saleDatabase = useSaleDatabase();
+  const customerDatabase = useCustomerDatabase();
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [dueDateStart, setDueDateStart] = useState<Date | null>(null);
+  const [dueDateEnd, setDueDateEnd] = useState<Date | null>(null);
   const [showDateFilter, setShowDateFilter] = useState(false);
 
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string[]>(['pending', 'completed']);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
+  const [customers, setCustomers] = useState<Array<{ id: number; name: string }>>([]);
+  const [paymentDateStart, setPaymentDateStart] = useState<Date | null>(null);
+  const [paymentDateEnd, setPaymentDateEnd] = useState<Date | null>(null);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [selectedSaleForPreview, setSelectedSaleForPreview] = useState<Sale | null>(null);
 
   const statusOptions = [
-    { label: 'Pendente', value: 'pending' },
-    { label: 'Concluída', value: 'completed' },
-    { label: 'Cancelada', value: 'cancelled' },
+    { label: 'Pendente', value: 'pending', color: '#f59e0b' },
+    { label: 'Concluída', value: 'completed', color: '#22c55e' },
+    { label: 'Cancelada', value: 'cancelled', color: '#ef4444' },
   ];
 
   const paymentMethodOptions = [
-    { label: 'Dinheiro', value: 'cash' },
-    { label: 'PIX', value: 'pix' },
-    { label: 'Parcelado', value: 'installment' },
+    { label: 'Dinheiro', value: 'cash', color: '#10b981' },
+    { label: 'PIX', value: 'pix', color: '#3b82f6' },
+    { label: 'Parcelado', value: 'installment', color: '#8b5cf6' },
   ];
 
   useEffect(() => {
-    if (!isFirstLoad && (startDate || endDate || selectedStatus || selectedPaymentMethod)) {
+    if (!isFirstLoad && (startDate || endDate || dueDateStart || dueDateEnd || selectedStatus || selectedPaymentMethod.length > 0 || selectedCustomerId || paymentDateStart || paymentDateEnd)) {
       setCurrentPage(1);
       setHasMoreData(true);
       loadSales(1, false);
     }
-  }, [startDate, endDate, selectedStatus, selectedPaymentMethod]);
+  }, [startDate, endDate, dueDateStart, dueDateEnd, selectedStatus, selectedPaymentMethod, selectedCustomerId, paymentDateStart, paymentDateEnd]);
 
   useEffect(() => {
     if (isFirstLoad) {
       setIsFirstLoad(false);
+      loadCustomers();
     }
   }, []);
+
+  const loadCustomers = async () => {
+    try {
+      const customersData = await customerDatabase.index();
+      setCustomers(
+        customersData.map((customer: any) => ({
+          id: customer.id,
+          name: customer.name,
+        }))
+      );
+    } catch (error) {
+      console.error('Error loading customers:', error);
+    }
+  };
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -122,11 +150,28 @@ export default function SalesList() {
         searchParams.endDate = endDate.toISOString().split('T')[0];
       }
 
-      if (selectedStatus) {
+      if (dueDateStart) {
+        searchParams.dueDateStart = dueDateStart.toISOString().split('T')[0];
+      }
+      if (dueDateEnd) {
+        searchParams.dueDateEnd = dueDateEnd.toISOString().split('T')[0];
+      }
+
+      if (paymentDateStart) {
+        searchParams.paymentDateStart = paymentDateStart.toISOString().split('T')[0];
+      }
+      if (paymentDateEnd) {
+        searchParams.paymentDateEnd = paymentDateEnd.toISOString().split('T')[0];
+      }
+
+      if (selectedStatus.length > 0) {
         searchParams.status = selectedStatus;
       }
-      if (selectedPaymentMethod) {
+      if (selectedPaymentMethod.length > 0) {
         searchParams.paymentMethod = selectedPaymentMethod;
+      }
+      if (selectedCustomerId) {
+        searchParams.customerId = selectedCustomerId;
       }
 
       const [data, count] = await Promise.all([
@@ -135,8 +180,13 @@ export default function SalesList() {
           q: searchParams.q,
           startDate: searchParams.startDate,
           endDate: searchParams.endDate,
+          dueDateStart: searchParams.dueDateStart,
+          dueDateEnd: searchParams.dueDateEnd,
+          paymentDateStart: searchParams.paymentDateStart,
+          paymentDateEnd: searchParams.paymentDateEnd,
           status: searchParams.status,
           paymentMethod: searchParams.paymentMethod,
+          customerId: searchParams.customerId,
         }),
       ]);
 
@@ -213,6 +263,17 @@ export default function SalesList() {
     loadSales(1, false);
   };
 
+  const handleSalePress = async (sale: Sale) => {
+    try {
+      // Carregar dados completos da venda para o preview
+      setSelectedSaleForPreview(sale);
+      setPreviewModalVisible(true);
+    } catch (error) {
+      console.error('Error loading sale details:', error);
+      Alert.alert('Erro', 'Falha ao carregar detalhes da venda');
+    }
+  };
+
   const pushToSale = (sale: Sale) => {
     router.push(`/sales/${sale.id}/edit`);
   };
@@ -226,7 +287,7 @@ export default function SalesList() {
   const renderSale = ({ item }: { item: Sale }) => (
     <SaleCard
       sale={item}
-      onPress={() => pushToSale(item)}
+      onPress={() => handleSalePress(item)}
     />
   );
 
@@ -303,56 +364,60 @@ export default function SalesList() {
             <Text style={styles.filterToggleText}>
               Filtrar por período
             </Text>
-            {(startDate || endDate || selectedStatus || selectedPaymentMethod) && (
+            {(startDate || endDate || dueDateStart || dueDateEnd || paymentDateStart || paymentDateEnd || selectedStatus.length > 0 || selectedPaymentMethod.length > 0 || selectedCustomerId) && (
               <View style={styles.filterActiveBadge}>
                 <Ionicons name='checkmark-circle' size={16} color='#22c55e' />
               </View>
             )}
           </TouchableOpacity>
 
-          {/* PeriodFilter - mostrado condicionalmente */}
+          {/* Filtros - mostrado condicionalmente */}
           {showDateFilter && (
             <View style={styles.periodFilterContainer}>
-              <PeriodFilter
-                startDate={startDate || new Date()}
-                endDate={endDate || new Date()}
+              <SalesFilters
+                startDate={startDate}
+                endDate={endDate}
+                dueDateStart={dueDateStart}
+                dueDateEnd={dueDateEnd}
+                paymentDateStart={paymentDateStart}
+                paymentDateEnd={paymentDateEnd}
                 onStartDateChange={setStartDate}
                 onEndDateChange={setEndDate}
+                onDueDateStartChange={setDueDateStart}
+                onDueDateEndChange={setDueDateEnd}
+                onPaymentDateStartChange={setPaymentDateStart}
+                onPaymentDateEndChange={setPaymentDateEnd}
+                selectedStatus={selectedStatus}
+                selectedPaymentMethod={selectedPaymentMethod}
+                selectedCustomerId={selectedCustomerId}
+                onStatusChange={setSelectedStatus}
+                onPaymentMethodChange={setSelectedPaymentMethod}
+                onCustomerChange={setSelectedCustomerId}
+                statusOptions={statusOptions}
+                paymentMethodOptions={paymentMethodOptions}
+                customers={customers}
               />
 
-              {/* Filtros adicionais */}
-              <SearchableSelect
-                label="Status"
-                selectedValue={selectedStatus ?? undefined}
-                onValueChange={(value) => setSelectedStatus(value as string)}
-                options={statusOptions}
-                placeholder="Todos os status"
-              />
-
-              <SearchableSelect
-                label="Forma de Pagamento"
-                selectedValue={selectedPaymentMethod ?? undefined}
-                onValueChange={(value) => setSelectedPaymentMethod(value as string)}
-                options={paymentMethodOptions}
-                placeholder="Todas as formas"
-              />
-
-              {/* Botões de ação */}
               <View style={styles.filterActions}>
                 <TouchableOpacity
                   style={styles.clearFilterButton}
                   onPress={() => {
                     setStartDate(null);
                     setEndDate(null);
-                    setSelectedStatus(null);
-                    setSelectedPaymentMethod(null);
+                    setDueDateStart(null);
+                    setDueDateEnd(null);
+                    setPaymentDateStart(null);
+                    setPaymentDateEnd(null);
+                    setSelectedStatus([]);
+                    setSelectedPaymentMethod([]);
+                    setSelectedCustomerId(null);
                     setCurrentPage(1);
                     setHasMoreData(true);
                   }}
-                  disabled={!startDate && !endDate && !selectedStatus && !selectedPaymentMethod}
+                  disabled={!startDate && !endDate && !dueDateStart && !dueDateEnd && !paymentDateStart && !paymentDateEnd && selectedStatus.length === 0 && selectedPaymentMethod.length === 0 && !selectedCustomerId}
                 >
-                  <Ionicons name='close-circle-outline' size={16} color={(!startDate && !endDate && !selectedStatus && !selectedPaymentMethod) ? '#cbd5e1' : '#64748b'} />
-                  <Text style={[styles.clearFilterButtonText, (!startDate && !endDate && !selectedStatus && !selectedPaymentMethod) && styles.disabledText]}>
+                  <Ionicons name='close-circle-outline' size={16} color={(!startDate && !endDate && !dueDateStart && !dueDateEnd && !paymentDateStart && !paymentDateEnd && selectedStatus.length === 0 && selectedPaymentMethod.length === 0 && !selectedCustomerId) ? '#cbd5e1' : '#64748b'} />
+                  <Text style={[styles.clearFilterButtonText, (!startDate && !endDate && !dueDateStart && !dueDateEnd && !paymentDateStart && !paymentDateEnd && selectedStatus.length === 0 && selectedPaymentMethod.length === 0 && !selectedCustomerId) && styles.disabledText]}>
                     Limpar
                   </Text>
                 </TouchableOpacity>
@@ -363,6 +428,7 @@ export default function SalesList() {
                     setCurrentPage(1);
                     setHasMoreData(true);
                     loadSales(1, false);
+                    setShowDateFilter(false);
                   }}
                   disabled={isLoading}
                 >
@@ -430,8 +496,17 @@ export default function SalesList() {
           </View>
         )}
 
-        <FloatingActionButton route='/sales/create' />
+        <FloatingActionButton route='/sales/create-wizard' />
       </View>
+
+      <SalePreviewModal
+        visible={previewModalVisible}
+        sale={selectedSaleForPreview}
+        onClose={() => {
+          setPreviewModalVisible(false);
+          setSelectedSaleForPreview(null);
+        }}
+      />
     </View>
   );
 }
@@ -464,8 +539,14 @@ const styles = StyleSheet.create({
   },
   periodFilterContainer: {
     paddingHorizontal: 12,
-    paddingBottom: 10,
-    gap: 8,
+    paddingBottom: 12,
+    gap: 12,
+  },
+  subLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+    marginTop: 4,
   },
   filterActions: {
     flexDirection: 'row',
