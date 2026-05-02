@@ -24,6 +24,10 @@ export default function RootLayout() {
         }}>
           <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
           <Stack.Screen
+            name='categories/index'
+            options={{ presentation: 'card', title: 'Categorias' }}
+          />
+          <Stack.Screen
             name='categories/create'
             options={{ presentation: 'card', title: 'Nova Categoria' }}
           />

@@ -46,16 +46,6 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name='categories'
-        options={{
-          title: 'Categorias',
-          headerTitle: 'Categorias',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name='folder-outline' size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name='products'
         options={{
           title: 'Produtos',
@@ -86,16 +76,6 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name='reports-list'
-        options={{
-          title: 'Relatórios',
-          headerTitle: 'Relatórios',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name='stats-chart-outline' size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name='profile'
         options={{
           title: 'Perfil',
@@ -105,12 +85,18 @@ export default function TabsLayout() {
           ),
         }}
       />
-      {/* Backup acessado via tab de Perfil, oculto da tab bar */}
       <Tabs.Screen
         name='backup'
         options={{
           href: null,
           headerTitle: 'Backup & Restauração',
+        }}
+      />
+      <Tabs.Screen
+        name='reports-list'
+        options={{
+          href: null,
+          headerTitle: 'Relatórios',
         }}
       />
     </Tabs>

@@ -69,74 +69,75 @@ export default function CreateCategory() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}><WorkArea>
-      <View style={styles.headerSection}>
-        <View style={styles.iconContainer}>
-          <Ionicons name='folder-outline' size={48} color='#FF6B35' />
-        </View>
-        <Text style={styles.title}>Nova Categoria</Text>
-        <Text style={styles.subtitle}>
-          Organize seus produtos criando uma nova categoria
-        </Text>
-      </View>
-
-      <View style={styles.formSection}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome da Categoria*</Text>
-          <Input
-            placeholder='Ex: Eletrônicos, Roupas, Livros...'
-            value={name}
-            onChangeText={setName}
-            editable={!isLoading}
-            style={styles.input}
-          />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <WorkArea>
+        <View style={styles.headerSection}>
+          <View style={styles.iconContainer}>
+            <Ionicons name='folder-outline' size={48} color='#FF6B35' />
+          </View>
+          <Text style={styles.title}>Nova Categoria</Text>
+          <Text style={styles.subtitle}>
+            Organize seus produtos criando uma nova categoria
+          </Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Descrição</Text>
-          <Input
-            placeholder='Descreva brevemente esta categoria (opcional)'
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
-            editable={!isLoading}
-            style={[styles.input, styles.textArea]}
-          />
-        </View>
-      </View>
+        <View style={styles.formSection}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nome da Categoria*</Text>
+            <Input
+              placeholder='Ex: Eletrônicos, Roupas, Livros...'
+              value={name}
+              onChangeText={setName}
+              editable={!isLoading}
+              style={styles.input}
+            />
+          </View>
 
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            isLoading && styles.saveButtonDisabled,
-          ]}
-          onPress={handleStore}
-          disabled={isLoading || !name.trim()}
-        >
-          {isLoading ? (
-            <>
-              <Ionicons
-                name='hourglass-outline'
-                size={16}
-                color='#ffffff'
-              />
-              <Text style={styles.saveButtonText}>Salvando...</Text>
-            </>
-          ) : (
-            <>
-              <Ionicons
-                name='checkmark-outline'
-                size={16}
-                color='#ffffff'
-              />
-              <Text style={styles.saveButtonText}>Salvar Categoria</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
-    </WorkArea>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Descrição</Text>
+            <Input
+              placeholder='Descreva brevemente esta categoria (opcional)'
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              editable={!isLoading}
+              style={[styles.input, styles.textArea]}
+            />
+          </View>
+        </View>
+
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              isLoading && styles.saveButtonDisabled,
+            ]}
+            onPress={handleStore}
+            disabled={isLoading || !name.trim()}
+          >
+            {isLoading ? (
+              <>
+                <Ionicons
+                  name='hourglass-outline'
+                  size={16}
+                  color='#ffffff'
+                />
+                <Text style={styles.saveButtonText}>Salvando...</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons
+                  name='checkmark-outline'
+                  size={16}
+                  color='#ffffff'
+                />
+                <Text style={styles.saveButtonText}>Salvar Categoria</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      </WorkArea>
     </SafeAreaView>
   );
 }

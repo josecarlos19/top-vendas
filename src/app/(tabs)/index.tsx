@@ -4,9 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import StatCard from '@/components/StatCard';
 import BarChart from '@/components/BarChart';
+import ReportCard from '@/components/ReportCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useReportDatabase } from '@/database/models/Report';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
 
 export default function Index() {
   const reportDatabase = useReportDatabase();
@@ -170,6 +172,42 @@ export default function Index() {
             )}
           </View>
 
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>
+              📊 Relatórios
+            </Text>
+            <View style={styles.reportsGrid}>
+              <ReportCard
+                title='Vendas por Período'
+                icon='calendar-outline'
+                color='#3b82f6'
+                backgroundColor='#eff6ff'
+                route='/reports/sales-by-period'
+              />
+              <ReportCard
+                title='Por Cliente'
+                icon='person-outline'
+                color='#22c55e'
+                backgroundColor='#f0fdf4'
+                route='/reports/sales-by-customer'
+              />
+              <ReportCard
+                title='Top Produtos'
+                icon='pie-chart-outline'
+                color='#f59e0b'
+                backgroundColor='#fef3c7'
+                route='/reports/top-products'
+              />
+              <ReportCard
+                title='Top Categorias'
+                icon='stats-chart-outline'
+                color='#ec4899'
+                backgroundColor='#fce7f3'
+                route='/reports/top-categories'
+              />
+            </View>
+          </View>
+
           <View style={styles.bottomSpacing} />
         </ScrollView>
       </View>
@@ -285,5 +323,10 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 20,
+  },
+  reportsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
   },
 });

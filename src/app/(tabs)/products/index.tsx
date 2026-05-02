@@ -432,6 +432,25 @@ export default function ProductsList() {
         />
 
         <View style={styles.resultsContainer}>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#eff6ff',
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+              borderRadius: 8,
+              marginBottom: 12,
+              borderWidth: 1,
+              borderColor: '#3b82f6',
+            }}
+            onPress={() => router.push('/categories')}
+          >
+            <Ionicons name='pricetags-outline' size={20} color='#3b82f6' style={{ marginRight: 6 }} />
+            <Text style={{ color: '#3b82f6', fontWeight: '600', fontSize: 14 }}>
+              Gerenciar Categorias
+            </Text>
+          </TouchableOpacity>
           <Text style={styles.resultsText}>
             {totalCount} produto{totalCount !== 1 ? 's' : ''} encontrado
             {totalCount !== 1 ? 's' : ''}
@@ -467,7 +486,7 @@ export default function ProductsList() {
 
         {renderFiltersModal()}
       </View>
-    </View>
+    </View >
   );
 }
 
@@ -536,9 +555,9 @@ const styles = StyleSheet.create({
   resultsContainer: {
     paddingHorizontal: 20,
     paddingBottom: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 8,
   },
   resultsText: {
     fontSize: 14,

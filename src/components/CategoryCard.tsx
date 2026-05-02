@@ -26,7 +26,7 @@ export default function CategoryCard({ category, onPress }: CategoryCardProps) {
     >
       <View style={styles.categoryHeader}>
         <View style={styles.iconContainer}>
-          <Ionicons name="albums" size={20} color="#3b82f6" />
+          <Ionicons name="pricetag-outline" size={20} color="#3b82f6" />
         </View>
         <View style={styles.categoryInfo}>
           <Text style={styles.categoryName} numberOfLines={1}>
