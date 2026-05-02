@@ -48,7 +48,7 @@ interface SaleItem {
 }
 
 const PAYMENT_METHODS = [
-  { value: 'money', label: 'Dinheiro' },
+  { value: 'cash', label: 'Dinheiro' },
   { value: 'pix', label: 'PIX' },
   { value: 'installment', label: 'Parcelado' },
 ];
@@ -59,7 +59,7 @@ export default function CreateSale() {
   const [products, setProducts] = useState<Product[]>([]);
   const [items, setItems] = useState<SaleItem[]>([]);
   const [discount, setDiscount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('money');
+  const [paymentMethod, setPaymentMethod] = useState<string | undefined>('cash');
   const [installments, setInstallments] = useState('1');
   const [saleDate, setSaleDate] = useState(new Date());
   const [notes, setNotes] = useState('');
@@ -88,6 +88,7 @@ export default function CreateSale() {
       const nextMonth = new Date(saleDate);
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       setFirstDueDate(nextMonth);
+      setMarkAsCompleted(false);
     } else {
       setFirstDueDate(saleDate);
     }
@@ -153,29 +154,28 @@ export default function CreateSale() {
     const product = products.find(p => p.id === Number(productId));
     if (!product) return;
 
+    const availableStock = product.current_stock ?? 0;
+
+    if (availableStock <= 0) {
+      Alert.alert('Estoque insuficiente', 'Este produto não possui estoque disponível.');
+      return;
+    }
+
     const existingItem = items.find(item => item.product_id === product.id);
 
     if (existingItem) {
       const newQuantity = existingItem.quantity + 1;
-      const availableStock = product.current_stock || product.initial_stock;
 
       if (newQuantity > availableStock) {
         Alert.alert(
           'Estoque insuficiente',
-          `Apenas ${availableStock} unidades disponíveis`
+          `Apenas ${availableStock} unidade${availableStock > 1 ? 's' : ''} disponível${availableStock > 1 ? 'eis' : ''} para este produto.`
         );
         return;
       }
 
       updateItemQuantity(product.id, newQuantity);
     } else {
-      const availableStock = product.current_stock || product.initial_stock;
-
-      if (availableStock <= 0) {
-        Alert.alert('Estoque insuficiente', 'Produto sem estoque disponível');
-        return;
-      }
-
       const newItem: SaleItem = {
         product_id: product.id,
         product_name: product.name,
@@ -193,13 +193,12 @@ export default function CreateSale() {
     }
 
     const product = products.find(p => p.id === productId);
-    const availableStock =
-      product?.current_stock || product?.initial_stock || 0;
+    const availableStock = product?.current_stock ?? 0;
 
     if (newQuantity > availableStock) {
       Alert.alert(
         'Estoque insuficiente',
-        `Apenas ${availableStock} unidades disponíveis`
+        `Este produto possui apenas ${availableStock} unidade${availableStock !== 1 ? 's' : ''} em estoque.`
       );
       return;
     }
@@ -246,6 +245,11 @@ export default function CreateSale() {
       return false;
     }
 
+    if (!paymentMethod) {
+      Alert.alert('Erro', 'Selecione uma forma de pagamento.');
+      return false;
+    }
+
     if (paymentMethod === 'installment' && parseInt(installments) <= 1) {
       Alert.alert(
         'Erro',
@@ -275,7 +279,7 @@ export default function CreateSale() {
         total,
         payment_method: paymentMethod as any,
         installments: installmentCount,
-        status: markAsCompleted ? 'completed' : 'pending',
+        status: markAsCompleted && paymentMethod !== 'installment' ? 'completed' : 'pending',
         sale_date: saleDate,
         notes: notes.trim() || undefined,
         itens: items.map(item => ({
@@ -332,10 +336,27 @@ export default function CreateSale() {
   }));
 
   const productOptions = products.map(product => {
-    const availableStock = product.current_stock || product.initial_stock;
+    const availableStock = product.current_stock ?? 0;
+    const isOutOfStock = availableStock <= 0;
+    const isLowStock = availableStock > 0 && availableStock <= 5;
+
     return {
-      label: `${product.name} - ${formatCurrency(product.sale_price.toString())} (Estoque: ${availableStock})`,
+      label: product.name,
       value: product.id,
+      disabled: isOutOfStock,
+      metadata: {
+        subtitle: formatCurrency(product.sale_price.toString()),
+        badge: {
+          text: isOutOfStock
+            ? 'Sem Estoque'
+            : `${availableStock} em estoque`,
+          variant: isOutOfStock
+            ? 'danger' as const
+            : isLowStock
+              ? 'warning' as const
+              : 'success' as const,
+        },
+      },
     };
   });
 
@@ -415,7 +436,6 @@ export default function CreateSale() {
         </View>
 
         <SearchableSelect
-          label='Cliente'
           selectedValue={customerId}
           onValueChange={value => setCustomerId(value as number)}
           options={customerOptions}
@@ -429,7 +449,6 @@ export default function CreateSale() {
         </View>
 
         <SearchableSelect
-          label='Adicionar Produto'
           selectedValue={undefined}
           onValueChange={addProductToSale}
           options={productOptions}
@@ -451,11 +470,10 @@ export default function CreateSale() {
         {/* Pagamento */}
         <View style={styles.sectionHeader}>
           <Ionicons name='card-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Pagamento</Text>
+          <Text style={styles.sectionTitle}>Forma de Pagamento</Text>
         </View>
 
         <SearchableSelect
-          label='Forma de Pagamento'
           selectedValue={paymentMethod}
           onValueChange={value => setPaymentMethod(value as string)}
           options={PAYMENT_METHODS}
@@ -463,21 +481,60 @@ export default function CreateSale() {
         />
 
         {paymentMethod === 'installment' && (
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Número de Parcelas</Text>
-            <Input
-              placeholder='Número de parcelas'
-              value={installments}
-              onChangeText={text => setInstallments(formatNumber(text))}
-              editable={!isLoading}
-              style={styles.input}
-              keyboardType='numeric'
-            />
-          </View>
+          <>
+            {/* Parcelamento */}
+            <View style={styles.sectionHeader}>
+              <Ionicons name='wallet-outline' size={20} color='#FF6B35' />
+              <Text style={styles.sectionTitle}>Parcelamento</Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Número de Parcelas</Text>
+              <Input
+                placeholder='Número de parcelas'
+                value={installments}
+                onChangeText={text => setInstallments(formatNumber(text))}
+                editable={!isLoading}
+                style={styles.input}
+                keyboardType='numeric'
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Data do Primeiro Vencimento</Text>
+              <TouchableOpacity
+                style={styles.selector}
+                onPress={() => setShowFirstDuePicker(true)}
+                disabled={isLoading}
+              >
+                <Text style={styles.selectorText}>
+                  {firstDueDate.toLocaleDateString('pt-BR')}
+                </Text>
+                <Ionicons name='calendar-outline' size={20} color='#64748b' />
+              </TouchableOpacity>
+
+              {showFirstDuePicker && (
+                <DateTimePicker
+                  value={firstDueDate}
+                  mode='date'
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(_, date) => {
+                    setShowFirstDuePicker(false);
+                    if (date) setFirstDueDate(date);
+                  }}
+                />
+              )}
+            </View>
+          </>
         )}
 
+        {/* Data da Venda */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='calendar-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Data da Venda</Text>
+        </View>
+
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Data da Venda</Text>
           <TouchableOpacity
             style={styles.selector}
             onPress={() => setShowSalePicker(true)}
@@ -502,35 +559,7 @@ export default function CreateSale() {
           )}
         </View>
 
-        {paymentMethod === 'installment' && (
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Data do Primeiro Vencimento</Text>
-            <TouchableOpacity
-              style={styles.selector}
-              onPress={() => setShowFirstDuePicker(true)}
-              disabled={isLoading}
-            >
-              <Text style={styles.selectorText}>
-                {firstDueDate.toLocaleDateString('pt-BR')}
-              </Text>
-              <Ionicons name='calendar-outline' size={20} color='#64748b' />
-            </TouchableOpacity>
-
-            {showFirstDuePicker && (
-              <DateTimePicker
-                value={firstDueDate}
-                mode='date'
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(_, date) => {
-                  setShowFirstDuePicker(false);
-                  if (date) setFirstDueDate(date);
-                }}
-              />
-            )}
-          </View>
-        )}
-
-        <View style={styles.inputGroup}>
+        <View style={[styles.inputGroup, styles.inputGroupCompact]}>
           <View style={styles.switchContainer}>
             <View style={styles.switchLabelContainer}>
               <Ionicons name='checkmark-circle-outline' size={20} color='#22c55e' />
@@ -546,9 +575,18 @@ export default function CreateSale() {
               }}
               trackColor={{ false: '#cbd5e1', true: '#86efac' }}
               thumbColor={markAsCompleted ? '#22c55e' : '#f1f5f9'}
-              disabled={isLoading}
+              disabled={isLoading || paymentMethod === 'installment'}
             />
           </View>
+
+          {paymentMethod === 'installment' && (
+            <View style={styles.infoCard}>
+              <Ionicons name='information-circle' size={20} color='#3b82f6' />
+              <Text style={styles.infoText}>
+                Para vendas parceladas, a conclusão ocorre quando todas as parcelas são pagas.
+              </Text>
+            </View>
+          )}
 
           {markAsCompleted && (
             <View style={styles.paymentDateContainer}>
@@ -579,8 +617,13 @@ export default function CreateSale() {
           )}
         </View>
 
+        {/* Desconto e Resumo */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Desconto e Resumo</Text>
+        </View>
+
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Desconto</Text>
           <Input
             placeholder='R$ 0,00'
             value={discount}
@@ -624,7 +667,6 @@ export default function CreateSale() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Observações</Text>
           <Input
             placeholder='Informações adicionais sobre a venda (opcional)'
             value={notes}
@@ -707,11 +749,13 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 20,
   },
+  inputGroupCompact: {
+    marginBottom: 12,
+  },
   label: {
     fontSize: 16,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 8,
   },
   subLabel: {
     fontSize: 14,
@@ -724,7 +768,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 0,
   },
   switchLabelContainer: {
     flexDirection: 'row',

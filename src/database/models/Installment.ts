@@ -22,7 +22,8 @@ export function useInstallmentDatabase() {
           SELECT
             s.id as sale_id,
             s.status as sale_status,
-            COUNT(CASE WHEN i2.status = 'pending' THEN 1 END) as pending_count
+            COUNT(CASE WHEN i2.status = 'pending' THEN 1 END) as pending_count,
+            COUNT(i2.id) as total_count
           FROM installments i
           INNER JOIN sales s ON s.id = i.sale_id
           LEFT JOIN installments i2 ON i2.sale_id = s.id
@@ -33,16 +34,15 @@ export function useInstallmentDatabase() {
           sale_id: number;
           sale_status: string;
           pending_count: number;
+          total_count: number;
         } | null;
 
         if (!saleInfo) return;
 
         const newSaleStatus =
-          saleInfo.pending_count === 0 && status === 'completed'
+          saleInfo.pending_count === 0
             ? 'completed'
-            : saleInfo.pending_count > 0 && status === 'pending'
-              ? 'pending'
-              : null;
+            : 'pending';
 
         if (newSaleStatus && newSaleStatus !== saleInfo.sale_status) {
           const updateSaleStatement = await database.prepareAsync(

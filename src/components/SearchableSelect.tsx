@@ -15,10 +15,19 @@ import { Ionicons } from '@expo/vector-icons';
 export interface SearchableSelectOption {
   label: string;
   value: string | number;
+  disabled?: boolean;
+  metadata?: {
+    subtitle?: string;
+    badge?: {
+      text: string;
+      variant: 'success' | 'warning' | 'danger' | 'info';
+    };
+    icon?: string;
+  };
 }
 
 interface SearchableSelectProps {
-  label: string;
+  label?: string;
   selectedValue: string | number | undefined;
   onValueChange: (value: string | number) => void;
   options: SearchableSelectOption[];
@@ -86,22 +95,82 @@ export default function SearchableSelect({
 
   const renderOption = ({ item }: { item: SearchableSelectOption }) => {
     const isSelected = item.value === selectedValue;
+    const isDisabled = item.disabled || false;
+
+    const getBadgeStyle = (variant: string) => {
+      switch (variant) {
+        case 'success':
+          return { bg: '#dcfce7', text: '#16a34a', border: '#86efac' };
+        case 'warning':
+          return { bg: '#fef3c7', text: '#d97706', border: '#fcd34d' };
+        case 'danger':
+          return { bg: '#fee2e2', text: '#dc2626', border: '#fca5a5' };
+        case 'info':
+          return { bg: '#dbeafe', text: '#2563eb', border: '#93c5fd' };
+        default:
+          return { bg: '#f1f5f9', text: '#64748b', border: '#cbd5e1' };
+      }
+    };
 
     return (
       <TouchableOpacity
-        style={[styles.optionItem, isSelected && styles.optionItemSelected]}
-        onPress={() => handleSelectOption(item.value)}
-        activeOpacity={0.7}
+        style={[
+          styles.optionItem,
+          isSelected && styles.optionItemSelected,
+          isDisabled && styles.optionItemDisabled,
+        ]}
+        onPress={() => !isDisabled && handleSelectOption(item.value)}
+        activeOpacity={isDisabled ? 1 : 0.7}
+        disabled={isDisabled}
       >
-        <Text
-          style={[styles.optionText, isSelected && styles.optionTextSelected]}
-          numberOfLines={1}
-        >
-          {item.label}
-        </Text>
-        {isSelected && (
-          <Ionicons name="checkmark" size={20} color="#3b82f6" />
-        )}
+        <View style={styles.optionContent}>
+          <View style={styles.optionTextContainer}>
+            <Text
+              style={[
+                styles.optionText,
+                isSelected && styles.optionTextSelected,
+                isDisabled && styles.optionTextDisabled,
+              ]}
+            >
+              {item.label}
+            </Text>
+            {item.metadata?.subtitle && (
+              <Text style={styles.optionSubtitle}>
+                {item.metadata.subtitle}
+              </Text>
+            )}
+          </View>
+
+          <View style={styles.optionRight}>
+            {item.metadata?.badge && (
+              <View
+                style={[
+                  styles.badge,
+                  {
+                    backgroundColor: getBadgeStyle(item.metadata.badge.variant).bg,
+                    borderColor: getBadgeStyle(item.metadata.badge.variant).border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.badgeText,
+                    { color: getBadgeStyle(item.metadata.badge.variant).text },
+                  ]}
+                >
+                  {item.metadata.badge.text}
+                </Text>
+              </View>
+            )}
+
+            {isSelected && !isDisabled && (
+              <Ionicons name="checkmark" size={20} color="#3b82f6" />
+            )}
+            {isDisabled && (
+              <Ionicons name="ban-outline" size={18} color="#ef4444" />
+            )}
+          </View>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -118,7 +187,7 @@ export default function SearchableSelect({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      {label && <Text style={styles.label}>{label}</Text>}
 
       <TouchableOpacity
         style={[
@@ -136,15 +205,16 @@ export default function SearchableSelect({
             !selectedValue && styles.selectButtonTextPlaceholder,
             !enabled && styles.selectButtonTextDisabled,
           ]}
-          numberOfLines={1}
         >
           {selectedLabel}
         </Text>
-        <Ionicons
-          name={isModalVisible ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color={enabled ? '#64748b' : '#cbd5e1'}
-        />
+        <View style={styles.iconWrapper}>
+          <Ionicons
+            name={isModalVisible ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color={enabled ? '#64748b' : '#cbd5e1'}
+          />
+        </View>
       </TouchableOpacity>
 
       <Modal
@@ -158,7 +228,7 @@ export default function SearchableSelect({
           <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
             {/* Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{label}</Text>
+              <Text style={styles.modalTitle}>{label || 'Selecionar'}</Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={handleCloseModal}
@@ -250,7 +320,7 @@ const styles = StyleSheet.create({
   },
   selectButton: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     backgroundColor: '#ffffff',
     borderWidth: 1,
@@ -272,6 +342,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1e293b',
     marginRight: 8,
+    lineHeight: 20,
+  },
+  iconWrapper: {
+    paddingTop: 2,
   },
   selectButtonTextPlaceholder: {
     color: '#94a3b8',
@@ -343,25 +417,68 @@ const styles = StyleSheet.create({
   },
   optionItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
+    minHeight: 44,
   },
   optionItemSelected: {
     backgroundColor: '#eff6ff',
   },
-  optionText: {
+  optionItemDisabled: {
+    backgroundColor: '#fef2f2',
+    opacity: 0.7,
+  },
+  optionContent: {
     flex: 1,
-    fontSize: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  optionTextContainer: {
+    flex: 1,
+    marginRight: 12,
+  },
+  optionText: {
+    fontSize: 15,
+    fontWeight: '500',
     color: '#1e293b',
-    marginRight: 8,
+    lineHeight: 20,
+    marginBottom: 2,
+  },
+  optionSubtitle: {
+    fontSize: 13,
+    color: '#64748b',
+    lineHeight: 18,
+    marginTop: 2,
+  },
+  optionRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   optionTextSelected: {
     color: '#3b82f6',
     fontWeight: '600',
+  },
+  optionTextDisabled: {
+    color: '#94a3b8',
+    textDecorationLine: 'line-through',
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   emptyState: {
     alignItems: 'center',

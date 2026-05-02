@@ -18,7 +18,7 @@ interface SaleCardProps {
 }
 
 const PAYMENT_METHOD_LABELS: { [key: string]: string } = {
-  money: 'Dinheiro',
+  cash: 'Dinheiro',
   card: 'Cartão',
   pix: 'PIX',
   transfer: 'Transferência',

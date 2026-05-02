@@ -80,7 +80,7 @@ interface Sale {
 }
 
 const PAYMENT_METHODS = [
-  { value: 'money', label: 'Dinheiro' },
+  { value: 'cash', label: 'Dinheiro' },
   { value: 'pix', label: 'PIX' },
   { value: 'installment', label: 'Parcelado' },
 ];
@@ -99,7 +99,7 @@ export default function EditSale() {
   const [products, setProducts] = useState<Product[]>([]);
   const [items, setItems] = useState<SaleItem[]>([]);
   const [discount, setDiscount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('money');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [installments, setInstallments] = useState('1');
   const [status, setStatus] = useState('completed');
   const [notes, setNotes] = useState('');
@@ -408,12 +408,20 @@ export default function EditSale() {
         </View>
 
         <SearchableSelect
-          label='Status da Venda'
           selectedValue={status}
           onValueChange={value => setStatus(value as string)}
           options={STATUS_OPTIONS}
-          enabled={!isSaving}
+          enabled={!isSaving && paymentMethod !== 'installment'}
         />
+
+        {paymentMethod === 'installment' && (
+          <View style={styles.infoCard}>
+            <Ionicons name='information-circle' size={20} color='#3b82f6' />
+            <Text style={styles.infoText}>
+              Para vendas parceladas, o status é atualizado automaticamente conforme as parcelas são pagas.
+            </Text>
+          </View>
+        )}
 
         {/* Cliente */}
         <View style={styles.sectionHeader}>
@@ -422,7 +430,6 @@ export default function EditSale() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Cliente</Text>
           <View style={[styles.disabledField]}>
             <Text style={styles.disabledText}>
               {customers.find(c => c.id === customerId)?.name ||
@@ -451,11 +458,10 @@ export default function EditSale() {
         {/* Pagamento */}
         <View style={styles.sectionHeader}>
           <Ionicons name='card-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Pagamento</Text>
+          <Text style={styles.sectionTitle}>Forma de Pagamento</Text>
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Forma de Pagamento</Text>
           <View style={styles.disabledField}>
             <Text style={styles.disabledText}>
               {PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label ||
@@ -464,8 +470,13 @@ export default function EditSale() {
           </View>
         </View>
 
+        {/* Data da Venda */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='calendar-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Data da Venda</Text>
+        </View>
+
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Data da Venda</Text>
           <TouchableOpacity
             style={[styles.selector, styles.disabledField]}
             disabled
@@ -478,89 +489,93 @@ export default function EditSale() {
         </View>
 
         {paymentMethod === 'installment' && (
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Número de Parcelas</Text>
-            <View style={styles.disabledField}>
-              <Text style={styles.disabledText}>{installments}</Text>
+          <>
+            {/* Parcelamento */}
+            <View style={styles.sectionHeader}>
+              <Ionicons name='wallet-outline' size={20} color='#FF6B35' />
+              <Text style={styles.sectionTitle}>Parcelamento</Text>
             </View>
-          </View>
-        )}
 
-        {sale.payment_method === 'installment' &&
-          sale?.installments &&
-          sale.installments.length > 0 && (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Parcelas</Text>
-              {sale.installments.map(inst => (
-                <TouchableOpacity
-                  key={inst.id}
-                  style={[
-                    styles.installmentItem,
-                    inst.status === 'completed' && styles.installmentPaid,
-                  ]}
-                  activeOpacity={0.7}
-                  onPress={openInstallmentModal(inst)}
-                >
-                  <View>
-                    <Text style={styles.installmentText}>
-                      {inst.number}ª parcela —{' '}
-                      {formatCurrency(inst.amount.toString())}
-                    </Text>
-                    {inst.status === 'completed' ? (
-                      <Text style={styles.installmentDate}>
-                        Data Pagamento:{' '}
-                        {inst.payment_date
-                          ? formatDate(inst.payment_date)
-                          : '-'}
-                      </Text>
-                    ) : (
-                      <Text style={styles.installmentDate}>
-                        Vencimento: {formatDate(inst.due_date)}
-                      </Text>
-                    )}
-                  </View>
-                  <Text
-                    style={[
-                      styles.installmentStatus,
-                      inst.status === 'completed'
-                        ? styles.installmentStatusPaid
-                        : styles.installmentStatusPending,
-                    ]}
-                  >
-                    {inst.status === 'completed' ? 'Paga' : 'Pendente'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              <Text style={styles.label}>Número de Parcelas</Text>
+              <View style={styles.disabledField}>
+                <Text style={styles.disabledText}>{installments}</Text>
+              </View>
             </View>
-          )}
 
-        {paymentMethod === 'installment' && (
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Data do Primeiro Vencimento</Text>
-            <TouchableOpacity
-              style={[styles.selector, styles.disabledField]}
-              onPress={() => setShowFirstDuePicker(true)}
-              disabled
-            >
-              <Text style={styles.selectorText}>
-                {firstDueDate.toLocaleDateString('pt-BR')}
-              </Text>
-              <Ionicons name='calendar-outline' size={20} color='#64748b' />
-            </TouchableOpacity>
-
-            {showFirstDuePicker && (
-              <DateTimePicker
-                value={firstDueDate}
-                mode='date'
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Data do Primeiro Vencimento</Text>
+              <TouchableOpacity
+                style={[styles.selector, styles.disabledField]}
+                onPress={() => setShowFirstDuePicker(true)}
                 disabled
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(event, date) => {
-                  setShowFirstDuePicker(false);
-                  if (date) setFirstDueDate(date);
-                }}
-              />
+              >
+                <Text style={styles.selectorText}>
+                  {firstDueDate.toLocaleDateString('pt-BR')}
+                </Text>
+                <Ionicons name='calendar-outline' size={20} color='#64748b' />
+              </TouchableOpacity>
+
+              {showFirstDuePicker && (
+                <DateTimePicker
+                  value={firstDueDate}
+                  mode='date'
+                  disabled
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event, date) => {
+                    setShowFirstDuePicker(false);
+                    if (date) setFirstDueDate(date);
+                  }}
+                />
+              )}
+            </View>
+
+            {sale?.installments && sale.installments.length > 0 && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Parcelas</Text>
+                {sale.installments.map(inst => (
+                  <TouchableOpacity
+                    key={inst.id}
+                    style={[
+                      styles.installmentItem,
+                      inst.status === 'completed' && styles.installmentPaid,
+                    ]}
+                    activeOpacity={0.7}
+                    onPress={openInstallmentModal(inst)}
+                  >
+                    <View>
+                      <Text style={styles.installmentText}>
+                        {inst.number}ª parcela —{' '}
+                        {formatCurrency(inst.amount.toString())}
+                      </Text>
+                      {inst.status === 'completed' ? (
+                        <Text style={styles.installmentDate}>
+                          Data Pagamento:{' '}
+                          {inst.payment_date
+                            ? formatDate(inst.payment_date)
+                            : '-'}
+                        </Text>
+                      ) : (
+                        <Text style={styles.installmentDate}>
+                          Vencimento: {formatDate(inst.due_date)}
+                        </Text>
+                      )}
+                    </View>
+                    <Text
+                      style={[
+                        styles.installmentStatus,
+                        inst.status === 'completed'
+                          ? styles.installmentStatusPaid
+                          : styles.installmentStatusPending,
+                      ]}
+                    >
+                      {inst.status === 'completed' ? 'Paga' : 'Pendente'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             )}
-          </View>
+          </>
         )}
 
         {paymentMethod !== 'installment' && (
@@ -594,8 +609,13 @@ export default function EditSale() {
           </View>
         )}
 
+        {/* Desconto e Resumo */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
+          <Text style={styles.sectionTitle}>Desconto e Resumo</Text>
+        </View>
+
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Desconto</Text>
           <View style={styles.disabledField}>
             <Text style={styles.disabledText}>{discount || 'R$ 0,00'}</Text>
           </View>
@@ -632,7 +652,6 @@ export default function EditSale() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Observações</Text>
           <Input
             placeholder='Informações adicionais sobre a venda (opcional)'
             value={notes}
