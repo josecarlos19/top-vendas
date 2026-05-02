@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -153,7 +154,7 @@ export default function SalePreview({ sale, saleId }: SalePreviewProps) {
                 <Text style={styles.infoText}>
                   {PAYMENT_METHOD_LABELS[sale.payment_method] || sale.payment_method}
                   {sale.payment_method === 'installment' && sale.totalInstallments && sale.totalInstallments > 0
-                    ? ` - Parcelado: ${sale.paidInstallments || 0}/${sale.totalInstallments}`
+                    ? `: ${sale.paidInstallments || 0}/${sale.totalInstallments}`
                     : sale.installments && sale.installments > 1
                       ? ` (${sale.installments}x)`
                       : ''}
@@ -215,10 +216,14 @@ export default function SalePreview({ sale, saleId }: SalePreviewProps) {
               </View>
             </View>
 
-            {/* Footer Compacto */}
             <View style={styles.footer}>
-              <Ionicons name="checkmark-circle" size={14} color="#22c55e" />
-              <Text style={styles.footerText}>Venda realizada!</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+                <Image
+                  source={require('../../assets/images/favicon.png')}
+                  style={{ width: 28, height: 28, marginRight: 8, borderRadius: 6 }}
+                />
+                <Text style={{ fontWeight: '600', fontSize: 18, color: '#1e293b' }}>Top Vendas</Text>
+              </View>
             </View>
           </View>
         </ViewShot>
