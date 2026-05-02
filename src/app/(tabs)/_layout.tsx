@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View, Text, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabsLayout() {
@@ -31,7 +31,15 @@ export default function TabsLayout() {
         name='index'
         options={{
           title: 'Home',
-          headerTitle: 'Home',
+          headerTitle: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Image
+                source={require('../../../assets/images/favicon.png')}
+                style={{ width: 28, height: 28, marginRight: 8, borderRadius: 6 }}
+              />
+              <Text style={{ fontWeight: '600', fontSize: 18, color: '#1e293b' }}>Top Vendas</Text>
+            </View>
+          ),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name='home-outline' size={size} color={color} />
           ),
