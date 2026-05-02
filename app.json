@@ -11,27 +11,28 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#4C56EB"
+      "backgroundColor": "#4F57E2"
     },
     "ios": {
       "supportsTablet": true,
       "splash": {
         "image": "./assets/images/splash-icon.png",
         "resizeMode": "contain",
-        "backgroundColor": "#4C56EB"
-      }
+        "backgroundColor": "#4F57E2"
+      },
+      "bundleIdentifier": "com.josecarlos19.topvendas"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#4C56EB"
+        "backgroundColor": "#4F57E2"
       },
       "package": "com.josecarlos19.topvendas",
       "edgeToEdgeEnabled": true,
       "splash": {
         "image": "./assets/images/splash-icon.png",
         "resizeMode": "contain",
-        "backgroundColor": "#4C56EB"
+        "backgroundColor": "#4F57E2"
       }
     },
     "web": {
