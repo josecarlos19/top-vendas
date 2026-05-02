@@ -5,10 +5,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import StatCard from '@/components/StatCard';
 import BarChart from '@/components/BarChart';
 import ReportCard from '@/components/ReportCard';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import DueNotifications from '@/components/DueNotifications';
+import LowStockNotifications from '@/components/LowStockNotifications';
 import { useReportDatabase } from '@/database/models/Report';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
 
 export default function Index() {
   const reportDatabase = useReportDatabase();
@@ -109,6 +109,8 @@ export default function Index() {
 
   return (
     <View style={{ flex: 1 }}>
+      <DueNotifications />
+      <LowStockNotifications />
       <View style={styles.container}>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <LinearGradient
@@ -117,14 +119,17 @@ export default function Index() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Text style={styles.welcomeTitle}>Bem-vindo de volta! 👋</Text>
+            <Text style={styles.welcomeTitle}>Bem-vindo de volta!</Text>
             <Text style={styles.welcomeSubtitle}>
               Aqui está um resumo do seu negócio hoje
             </Text>
           </LinearGradient>
 
           <View style={styles.headerRow}>
-            <Text style={styles.sectionTitle}>📊 Estatísticas</Text>
+            <View style={styles.sectionTitleContainer}>
+              <Ionicons name="stats-chart" size={20} color="#667eea" />
+              <Text style={styles.sectionTitle}>Estatísticas</Text>
+            </View>
             <TouchableOpacity
               onPress={toggleRevenueVisibility}
               style={styles.toggleButton}
@@ -159,9 +164,12 @@ export default function Index() {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>
-              📈 Vendas dos Últimos 7 Dias
-            </Text>
+            <View style={styles.sectionTitleContainer}>
+              <Ionicons name="trending-up" size={20} color="#667eea" />
+              <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>
+                Vendas dos Últimos 7 Dias
+              </Text>
+            </View>
             {isLoadingChart ? (
               <View style={styles.chartPlaceholder}>
                 <ActivityIndicator size='large' color='#667eea' />
@@ -173,10 +181,14 @@ export default function Index() {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>
-              📊 Relatórios
-            </Text>
+            <View style={styles.sectionTitleContainer}>
+              <Ionicons name="document-text" size={20} color="#667eea" />
+              <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>
+                Relatórios
+              </Text>
+            </View>
             <View style={styles.reportsGrid}>
+
               <ReportCard
                 title='Vendas por Período'
                 icon='calendar-outline'
@@ -230,6 +242,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
   },
+  welcomeIconContainer: {
+    marginBottom: 12,
+  },
   welcomeTitle: {
     fontSize: 24,
     fontWeight: '700',
@@ -248,6 +263,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 16,
     marginBottom: 16,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
   },
   toggleButton: {
     flexDirection: 'row',

@@ -44,7 +44,7 @@ export default function SalePreviewModal({ visible, sale, onClose }: SalePreview
           COUNT(*) as total,
           SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as paid
          FROM installments
-         WHERE sale_id = ? AND deleted_at IS NULL`,
+         WHERE sale_id = ?`,
         [sale!.id]
       ) as { total: number; paid: number } | null;
 
@@ -85,16 +85,14 @@ export default function SalePreviewModal({ visible, sale, onClose }: SalePreview
           <View style={styles.placeholder} />
         </View>
 
-        <ScrollView style={styles.content}>
-          {isLoadingInstallments && sale.payment_method === 'installment' ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#667eea" />
-              <Text style={styles.loadingText}>Carregando informações...</Text>
-            </View>
-          ) : (
-            <SalePreview sale={saleWithItems} saleId={String(sale.id)} />
-          )}
-        </ScrollView>
+        {isLoadingInstallments && sale.payment_method === 'installment' ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#667eea" />
+            <Text style={styles.loadingText}>Carregando informações...</Text>
+          </View>
+        ) : (
+          <SalePreview sale={saleWithItems} saleId={String(sale.id)} />
+        )}
       </View>
     </Modal>
   );
@@ -127,9 +125,7 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 36,
   },
-  content: {
-    flex: 1,
-  },
+
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

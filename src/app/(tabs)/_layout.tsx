@@ -2,9 +2,13 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View, Text, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDueNotifications } from '@/hooks/useDueNotifications';
+import { useLowStockNotifications } from '@/hooks/useLowStockNotifications';
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const { notifications } = useDueNotifications();
+  const { notifications: lowStockNotifications } = useLowStockNotifications();
   return (
     <Tabs
       screenOptions={{
@@ -51,7 +55,16 @@ export default function TabsLayout() {
           title: 'Produtos',
           headerTitle: 'Produtos',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name='bag-outline' size={size} color={color} />
+            <View style={{ position: 'relative' }}>
+              <Ionicons name='bag-outline' size={size} color={color} />
+              {lowStockNotifications.totalCount > 0 && (
+                <View style={[styles.badge, styles.warningBadge]}>
+                  <Text style={styles.badgeText}>
+                    {lowStockNotifications.totalCount > 99 ? '99+' : lowStockNotifications.totalCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
@@ -71,7 +84,16 @@ export default function TabsLayout() {
           title: 'Vendas',
           headerTitle: 'Vendas',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name='cart-outline' size={size} color={color} />
+            <View style={{ position: 'relative' }}>
+              <Ionicons name='cart-outline' size={size} color={color} />
+              {notifications.totalCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {notifications.totalCount > 99 ? '99+' : notifications.totalCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
@@ -102,3 +124,28 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
+  badgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  warningBadge: {
+    backgroundColor: '#f97316',
+  },
+});

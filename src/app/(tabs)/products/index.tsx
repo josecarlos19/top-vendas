@@ -20,6 +20,8 @@ import ProductCard from '@/components/ProductCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { SearchBar } from '@/components/SearchBar';
+import StockAdjustmentModal, { StockAdjustmentType } from '@/components/modals/StockAdjustmentModal';
+import { useSQLiteContext } from 'expo-sqlite';
 
 interface Product {
   id: number;
@@ -60,8 +62,13 @@ export default function ProductsList() {
   const [hasMoreData, setHasMoreData] = useState(true);
   const perPage = 10;
 
+  // Estado para ajuste rápido de estoque
+  const [showStockAdjustModal, setShowStockAdjustModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
   const productDatabase = useProductDatabase();
   const categoryDatabase = useCategoryDatabase();
+  const database = useSQLiteContext();
 
   useEffect(() => {
     loadCategories();
@@ -217,6 +224,55 @@ export default function ProductsList() {
     router.push(`/products/${product.id}/edit`);
   };
 
+  const handleStockAdjust = (product: any) => {
+    setSelectedProduct(product as Product);
+    setShowStockAdjustModal(true);
+  };
+
+  const handleStockAdjustConfirm = async (params: {
+    type: StockAdjustmentType;
+    quantity: number;
+    notes: string;
+  }) => {
+    if (!selectedProduct) return;
+
+    try {
+      let quantity = params.quantity;
+      let type = params.type;
+      let notes = params.notes;
+
+      if (type === 'set') {
+        const currentStockValue = selectedProduct.current_stock || 0;
+        const difference = quantity - currentStockValue;
+
+        if (difference > 0) {
+          type = 'add';
+          quantity = difference;
+        } else if (difference < 0) {
+          type = 'remove';
+          quantity = Math.abs(difference);
+        } else {
+          return;
+        }
+      }
+
+      await database.runAsync(
+        `INSERT INTO stock_movements (
+          sale_id, product_id, type, quantity, unit_value, total_value, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [null, selectedProduct.id, type, quantity, selectedProduct.sale_price, 0, notes]
+      );
+
+      Alert.alert('Sucesso', 'Estoque ajustado com sucesso!');
+      setShowStockAdjustModal(false);
+      setSelectedProduct(null);
+      handleRefresh();
+    } catch (error) {
+      console.error('Error adjusting stock:', error);
+      Alert.alert('Erro', 'Falha ao ajustar estoque. Tente novamente.');
+    }
+  };
+
   const clearFilters = () => {
     setSelectedCategory(undefined);
     setShowLowStock(false);
@@ -258,7 +314,12 @@ export default function ProductsList() {
   );
 
   const renderProduct = ({ item }: { item: Product }) => (
-    <ProductCard product={item} onPress={handleEdit} />
+    <ProductCard
+      product={item}
+      onPress={handleEdit}
+      onStockAdjust={handleStockAdjust}
+      showStockAction={true}
+    />
   );
 
   const renderFooter = () => {
@@ -485,6 +546,18 @@ export default function ProductsList() {
         <FloatingActionButton route='/products/create' />
 
         {renderFiltersModal()}
+
+        {/* Modal de Ajuste Rápido de Estoque */}
+        <StockAdjustmentModal
+          visible={showStockAdjustModal}
+          productName={selectedProduct?.name || ''}
+          currentStock={selectedProduct?.current_stock || 0}
+          onClose={() => {
+            setShowStockAdjustModal(false);
+            setSelectedProduct(null);
+          }}
+          onConfirm={handleStockAdjustConfirm}
+        />
       </View>
     </View >
   );

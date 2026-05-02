@@ -186,7 +186,7 @@ export default function SearchableSelect({
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, label ? styles.containerWithLabel : null]}>
       {label && <Text style={styles.label}>{label}</Text>}
 
       <TouchableOpacity
@@ -310,13 +310,16 @@ export default function SearchableSelect({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    // marginBottom removido para permitir controle pelo componente pai
+  },
+  containerWithLabel: {
+    marginBottom: 12,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1e293b',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   selectButton: {
     flexDirection: 'row',

@@ -12,8 +12,11 @@ interface ProductCardProps {
     barcode?: string;
     category_name?: string;
     active?: number;
+    [key: string]: any; // Permite propriedades adicionais
   };
   onPress?: (product: ProductCardProps['product']) => void;
+  onStockAdjust?: (product: ProductCardProps['product']) => void;
+  showStockAction?: boolean;
 }
 
 const getStockColor = (stock?: number) => {
@@ -30,9 +33,14 @@ const getStockBackgroundColor = (stock?: number) => {
   return '#fee2e2';
 };
 
-export default function ProductCard({ product, onPress }: ProductCardProps) {
+export default function ProductCard({ product, onPress, onStockAdjust, showStockAction = false }: ProductCardProps) {
   const handlePress = () => {
     onPress?.(product);
+  };
+
+  const handleStockAdjust = (e: any) => {
+    e.stopPropagation();
+    onStockAdjust?.(product);
   };
 
   const isInactive = product.active === 0;
@@ -59,7 +67,7 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
 
       <View style={styles.productContent}>
         <View style={styles.priceSection}>
-          <Ionicons name="pricetag" size={14} color="#8b5cf6" />
+          <Ionicons name="cash-outline" size={14} color="#8b5cf6" />
           <Text style={styles.priceAmount}>
             {formatCurrency(product.sale_price.toString())}
           </Text>
@@ -88,6 +96,16 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
               </Text>
             </View>
           </View>
+
+          {showStockAction && onStockAdjust && (
+            <TouchableOpacity
+              style={styles.stockActionButton}
+              onPress={handleStockAdjust}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="enter-outline" size={14} color="#3b82f6" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {(product.category_name || product.barcode) && (
@@ -172,7 +190,16 @@ const styles = StyleSheet.create({
   detailsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 8,
+  },
+  stockActionButton: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
   },
   detailItem: {
     flexDirection: 'row',

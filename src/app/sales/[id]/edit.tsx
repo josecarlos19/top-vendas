@@ -15,7 +15,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useSaleDatabase } from '@/database/models/Sale';
 import { useCustomerDatabase } from '@/database/models/Customer';
 import { useProductDatabase } from '@/database/models/Product';
-import { Input } from '@/components/Input';
+import { FormSection, FormInput, FormSelector, InfoCard } from '@/components/Form';
 import formatCurrency from '@/components/utils/formatCurrency';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useInstallmentDatabase } from '@/database/models/Installment';
@@ -403,133 +403,96 @@ export default function EditSale() {
 
         <View style={styles.formSection}>
           {/* Status */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name='flag-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Status</Text>
-          </View>
+          <FormSection icon='flag-outline' title='Status'>
+            <SearchableSelect
+              selectedValue={status}
+              onValueChange={value => setStatus(value as string)}
+              options={STATUS_OPTIONS}
+              enabled={!isSaving && paymentMethod !== 'installment'}
+            />
 
-          <SearchableSelect
-            selectedValue={status}
-            onValueChange={value => setStatus(value as string)}
-            options={STATUS_OPTIONS}
-            enabled={!isSaving && paymentMethod !== 'installment'}
-          />
-
-          {paymentMethod === 'installment' && (
-            <View style={styles.infoCard}>
-              <Ionicons name='information-circle' size={20} color='#3b82f6' />
-              <Text style={styles.infoText}>
+            {paymentMethod === 'installment' && (
+              <InfoCard variant='info'>
                 Para vendas parceladas, o status é atualizado automaticamente conforme as parcelas são pagas.
-              </Text>
-            </View>
-          )}
+              </InfoCard>
+            )}
+          </FormSection>
 
           {/* Cliente */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name='person-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Cliente</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <View style={[styles.disabledField]}>
-              <Text style={styles.disabledText}>
-                {customers.find(c => c.id === customerId)?.name ||
-                  'Nenhum cliente'}
-              </Text>
-            </View>
-          </View>
+          <FormSection icon='person-outline' title='Cliente'>
+            <FormSelector
+              label='Cliente selecionado'
+              value={customers.find(c => c.id === customerId)?.name || 'Nenhum cliente'}
+              onPress={() => { }}
+              disabled={true}
+              icon='person-outline'
+            />
+          </FormSection>
 
           {/* Produtos */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name='bag-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Produtos</Text>
-          </View>
-
-          {items.length > 0 && (
-            <View style={styles.itemsList}>
-              <FlatList
-                data={items}
-                renderItem={renderSaleItem}
-                keyExtractor={item => item.product_id.toString()}
-                scrollEnabled={false}
-              />
-            </View>
-          )}
+          <FormSection icon='bag-outline' title='Produtos'>
+            {items.length > 0 && (
+              <View style={styles.itemsList}>
+                <FlatList
+                  data={items}
+                  renderItem={renderSaleItem}
+                  keyExtractor={item => item.product_id.toString()}
+                  scrollEnabled={false}
+                />
+              </View>
+            )}
+          </FormSection>
 
           {/* Pagamento */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name='card-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Forma de Pagamento</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <View style={styles.disabledField}>
-              <Text style={styles.disabledText}>
-                {PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label ||
-                  paymentMethod}
-              </Text>
-            </View>
-          </View>
+          <FormSection icon='card-outline' title='Forma de Pagamento'>
+            <FormSelector
+              label='Método de pagamento'
+              value={PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label || paymentMethod}
+              onPress={() => { }}
+              disabled={true}
+              icon='card-outline'
+            />
+          </FormSection>
 
           {/* Data da Venda */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name='calendar-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Data da Venda</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <TouchableOpacity
-              style={[styles.selector, styles.disabledField]}
-              disabled
-            >
-              <Text style={[styles.selectorText]}>
-                {saleDate!.toLocaleDateString('pt-BR')}
-              </Text>
-              <Ionicons name='calendar-outline' size={20} color='#64748b' />
-            </TouchableOpacity>
-          </View>
+          <FormSection icon='calendar-outline' title='Data da Venda'>
+            <FormSelector
+              label='Data'
+              value={saleDate!.toLocaleDateString('pt-BR')}
+              onPress={() => { }}
+              disabled={true}
+              icon='calendar-outline'
+            />
+          </FormSection>
 
           {paymentMethod === 'installment' && (
-            <>
-              {/* Parcelamento */}
-              <View style={styles.sectionHeader}>
-                <Ionicons name='wallet-outline' size={20} color='#FF6B35' />
-                <Text style={styles.sectionTitle}>Parcelamento</Text>
-              </View>
+            <FormSection icon='wallet-outline' title='Parcelamento'>
+              <FormInput
+                label='Número de Parcelas'
+                value={installments}
+                editable={false}
+              />
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Número de Parcelas</Text>
-                <View style={styles.disabledField}>
-                  <Text style={styles.disabledText}>{installments}</Text>
-                </View>
-              </View>
+              <FormSelector
+                label='Data do Primeiro Vencimento'
+                value={firstDueDate.toLocaleDateString('pt-BR')}
+                onPress={() => setShowFirstDuePicker(true)}
+                disabled={true}
+                icon='calendar-outline'
+              />
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Data do Primeiro Vencimento</Text>
-                <TouchableOpacity
-                  style={[styles.selector, styles.disabledField]}
-                  onPress={() => setShowFirstDuePicker(true)}
+              {showFirstDuePicker && (
+                <DateTimePicker
+                  value={firstDueDate}
+                  mode='date'
                   disabled
-                >
-                  <Text style={styles.selectorText}>
-                    {firstDueDate.toLocaleDateString('pt-BR')}
-                  </Text>
-                  <Ionicons name='calendar-outline' size={20} color='#64748b' />
-                </TouchableOpacity>
-
-                {showFirstDuePicker && (
-                  <DateTimePicker
-                    value={firstDueDate}
-                    mode='date'
-                    disabled
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={(event, date) => {
-                      setShowFirstDuePicker(false);
-                      if (date) setFirstDueDate(date);
-                    }}
-                  />
-                )}
-              </View>
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event, date) => {
+                    setShowFirstDuePicker(false);
+                    if (date) setFirstDueDate(date);
+                  }}
+                />
+              )}
 
               {sale?.installments && sale.installments.length > 0 && (
                 <View style={styles.inputGroup}>
@@ -576,23 +539,18 @@ export default function EditSale() {
                   ))}
                 </View>
               )}
-            </>
+            </FormSection>
           )}
 
           {paymentMethod !== 'installment' && (
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Data do Pagamento</Text>
-              <TouchableOpacity
-                style={[styles.selector]}
+            <FormSection icon='calendar-outline' title='Data do Pagamento' marginTop={0}>
+              <FormSelector
+                label='Data do pagamento'
+                value={paymentDate ? paymentDate.toLocaleDateString('pt-BR') : ''}
                 onPress={() => setShowPaymentDatePicker(true)}
-              >
-                <Text style={styles.selectorText}>
-                  {paymentDate
-                    ? paymentDate.toLocaleDateString('pt-BR')
-                    : 'Selecione a data'}
-                </Text>
-                <Ionicons name='calendar-outline' size={20} color='#64748b' />
-              </TouchableOpacity>
+                placeholder='Selecione a data'
+                icon='calendar-outline'
+              />
 
               {showPaymentDatePicker && (
                 <DateTimePicker
@@ -607,20 +565,17 @@ export default function EditSale() {
                   }}
                 />
               )}
-            </View>
+            </FormSection>
           )}
 
           {/* Desconto e Resumo */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Desconto e Resumo</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <View style={styles.disabledField}>
-              <Text style={styles.disabledText}>{discount || 'R$ 0,00'}</Text>
-            </View>
-          </View>
+          <FormSection icon='pricetag-outline' title='Desconto e Resumo'>
+            <FormInput
+              label='Desconto'
+              value={discount || 'R$ 0,00'}
+              editable={false}
+            />
+          </FormSection>
 
           {items.length > 0 && (
             <View style={styles.summaryContainer}>
@@ -647,32 +602,23 @@ export default function EditSale() {
             </View>
           )}
 
-          <View style={styles.sectionHeader}>
-            <Ionicons name='document-text-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Observações</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Input
+          <FormSection icon='document-text-outline' title='Observações'>
+            <FormInput
+              label='Observações'
               placeholder='Informações adicionais sobre a venda (opcional)'
               value={notes}
               onChangeText={setNotes}
               multiline
               numberOfLines={3}
               editable={!isSaving}
-              style={[styles.input, styles.textArea]}
+              style={styles.textArea}
             />
-          </View>
 
-          <View style={styles.infoSection}>
-            <View style={[styles.infoCard, styles.warningCard]}>
-              <Ionicons name='warning-outline' size={20} color='#f59e0b' />
-              <Text style={[styles.infoText, styles.warningText]}>
-                Ao excluir esta venda, todos os produtos serão devolvidos ao
-                estoque e as parcelas pendentes serão canceladas.
-              </Text>
-            </View>
-          </View>
+            <InfoCard variant='warning' icon='warning-outline'>
+              Ao excluir esta venda, todos os produtos serão devolvidos ao
+              estoque e as parcelas pendentes serão canceladas.
+            </InfoCard>
+          </FormSection>
         </View>
 
         <View style={styles.actionButtons}>
@@ -790,8 +736,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
+    marginTop: 12,
+    fontSize: 15,
     color: '#64748b',
   },
   errorContainer: {
@@ -799,138 +745,89 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f8fafc',
-    padding: 20,
+    padding: 16,
   },
   errorTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#ef4444',
-    marginTop: 16,
-    marginBottom: 24,
+    marginTop: 12,
+    marginBottom: 16,
   },
   backButton: {
     backgroundColor: '#FF6B35',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
   backButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   headerSection: {
     alignItems: 'center',
-    marginBottom: 24,
-    marginTop: 20,
+    marginBottom: 16,
+    marginTop: 12,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 14,
     backgroundColor: '#fff5f0',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: '700',
     color: '#1e293b',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#64748b',
     textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: 20,
+    lineHeight: 20,
+    paddingHorizontal: 16,
   },
   formSection: {
-    marginBottom: 32,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginLeft: 8,
-  },
-  inputGroup: {
     marginBottom: 20,
   },
+  inputGroup: {
+    marginBottom: 14,
+  },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#374151',
     marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#1e293b',
   },
   textArea: {
     minHeight: 80,
     textAlignVertical: 'top',
   },
-  selector: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  selectorText: {
-    fontSize: 16,
-    color: '#1e293b',
-  },
-  disabledField: {
-    backgroundColor: '#f1f5f9',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  disabledText: {
-    fontSize: 16,
-    color: '#64748b',
-  },
   itemsList: {
-    marginTop: 16,
+    marginTop: 12,
   },
   saleItem: {
     backgroundColor: '#ffffff',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
   },
   saleItemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   saleItemName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#1e293b',
     flex: 1,
@@ -944,43 +841,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f1f5f9',
-    borderRadius: 8,
-    padding: 4,
+    borderRadius: 6,
+    padding: 3,
   },
   quantityButton: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: 6,
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   quantityText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1e293b',
-    marginHorizontal: 16,
-    minWidth: 20,
+    marginHorizontal: 10,
+    minWidth: 40,
     textAlign: 'center',
   },
   priceContainer: {
     alignItems: 'flex-end',
   },
   unitPrice: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748b',
   },
   subtotal: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#1e293b',
   },
   summaryContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
-    marginTop: 16,
-    borderWidth: 1,
+    borderRadius: 10,
+    padding: 16,
+    marginTop: 12,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
   },
   summaryRow: {
@@ -990,11 +887,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   summaryLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#64748b',
   },
   summaryValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1e293b',
   },
@@ -1004,11 +901,11 @@ const styles = StyleSheet.create({
   totalRow: {
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    paddingTop: 12,
+    paddingTop: 10,
     marginTop: 4,
   },
   totalLabel: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1e293b',
   },
@@ -1017,80 +914,53 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FF6B35',
   },
-  infoSection: {
-    gap: 12,
-    marginTop: 16,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'flex-start',
-    borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
-  },
-  warningCard: {
-    backgroundColor: '#fffbeb',
-    borderLeftColor: '#f59e0b',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#1e40af',
-    lineHeight: 20,
-    marginLeft: 12,
-  },
-  warningText: {
-    color: '#92400e',
-  },
   actionButtons: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
     marginTop: 'auto',
-    paddingTop: 20,
+    paddingTop: 16,
   },
   deleteButton: {
     backgroundColor: '#fef2f2',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#fecaca',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
   },
   deleteButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#ef4444',
   },
   cancelButton: {
     flex: 1,
     backgroundColor: '#ffffff',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 10,
+    paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#64748b',
   },
   saveButton: {
     flex: 1,
     backgroundColor: '#FF6B35',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 10,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     shadowColor: '#FF6B35',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -1103,17 +973,17 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   saveButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#ffffff',
   },
 
   installmentItem: {
     backgroundColor: '#ffffff',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
     borderRadius: 8,
-    padding: 12,
+    padding: 10,
     marginBottom: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1123,16 +993,16 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   installmentText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500',
     color: '#1e293b',
   },
   installmentDate: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#64748b',
   },
   installmentStatus: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
   installmentStatusPaid: {
@@ -1150,29 +1020,29 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: '85%',
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 10,
+    padding: 16,
     elevation: 5,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#1e293b',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   modalAmount: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#22c55e',
     marginBottom: 6,
   },
   modalDueDate: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748b',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   modalLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#374151',
     marginBottom: 8,
@@ -1182,47 +1052,47 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#f1f5f9',
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   dateText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#1e293b',
   },
   confirmButton: {
     backgroundColor: '#22c55e',
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   revertButton: {
     backgroundColor: '#f59e0b',
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   confirmButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   modalPaidText: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#22c55e',
-    marginBottom: 20,
+    marginBottom: 16,
     textAlign: 'center',
   },
   closeButton: {
     backgroundColor: '#e2e8f0',
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderRadius: 8,
     alignItems: 'center',
   },
   closeButtonText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1e293b',
   },

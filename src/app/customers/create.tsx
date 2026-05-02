@@ -6,6 +6,7 @@ import { useCustomerDatabase } from '@/database/models/Customer';
 import { Input } from '@/components/Input';
 import WorkArea from '@/components/WorkArea';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FormSection, FormInput, FormRow } from '@/components/Form';
 
 export default function CreateCustomer() {
   const [name, setName] = useState('');
@@ -255,23 +256,18 @@ export default function CreateCustomer() {
         </View>
 
         <View>
-          <View style={styles.sectionHeader}>
-            <Ionicons name='person-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Dados Básicos</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome Completo *</Text>
-            <Input
+          <FormSection icon='person-outline' title='Dados Básicos' marginTop={0}>
+            <FormInput
+              label='Nome Completo'
               placeholder='Nome completo do cliente'
               value={name}
               onChangeText={setName}
               editable={!isLoading}
-              style={styles.input}
+              required
             />
-          </View>
+          </FormSection>
 
-          <View style={styles.row}>
+          <FormRow>
             <View style={styles.pickerGroup}>
               <Text style={styles.label}>Tipo de Documento</Text>
               <View style={styles.documentTypeContainer}>
@@ -313,8 +309,8 @@ export default function CreateCustomer() {
             </View>
 
             <View style={styles.inputHalf}>
-              <Text style={styles.label}>{documentType}</Text>
-              <Input
+              <FormInput
+                label={documentType}
                 placeholder={
                   documentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'
                 }
@@ -323,179 +319,162 @@ export default function CreateCustomer() {
                   setDocument(formatDocument(text, documentType))
                 }
                 editable={!isLoading}
-                style={styles.input}
                 keyboardType='numeric'
+                containerStyle={{ marginBottom: 0 }}
               />
             </View>
-          </View>
+          </FormRow>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <Input
-              placeholder='email@exemplo.com (opcional)'
-              value={email}
-              onChangeText={setEmail}
-              editable={!isLoading}
-              style={styles.input}
-              keyboardType='email-address'
-              autoCapitalize='none'
-            />
-          </View>
+          <FormInput
+            label='Email'
+            placeholder='email@exemplo.com (opcional)'
+            value={email}
+            onChangeText={setEmail}
+            editable={!isLoading}
+            keyboardType='email-address'
+            autoCapitalize='none'
+          />
 
-          <View style={styles.sectionHeader}>
-            <Ionicons name='call-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Contato</Text>
-          </View>
-
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Telefone</Text>
-              <Input
-                placeholder='(11) 1234-5678'
-                value={phone}
-                onChangeText={text => setPhone(formatPhone(text))}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType='phone-pad'
-              />
-            </View>
-
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Celular</Text>
-              <Input
-                placeholder='(11) 91234-5678'
-                value={mobile}
-                onChangeText={text => setMobile(formatPhone(text))}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType='phone-pad'
-              />
-            </View>
-          </View>
-
-          <View style={styles.sectionHeader}>
-            <Ionicons name='location-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Endereço</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>CEP</Text>
-            <View style={styles.cepContainer}>
-              <Input
-                placeholder='00000-000'
-                value={zipCode}
-                onChangeText={handleZipCodeChange}
-                editable={!isLoading && !isLoadingCep}
-                style={[styles.input, styles.cepInput]}
-                keyboardType='numeric'
-              />
-              {isLoadingCep && (
-                <View style={styles.cepLoading}>
-                  <Ionicons name='hourglass-outline' size={16} color='#FF6B35' />
-                </View>
-              )}
-              <TouchableOpacity
-                style={styles.cepButton}
-                onPress={() =>
-                  zipCode.replace(/\D/g, '').length === 8 &&
-                  fetchAddressFromCep(zipCode)
-                }
-                disabled={
-                  isLoading ||
-                  isLoadingCep ||
-                  zipCode.replace(/\D/g, '').length !== 8
-                }
-              >
-                <Ionicons
-                  name='search-outline'
-                  size={16}
-                  color={
-                    zipCode.replace(/\D/g, '').length === 8
-                      ? '#FF6B35'
-                      : '#94a3b8'
-                  }
+          <FormSection icon='call-outline' title='Contato'>
+            <FormRow>
+              <View style={styles.inputHalf}>
+                <FormInput
+                  label='Telefone'
+                  placeholder='(11) 1234-5678'
+                  value={phone}
+                  onChangeText={text => setPhone(formatPhone(text))}
+                  editable={!isLoading}
+                  keyboardType='phone-pad'
+                  containerStyle={{ marginBottom: 0 }}
                 />
-              </TouchableOpacity>
-            </View>
-          </View>
+              </View>
 
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Número</Text>
-              <Input
-                placeholder='Número'
-                value={addressNumber}
-                onChangeText={setAddressNumber}
-                style={styles.input}
-                keyboardType='numeric'
-              />
+              <View style={styles.inputHalf}>
+                <FormInput
+                  label='Celular'
+                  placeholder='(11) 91234-5678'
+                  value={mobile}
+                  onChangeText={text => setMobile(formatPhone(text))}
+                  editable={!isLoading}
+                  keyboardType='phone-pad'
+                  containerStyle={{ marginBottom: 0 }}
+                />
+              </View>
+            </FormRow>
+          </FormSection>
+
+          <FormSection icon='location-outline' title='Endereço'>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>CEP</Text>
+              <View style={styles.cepContainer}>
+                <Input
+                  placeholder='00000-000'
+                  value={zipCode}
+                  onChangeText={handleZipCodeChange}
+                  editable={!isLoading && !isLoadingCep}
+                  style={[styles.input, styles.cepInput]}
+                  keyboardType='numeric'
+                />
+                {isLoadingCep && (
+                  <View style={styles.cepLoading}>
+                    <Ionicons name='hourglass-outline' size={16} color='#FF6B35' />
+                  </View>
+                )}
+                <TouchableOpacity
+                  style={styles.cepButton}
+                  onPress={() =>
+                    zipCode.replace(/\D/g, '').length === 8 &&
+                    fetchAddressFromCep(zipCode)
+                  }
+                  disabled={
+                    isLoading ||
+                    isLoadingCep ||
+                    zipCode.replace(/\D/g, '').length !== 8
+                  }
+                >
+                  <Ionicons
+                    name='search-outline'
+                    size={16}
+                    color={
+                      zipCode.replace(/\D/g, '').length === 8
+                        ? '#FF6B35'
+                        : '#94a3b8'
+                    }
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Estado</Text>
-              <Input
-                placeholder='UF'
-                value={state}
-                onChangeText={setState}
-                style={styles.input}
-                autoCapitalize='characters'
-                maxLength={2}
-              />
-            </View>
-          </View>
+            <FormRow>
+              <View style={styles.inputHalf}>
+                <FormInput
+                  label='Número'
+                  placeholder='Número'
+                  value={addressNumber}
+                  onChangeText={setAddressNumber}
+                  keyboardType='numeric'
+                  containerStyle={{ marginBottom: 0 }}
+                />
+              </View>
 
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Bairro</Text>
-              <Input
-                placeholder='Bairro'
-                value={neighborhood}
-                onChangeText={setNeighborhood}
-                editable={!isLoading}
-                style={styles.input}
-              />
-            </View>
+              <View style={styles.inputHalf}>
+                <FormInput
+                  label='Estado'
+                  placeholder='UF'
+                  value={state}
+                  onChangeText={setState}
+                  autoCapitalize='characters'
+                  maxLength={2}
+                  containerStyle={{ marginBottom: 0 }}
+                />
+              </View>
+            </FormRow>
 
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Cidade</Text>
-              <Input
-                placeholder='Cidade'
-                value={city}
-                onChangeText={setCity}
-                editable={!isLoading}
-                style={styles.input}
-              />
-            </View>
-          </View>
+            <FormRow>
+              <View style={styles.inputHalf}>
+                <FormInput
+                  label='Bairro'
+                  placeholder='Bairro'
+                  value={neighborhood}
+                  onChangeText={setNeighborhood}
+                  editable={!isLoading}
+                  containerStyle={{ marginBottom: 0 }}
+                />
+              </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Estado</Text>
-            <Input
-              placeholder='Estado'
-              value={state}
-              onChangeText={setState}
+              <View style={styles.inputHalf}>
+                <FormInput
+                  label='Cidade'
+                  placeholder='Cidade'
+                  value={city}
+                  onChangeText={setCity}
+                  editable={!isLoading}
+                  containerStyle={{ marginBottom: 0 }}
+                />
+              </View>
+            </FormRow>
+
+            <FormInput
+              label='Endereço'
+              placeholder='Rua, Avenida...'
+              value={address}
+              onChangeText={setAddress}
               editable={!isLoading}
-              style={styles.input}
             />
-          </View>
+          </FormSection>
 
-          <View style={styles.sectionHeader}>
-            <Ionicons name='document-text-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Observações</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Observações</Text>
-            <Input
+          <FormSection icon='document-text-outline' title='Observações'>
+            <FormInput
+              label='Observações'
               placeholder='Informações adicionais sobre o cliente (opcional)'
               value={notes}
               onChangeText={setNotes}
               multiline
               numberOfLines={4}
               editable={!isLoading}
-              style={[styles.input, styles.textArea]}
+              style={styles.textArea}
             />
-          </View>
+          </FormSection>
         </View>
 
         <View style={styles.actionButtons}>
@@ -526,14 +505,6 @@ export default function CreateCustomer() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
-  },
   headerSection: {
     alignItems: 'center',
     marginBottom: 32,
@@ -562,26 +533,8 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     paddingHorizontal: 20,
   },
-
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginLeft: 8,
-  },
   inputGroup: {
-    marginBottom: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   inputHalf: {
     flex: 1,
@@ -647,61 +600,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#374151',
     marginBottom: 8,
   },
   input: {
     backgroundColor: '#ffffff',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
     color: '#1e293b',
   },
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
   },
-  infoCard: {
-    flexDirection: 'row',
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'flex-start',
-    borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
-    marginTop: 16,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#1e40af',
-    lineHeight: 20,
-    marginLeft: 12,
-  },
+
   actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
     marginTop: 'auto',
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#64748b',
   },
   saveButton: {
     flex: 2,

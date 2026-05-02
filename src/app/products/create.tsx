@@ -11,11 +11,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useProductDatabase } from '@/database/models/Product';
 import { useCategoryDatabase } from '@/database/models/Category';
-import { Input } from '@/components/Input';
 import formatCurrency from '@/components/utils/formatCurrency';
 import WorkArea from '@/components/WorkArea';
 import SearchableSelect from '@/components/SearchableSelect';
+import CollapsibleSection from '@/components/CollapsibleSection';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FormSection, FormInput, FormRow } from '@/components/Form';
 
 interface Category {
   id: number;
@@ -31,7 +32,7 @@ export default function CreateProduct() {
   const [salePrice, setSalePrice] = useState('');
   const [wholesalePrice, setWholesalePrice] = useState('');
   const [currentStock, setCurrentStock] = useState('');
-  const [minimumStock, setMinimumStock] = useState('');
+  const [minimumStock, setMinimumStock] = useState('1');
   const [categoryId, setCategoryId] = useState<number | undefined>();
   const [supplier, setSupplier] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
@@ -146,7 +147,7 @@ export default function CreateProduct() {
         sale_price: salePriceValue,
         wholesale_price: wholesalePriceValue,
         initial_stock: currentStock ? parseInt(currentStock) : 0,
-        minimum_stock: minimumStock ? parseInt(minimumStock) : 0,
+        minimum_stock: minimumStock ? parseInt(minimumStock) : 1,
         category_id: categoryId,
         supplier: supplier.trim() || undefined,
       });
@@ -205,150 +206,142 @@ export default function CreateProduct() {
       <WorkArea>
         <View style={styles.headerSection}>
           <View style={styles.iconContainer}>
-            <Ionicons name='bag-outline' size={48} color='#FF6B35' />
+            <Ionicons name='bag-outline' size={40} color='#FF6B35' />
           </View>
           <Text style={styles.title}>Novo Produto</Text>
           <Text style={styles.subtitle}>Cadastre um novo produto no estoque</Text>
         </View>
 
         <View style={styles.formSection}>
-          <View style={styles.sectionHeader}>
-            <Ionicons
-              name='information-circle-outline'
-              size={20}
-              color='#FF6B35'
-            />
-            <Text style={styles.sectionTitle}>Informações Básicas</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome do Produto *</Text>
-            <Input
+          <FormSection
+            icon='information-circle-outline'
+            title='Informações Principais'
+          >
+            <FormInput
+              label='Nome do Produto'
               placeholder='Nome do produto'
               value={name}
               onChangeText={setName}
               editable={!isLoading}
-              style={styles.input}
+              required
             />
-          </View>
 
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Código de Barras</Text>
-              <Input
-                placeholder='0000000000000'
-                value={barcode}
-                onChangeText={setBarcode}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType='numeric'
+            <View style={styles.inputGroup}>
+              <SearchableSelect
+                label='Categoria'
+                options={categories.map(cat => ({
+                  label: cat.name,
+                  value: cat.id,
+                }))}
+                selectedValue={categoryId}
+                onValueChange={(value: string | number) => setCategoryId(value as number)}
+                placeholder='Selecionar categoria'
+                enabled={!isLoading}
               />
             </View>
 
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Referência</Text>
-              <Input
-                placeholder='REF-001'
-                value={reference}
-                onChangeText={setReference}
-                editable={!isLoading}
-                style={styles.input}
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <SearchableSelect
-              label='Categoria'
-              options={categories.map(cat => ({
-                label: cat.name,
-                value: cat.id,
-              }))}
-              selectedValue={categoryId}
-              onValueChange={(value: string | number) => setCategoryId(value as number)}
-              placeholder='Selecionar categoria'
-              enabled={!isLoading}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Descrição</Text>
-            <Input
+            <FormInput
+              label='Descrição'
               placeholder='Descrição detalhada do produto (opcional)'
               value={description}
               onChangeText={setDescription}
               multiline
               numberOfLines={3}
               editable={!isLoading}
-              style={[styles.input, styles.textArea]}
+              style={styles.textArea}
             />
-          </View>
+          </FormSection>
 
           {/* Preços */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Preços</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Preço de Venda *</Text>
-            <Input
+          <FormSection icon='pricetag-outline' title='Preço'>
+            <FormInput
+              label='Preço de Venda'
               placeholder='R$ 0,00'
               value={salePrice}
               onChangeText={text => setSalePrice(formatCurrency(text))}
               editable={!isLoading}
-              style={styles.input}
               keyboardType='numeric'
+              required
             />
-          </View>
+          </FormSection>
 
-          {/* Estoque */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name='archive-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Controle de Estoque</Text>
-          </View>
+          {/* Estoque Simplificado */}
+          <FormSection icon='archive-outline' title='Estoque'>
+            <View style={styles.stockSimplifiedContainer}>
+              <FormRow>
+                <View style={{ flex: 1 }}>
+                  <FormInput
+                    label='Inicial'
+                    placeholder='0'
+                    value={currentStock}
+                    onChangeText={text => setCurrentStock(formatNumber(text))}
+                    editable={!isLoading}
+                    style={styles.stockInput}
+                    keyboardType='numeric'
+                    containerStyle={{ marginBottom: 0 }}
+                  />
+                </View>
 
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Estoque Inicial</Text>
-              <Input
-                placeholder='0'
-                value={currentStock}
-                onChangeText={text => setCurrentStock(formatNumber(text))}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType='numeric'
-              />
+                <View style={{ flex: 1 }}>
+                  <FormInput
+                    label='Mínimo'
+                    placeholder='1'
+                    value={minimumStock}
+                    onChangeText={text => setMinimumStock(formatNumber(text))}
+                    editable={!isLoading}
+                    style={styles.stockInput}
+                    keyboardType='numeric'
+                    containerStyle={{ marginBottom: 0 }}
+                  />
+                </View>
+              </FormRow>
+              <Text style={styles.stockHelperText}>
+                💡 Você será notificado quando o estoque atingir o mínimo
+              </Text>
             </View>
+          </FormSection>
 
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Estoque Mínimo</Text>
-              <Input
-                placeholder='0'
-                value={minimumStock}
-                onChangeText={text => setMinimumStock(formatNumber(text))}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType='numeric'
-              />
-            </View>
-          </View>
+          {/* Campos Secundários - Colapsados */}
+          <CollapsibleSection
+            title='Informações Adicionais'
+            icon='documents-outline'
+            iconColor='#64748b'
+            defaultCollapsed={true}
+            badge='Opcional'
+          >
+            <FormRow>
+              <View style={{ flex: 1 }}>
+                <FormInput
+                  label='Código de Barras'
+                  placeholder='0000000000000'
+                  value={barcode}
+                  onChangeText={setBarcode}
+                  editable={!isLoading}
+                  keyboardType='numeric'
+                  containerStyle={{ marginBottom: 0 }}
+                />
+              </View>
 
-          <View style={styles.sectionHeader}>
-            <Ionicons name='business-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Fornecedor</Text>
-          </View>
+              <View style={{ flex: 1 }}>
+                <FormInput
+                  label='Referência'
+                  placeholder='REF-001'
+                  value={reference}
+                  onChangeText={setReference}
+                  editable={!isLoading}
+                  containerStyle={{ marginBottom: 0 }}
+                />
+              </View>
+            </FormRow>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Fornecedor</Text>
-            <Input
-              placeholder='Nome do fornecedor (opcional)'
+            <FormInput
+              label='Fornecedor'
+              placeholder='Nome do fornecedor'
               value={supplier}
               onChangeText={setSupplier}
               editable={!isLoading}
-              style={styles.input}
             />
-          </View>
+          </CollapsibleSection>
         </View>
 
         <View style={styles.actionButtons}>
@@ -389,137 +382,66 @@ const styles = StyleSheet.create({
   },
   headerSection: {
     alignItems: 'center',
-    marginBottom: 32,
-    marginTop: 20,
+    marginBottom: 24,
+    marginTop: 16,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+    width: 64,
+    height: 64,
+    borderRadius: 16,
     backgroundColor: '#fff5f0',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '700',
     color: '#1e293b',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#64748b',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
     paddingHorizontal: 20,
   },
   formSection: {
-    marginBottom: 32,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginLeft: 8,
+    marginBottom: 20,
   },
   inputGroup: {
-    marginBottom: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
-  inputHalf: {
-    flex: 1,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#1e293b',
+    marginBottom: 12,
   },
   textArea: {
-    minHeight: 80,
+    minHeight: 70,
     textAlignVertical: 'top',
   },
-  categorySelector: {
-    backgroundColor: '#ffffff',
+  stockSimplifiedContainer: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 10,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    marginBottom: 12,
   },
-  categorySelectorText: {
-    fontSize: 16,
-    color: '#1e293b',
-  },
-  categorySelectorPlaceholder: {
-    color: '#94a3b8',
-  },
-  categoryList: {
+  stockInput: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    marginTop: 8,
-    maxHeight: 200,
-  },
-  categoryOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  categoryOptionSelected: {
-    backgroundColor: '#fff5f0',
-  },
-  categoryOptionText: {
-    fontSize: 16,
+    borderColor: '#cbd5e1',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    fontSize: 15,
     color: '#1e293b',
-  },
-  categoryOptionSelectedText: {
-    color: '#FF6B35',
+    textAlign: 'center',
     fontWeight: '600',
   },
-  infoCard: {
-    flexDirection: 'row',
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'flex-start',
-    borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
-    marginTop: 16,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#1e40af',
-    lineHeight: 20,
-    marginLeft: 12,
+  stockHelperText: {
+    fontSize: 12,
+    color: '#64748b',
+    lineHeight: 16,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -544,12 +466,12 @@ const styles = StyleSheet.create({
   saveButton: {
     flex: 1,
     backgroundColor: '#FF6B35',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 10,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     shadowColor: '#FF6B35',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -562,7 +484,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   saveButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#ffffff',
   },

@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface SaleItem {
   product_name: string;
@@ -71,6 +72,7 @@ const formatCurrencyFromNumber = (value: number): string => {
 export default function SalePreview({ sale, saleId }: SalePreviewProps) {
   const router = useRouter();
   const viewShotRef = useRef<ViewShot>(null);
+  const insets = useSafeAreaInsets();
 
   const handleShareImage = async () => {
     try {
@@ -113,7 +115,7 @@ export default function SalePreview({ sale, saleId }: SalePreviewProps) {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 80 + insets.bottom }]}
       >
         <ViewShot
           ref={viewShotRef}
@@ -223,7 +225,7 @@ export default function SalePreview({ sale, saleId }: SalePreviewProps) {
       </ScrollView>
 
       {/* Botões de Ação */}
-      <View style={styles.actionsContainer}>
+      <View style={[styles.actionsContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <TouchableOpacity
           style={[styles.actionButton, styles.editButton]}
           onPress={handleEditSale}
@@ -257,7 +259,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 12,
-    paddingBottom: 80,
   },
   captureContainer: {
     backgroundColor: '#ffffff',
@@ -427,8 +428,8 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     flexDirection: 'row',
-    padding: 12,
-    paddingBottom: 12,
+    paddingHorizontal: 12,
+    paddingTop: 12,
     gap: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderTopWidth: 1,

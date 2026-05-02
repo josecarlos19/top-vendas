@@ -18,8 +18,10 @@ import formatCurrency from '@/components/utils/formatCurrency';
 import WorkArea from '@/components/WorkArea';
 import { HeaderDeleteButton } from '@/components/HeaderDeleteButton';
 import SearchableSelect from '@/components/SearchableSelect';
+import CollapsibleSection from '@/components/CollapsibleSection';
 import StockAdjustmentModal, { StockAdjustmentType } from '@/components/modals/StockAdjustmentModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FormSection, FormInput, FormSelector, FormRow, InfoCard } from '@/components/Form';
 
 
 interface Category {
@@ -119,7 +121,7 @@ export default function EditProduct() {
           : ''
       );
 
-      setMinimumStock(foundProduct.minimum_stock.toString());
+      setMinimumStock(foundProduct.minimum_stock ? foundProduct.minimum_stock.toString() : '1');
       setCategoryId(foundProduct.category_id);
       setSupplier(foundProduct.supplier || '');
     } catch (error) {
@@ -267,7 +269,7 @@ export default function EditProduct() {
         : undefined;
 
       await productDatabase.update({
-        id: product.id,
+        id: +id,
         name: name.trim(),
         barcode: barcode.trim() || undefined,
         reference: reference.trim() || undefined,
@@ -275,7 +277,7 @@ export default function EditProduct() {
         cost_price: costPriceValue,
         sale_price: salePriceValue,
         wholesale_price: wholesalePriceValue,
-        minimum_stock: minimumStock ? parseInt(minimumStock) : 0,
+        minimum_stock: minimumStock ? parseInt(minimumStock) : 1,
         category_id: categoryId,
         supplier: supplier.trim() || undefined,
       });
@@ -375,7 +377,7 @@ export default function EditProduct() {
         />
         <View style={styles.headerSection}>
           <View style={styles.iconContainer}>
-            <Ionicons name='bag-outline' size={48} color='#FF6B35' />
+            <Ionicons name='bag-outline' size={40} color='#FF6B35' />
           </View>
           <Text style={styles.title}>Editar Produto</Text>
           <Text style={styles.subtitle}>Atualize as informações do produto</Text>
@@ -410,154 +412,127 @@ export default function EditProduct() {
         </TouchableOpacity>
 
         <View style={styles.formSection}>
-          {/* Informações Básicas */}
-          <View style={styles.sectionHeader}>
-            <Ionicons
-              name='information-circle-outline'
-              size={20}
-              color='#FF6B35'
-            />
-            <Text style={styles.sectionTitle}>Informações Básicas</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome do Produto *</Text>
-            <Input
+          {/* Informações Principais */}
+          <FormSection icon='information-circle-outline' title='Informações Principais'>
+            <FormInput
+              label='Nome do Produto'
+              required
               placeholder='Nome do produto'
               value={name}
               onChangeText={setName}
               editable={!isSaving}
-              style={styles.input}
             />
-          </View>
 
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Código de Barras</Text>
-              <Input
-                placeholder='0000000000000'
-                value={barcode}
-                onChangeText={setBarcode}
-                editable={!isSaving}
-                style={styles.input}
-                keyboardType='numeric'
-              />
-            </View>
+            <SearchableSelect
+              label='Categoria'
+              selectedValue={categoryId}
+              onValueChange={value => setCategoryId(value as number)}
+              options={categoryOptions}
+              enabled={!isSaving}
+              placeholder='Selecionar categoria'
+            />
 
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Referência</Text>
-              <Input
-                placeholder='REF-001'
-                value={reference}
-                onChangeText={setReference}
-                editable={!isSaving}
-                style={styles.input}
-              />
-            </View>
-          </View>
-
-          <SearchableSelect
-            label='Categoria'
-            selectedValue={categoryId}
-            onValueChange={value => setCategoryId(value as number)}
-            options={categoryOptions}
-            enabled={!isSaving}
-            placeholder='Selecionar categoria'
-          />
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Descrição</Text>
-            <Input
+            <FormInput
+              label='Descrição'
               placeholder='Descrição detalhada do produto (opcional)'
               value={description}
               onChangeText={setDescription}
               multiline
               numberOfLines={3}
               editable={!isSaving}
-              style={[styles.input, styles.textArea]}
+              style={styles.textArea}
             />
-          </View>
+          </FormSection>
 
-          <View style={styles.sectionHeader}>
-            <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Preço</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Input
+          {/* Preço */}
+          <FormSection icon='pricetag-outline' title='Preço'>
+            <FormInput
+              label='Preço de Venda'
+              required
               placeholder='R$ 0,00'
               value={salePrice}
               onChangeText={text => setSalePrice(formatCurrency(text))}
               editable={!isSaving}
-              style={styles.input}
               keyboardType='numeric'
             />
-          </View>
+          </FormSection>
 
           {/* Estoque */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name='archive-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Controle de Estoque</Text>
-          </View>
+          <FormSection icon='archive-outline' title='Controle de Estoque'>
+            <View style={styles.stockInfoContainer}>
+              <View style={styles.stockCurrentBox}>
+                <Text style={styles.stockCurrentLabel}>Estoque Atual</Text>
+                <Text style={styles.stockCurrentValue}>
+                  {product?.current_stock || 0} unidades
+                </Text>
+              </View>
 
-          <View style={styles.stockInfoContainer}>
-            <View style={styles.stockCurrentBox}>
-              <Text style={styles.stockCurrentLabel}>Estoque Atual</Text>
-              <Text style={styles.stockCurrentValue}>
-                {product?.current_stock || 0} unidades
-              </Text>
+              <TouchableOpacity
+                style={styles.adjustStockButton}
+                onPress={() => setShowStockAdjustModal(true)}
+                disabled={isSaving}
+              >
+                <Ionicons name='create-outline' size={16} color='#ffffff' />
+                <Text style={styles.adjustStockButtonText}>Ajustar Estoque</Text>
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={styles.adjustStockButton}
-              onPress={() => setShowStockAdjustModal(true)}
-              disabled={isSaving}
-            >
-              <Ionicons name='create-outline' size={16} color='#ffffff' />
-              <Text style={styles.adjustStockButtonText}>Ajustar Estoque</Text>
-            </TouchableOpacity>
-          </View>
+            <FormInput
+              label='Estoque Mínimo'
+              placeholder='1'
+              value={minimumStock}
+              onChangeText={text => setMinimumStock(formatNumber(text))}
+              editable={!isSaving}
+              keyboardType='numeric'
+            />
+          </FormSection>
 
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Estoque Mínimo</Text>
-              <Input
-                placeholder='0'
-                value={minimumStock}
-                onChangeText={text => setMinimumStock(formatNumber(text))}
-                editable={!isSaving}
-                style={styles.input}
-                keyboardType='numeric'
-              />
-            </View>
-          </View>
+          {/* Informações Adicionais - Seção Colapsável */}
+          <CollapsibleSection
+            title='Informações Adicionais'
+            icon='documents-outline'
+            iconColor='#64748b'
+            defaultCollapsed={true}
+            badge='Opcional'
+          >
+            <FormRow>
+              <View style={styles.inputHalf}>
+                <FormInput
+                  label='Código de Barras'
+                  placeholder='0000000000000'
+                  value={barcode}
+                  onChangeText={setBarcode}
+                  editable={!isSaving}
+                  keyboardType='numeric'
+                  containerStyle={{ marginBottom: 0 }}
+                />
+              </View>
 
-          {/* Fornecedor */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name='business-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Fornecedor</Text>
-          </View>
+              <View style={styles.inputHalf}>
+                <FormInput
+                  label='Referência'
+                  placeholder='REF-001'
+                  value={reference}
+                  onChangeText={setReference}
+                  editable={!isSaving}
+                  containerStyle={{ marginBottom: 0 }}
+                />
+              </View>
+            </FormRow>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Fornecedor</Text>
-            <Input
-              placeholder='Nome do fornecedor (opcional)'
+            <FormInput
+              label='Fornecedor'
+              placeholder='Nome do fornecedor'
               value={supplier}
               onChangeText={setSupplier}
               editable={!isSaving}
-              style={styles.input}
             />
-          </View>
+          </CollapsibleSection>
 
-          <View style={styles.infoSection}>
-            <View style={[styles.infoCard, styles.warningCard]}>
-              <Ionicons name='warning-outline' size={20} color='#f59e0b' />
-              <Text style={[styles.infoText, styles.warningText]}>
-                Não é possível excluir produtos que possuem vendas ou
-                movimentações de estoque.
-              </Text>
-            </View>
-          </View>
+          <InfoCard variant='warning' icon='warning-outline'>
+            Não é possível excluir produtos que possuem vendas ou movimentações
+            de estoque.
+          </InfoCard>
         </View>
 
         <View style={styles.actionButtons}>
@@ -598,30 +573,30 @@ export default function EditProduct() {
 
 const styles = StyleSheet.create({
   activateButton: {
-    backgroundColor: '#f0fdf4',
+    backgroundColor: '#22c55e',
   },
   deactivateButton: {
-    backgroundColor: '#fffbeb',
+    backgroundColor: '#ef4444',
   },
   toggleButtonText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
   },
   activateButtonText: {
-    color: '#22c55e',
+    color: '#ffffff',
   },
   deactivateButtonText: {
-    color: '#f59e0b',
+    color: '#ffffff',
   },
   actionButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 6,
   },
   container: {
     flex: 1,
@@ -663,36 +638,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
-  },
   headerSection: {
     alignItems: 'center',
-    marginBottom: 24,
-    marginTop: 20,
+    marginBottom: 20,
+    marginTop: 16,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+    width: 64,
+    height: 64,
+    borderRadius: 16,
     backgroundColor: '#fff5f0',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '700',
     color: '#1e293b',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#64748b',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
     paddingHorizontal: 20,
   },
   statusToggle: {
@@ -701,21 +672,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 20,
   },
   statusToggleActive: {
     borderColor: '#22c55e',
     backgroundColor: '#f0fdf4',
   },
   statusIndicator: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: '#d1d5db',
-    marginRight: 12,
+    marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -724,7 +695,7 @@ const styles = StyleSheet.create({
     borderColor: '#22c55e',
   },
   statusText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#64748b',
     fontWeight: '500',
   },
@@ -733,166 +704,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   formSection: {
-    marginBottom: 32,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginLeft: 8,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
     marginBottom: 20,
   },
   inputHalf: {
     flex: 1,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#1e293b',
-  },
   textArea: {
-    minHeight: 80,
+    minHeight: 70,
     textAlignVertical: 'top',
-  },
-  categorySelector: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  categorySelectorText: {
-    fontSize: 16,
-    color: '#1e293b',
-  },
-  categorySelectorPlaceholder: {
-    color: '#94a3b8',
-  },
-  categoryList: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    marginTop: 8,
-    maxHeight: 200,
-  },
-  categoryOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  categoryOptionSelected: {
-    backgroundColor: '#fff5f0',
-  },
-  categoryOptionText: {
-    fontSize: 16,
-    color: '#1e293b',
-  },
-  categoryOptionSelectedText: {
-    color: '#FF6B35',
-    fontWeight: '600',
-  },
-  infoSection: {
-    gap: 12,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'flex-start',
-    borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
-  },
-  warningCard: {
-    backgroundColor: '#fffbeb',
-    borderLeftColor: '#f59e0b',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#1e40af',
-    lineHeight: 20,
-    marginLeft: 12,
-  },
-  warningText: {
-    color: '#92400e',
   },
   actionButtons: {
     flexDirection: 'row',
     gap: 8,
     marginTop: 'auto',
   },
-  deleteButton: {
-    backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  deleteButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ef4444',
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#64748b',
-  },
   saveButton: {
     flex: 1,
     backgroundColor: '#FF6B35',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderRadius: 10,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     shadowColor: '#FF6B35',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -905,7 +739,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   saveButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#ffffff',
   },
@@ -914,22 +748,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#f8fafc',
-    padding: 16,
-    borderRadius: 12,
+    padding: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   stockCurrentBox: {
     flex: 1,
   },
   stockCurrentLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#64748b',
     marginBottom: 4,
   },
   stockCurrentValue: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1e293b',
   },
@@ -937,13 +771,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#3b82f6',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 8,
-    gap: 6,
+    gap: 5,
   },
   adjustStockButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#ffffff',
   },

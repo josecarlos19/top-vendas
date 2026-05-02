@@ -17,6 +17,7 @@ import { Input } from '@/components/Input';
 import WorkArea from '@/components/WorkArea';
 import { HeaderDeleteButton } from '@/components/HeaderDeleteButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FormSection, FormInput, FormRow, InfoCard } from '@/components/Form';
 
 interface Customer {
   id: number;
@@ -385,72 +386,65 @@ export default function EditCustomer() {
         </View>
 
         <View style={styles.formSection}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name='person-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Dados Básicos</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome Completo *</Text>
-            <Input
+          <FormSection icon='person-outline' title='Dados Básicos' marginTop={0}>
+            <FormInput
+              label='Nome Completo'
+              required
               placeholder='Nome completo do cliente'
               value={name}
               onChangeText={setName}
               editable={!isSaving}
-              style={styles.input}
             />
-          </View>
 
-          <View style={styles.row}>
-            <View style={styles.pickerGroup}>
-              <Text style={styles.label}>Tipo de Documento</Text>
-              <View style={styles.documentTypeContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.documentTypeButton,
-                    documentType === 'CPF' && styles.documentTypeButtonActive,
-                  ]}
-                  onPress={() => {
-                    setDocumentType('CPF');
-                    setDocument(formatDocument(document, 'CPF'));
-                  }}
-                  disabled={isSaving}
-                >
-                  <Text
+            <FormRow>
+              <View style={styles.pickerGroup}>
+                <Text style={styles.label}>Tipo de Documento</Text>
+                <View style={styles.documentTypeContainer}>
+                  <TouchableOpacity
                     style={[
-                      styles.documentTypeText,
-                      documentType === 'CPF' && styles.documentTypeTextActive,
+                      styles.documentTypeButton,
+                      documentType === 'CPF' && styles.documentTypeButtonActive,
                     ]}
+                    onPress={() => {
+                      setDocumentType('CPF');
+                      setDocument(formatDocument(document, 'CPF'));
+                    }}
+                    disabled={isSaving}
                   >
-                    CPF
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.documentTypeButton,
-                    documentType === 'CNPJ' && styles.documentTypeButtonActive,
-                  ]}
-                  onPress={() => {
-                    setDocumentType('CNPJ');
-                    setDocument(formatDocument(document, 'CNPJ'));
-                  }}
-                  disabled={isSaving}
-                >
-                  <Text
+                    <Text
+                      style={[
+                        styles.documentTypeText,
+                        documentType === 'CPF' && styles.documentTypeTextActive,
+                      ]}
+                    >
+                      CPF
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     style={[
-                      styles.documentTypeText,
-                      documentType === 'CNPJ' && styles.documentTypeTextActive,
+                      styles.documentTypeButton,
+                      documentType === 'CNPJ' && styles.documentTypeButtonActive,
                     ]}
+                    onPress={() => {
+                      setDocumentType('CNPJ');
+                      setDocument(formatDocument(document, 'CNPJ'));
+                    }}
+                    disabled={isSaving}
                   >
-                    CNPJ
-                  </Text>
-                </TouchableOpacity>
+                    <Text
+                      style={[
+                        styles.documentTypeText,
+                        documentType === 'CNPJ' && styles.documentTypeTextActive,
+                      ]}
+                    >
+                      CNPJ
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>{documentType}</Text>
-              <Input
+              <FormInput
+                label={documentType}
                 placeholder={
                   documentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'
                 }
@@ -459,191 +453,157 @@ export default function EditCustomer() {
                   setDocument(formatDocument(text, documentType))
                 }
                 editable={!isSaving}
-                style={styles.input}
                 keyboardType='numeric'
+                containerStyle={styles.inputHalf}
               />
-            </View>
-          </View>
+            </FormRow>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <Input
+            <FormInput
+              label='Email'
               placeholder='email@exemplo.com (opcional)'
               value={email}
               onChangeText={setEmail}
               editable={!isSaving}
-              style={styles.input}
               keyboardType='email-address'
               autoCapitalize='none'
             />
-          </View>
+          </FormSection>
 
-          <View style={styles.sectionHeader}>
-            <Ionicons name='call-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Contato</Text>
-          </View>
-
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Telefone</Text>
-              <Input
+          <FormSection icon='call-outline' title='Contato'>
+            <FormRow>
+              <FormInput
+                label='Telefone'
                 placeholder='(11) 1234-5678'
                 value={phone}
                 onChangeText={text => setPhone(formatPhone(text))}
                 editable={!isSaving}
-                style={styles.input}
                 keyboardType='phone-pad'
+                containerStyle={styles.inputHalf}
               />
-            </View>
 
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Celular</Text>
-              <Input
+              <FormInput
+                label='Celular'
                 placeholder='(11) 91234-5678'
                 value={mobile}
                 onChangeText={text => setMobile(formatPhone(text))}
                 editable={!isSaving}
-                style={styles.input}
                 keyboardType='phone-pad'
+                containerStyle={styles.inputHalf}
               />
-            </View>
-          </View>
+            </FormRow>
+          </FormSection>
 
-          <View style={styles.sectionHeader}>
-            <Ionicons name='location-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Endereço</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>CEP</Text>
-            <View style={styles.cepContainer}>
-              <Input
-                placeholder='00000-000'
-                value={zipCode}
-                onChangeText={handleZipCodeChange}
-                editable={!isSaving && !isLoadingCep}
-                style={[styles.input, styles.cepInput]}
-                keyboardType='numeric'
-              />
-              {isLoadingCep && (
-                <View style={styles.cepLoading}>
-                  <Ionicons name='hourglass-outline' size={16} color='#FF6B35' />
-                </View>
-              )}
-              <TouchableOpacity
-                style={styles.cepButton}
-                onPress={() =>
-                  zipCode.replace(/\D/g, '').length === 8 &&
-                  fetchAddressFromCep(zipCode)
-                }
-                disabled={
-                  isSaving ||
-                  isLoadingCep ||
-                  zipCode.replace(/\D/g, '').length !== 8
-                }
-              >
-                <Ionicons
-                  name='search-outline'
-                  size={16}
-                  color={
-                    zipCode.replace(/\D/g, '').length === 8
-                      ? '#FF6B35'
-                      : '#94a3b8'
-                  }
+          <FormSection icon='location-outline' title='Endereço'>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>CEP</Text>
+              <View style={styles.cepContainer}>
+                <Input
+                  placeholder='00000-000'
+                  value={zipCode}
+                  onChangeText={handleZipCodeChange}
+                  editable={!isSaving && !isLoadingCep}
+                  style={[styles.input, styles.cepInput]}
+                  keyboardType='numeric'
                 />
-              </TouchableOpacity>
+                {isLoadingCep && (
+                  <View style={styles.cepLoading}>
+                    <Ionicons name='hourglass-outline' size={16} color='#FF6B35' />
+                  </View>
+                )}
+                <TouchableOpacity
+                  style={styles.cepButton}
+                  onPress={() =>
+                    zipCode.replace(/\D/g, '').length === 8 &&
+                    fetchAddressFromCep(zipCode)
+                  }
+                  disabled={
+                    isSaving ||
+                    isLoadingCep ||
+                    zipCode.replace(/\D/g, '').length !== 8
+                  }
+                >
+                  <Ionicons
+                    name='search-outline'
+                    size={16}
+                    color={
+                      zipCode.replace(/\D/g, '').length === 8
+                        ? '#FF6B35'
+                        : '#94a3b8'
+                    }
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Endereço</Text>
-            <Input
+            <FormInput
+              label='Endereço'
               placeholder='Rua, número, complemento'
               value={address}
               onChangeText={setAddress}
               editable={!isSaving}
-              style={styles.input}
             />
-          </View>
 
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Bairro</Text>
-              <Input
+            <FormRow>
+              <FormInput
+                label='Bairro'
                 placeholder='Bairro'
                 value={neighborhood}
                 onChangeText={setNeighborhood}
                 editable={!isSaving}
-                style={styles.input}
+                containerStyle={styles.inputHalf}
               />
-            </View>
 
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Cidade</Text>
-              <Input
+              <FormInput
+                label='Cidade'
                 placeholder='Cidade'
                 value={city}
                 onChangeText={setCity}
                 editable={!isSaving}
-                style={styles.input}
+                containerStyle={styles.inputHalf}
               />
-            </View>
-          </View>
+            </FormRow>
 
-          <View style={styles.row}>
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Número</Text>
-              <Input
+            <FormRow>
+              <FormInput
+                label='Número'
                 placeholder='Número'
                 value={addressNumber}
                 onChangeText={setAddressNumber}
                 editable={!isSaving}
-                style={styles.input}
                 keyboardType='numeric'
+                containerStyle={styles.inputHalf}
               />
-            </View>
 
-            <View style={styles.inputHalf}>
-              <Text style={styles.label}>Estado</Text>
-              <Input
+              <FormInput
+                label='Estado'
                 placeholder='UF'
                 value={state}
                 onChangeText={setState}
                 editable={!isSaving}
-                style={styles.input}
                 autoCapitalize='characters'
                 maxLength={2}
+                containerStyle={styles.inputHalf}
               />
-            </View>
-          </View>
+            </FormRow>
+          </FormSection>
 
-          <View style={styles.sectionHeader}>
-            <Ionicons name='document-text-outline' size={20} color='#FF6B35' />
-            <Text style={styles.sectionTitle}>Observações</Text>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Observações</Text>
-            <Input
+          <FormSection icon='document-text-outline' title='Observações'>
+            <FormInput
+              label='Observações'
               placeholder='Informações adicionais sobre o cliente (opcional)'
               value={notes}
               onChangeText={setNotes}
               multiline
               numberOfLines={4}
               editable={!isSaving}
-              style={[styles.input, styles.textArea]}
+              style={styles.textArea}
             />
-          </View>
+          </FormSection>
 
-          <View style={styles.infoSection}>
-            <View style={[styles.infoCard, styles.warningCard]}>
-              <Ionicons name='warning-outline' size={20} color='#f59e0b' />
-              <Text style={[styles.infoText, styles.warningText]}>
-                Não é possível excluir clientes que possuem vendas associadas.
-                Para excluir, remova as vendas primeiro.
-              </Text>
-            </View>
-          </View>
+          <InfoCard variant='warning' icon='warning-outline'>
+            Não é possível excluir clientes que possuem vendas associadas.
+            Para excluir, remova as vendas primeiro.
+          </InfoCard>
         </View>
 
         <View style={styles.actionButtons}>
@@ -714,10 +674,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
-  },
   headerSection: {
     alignItems: 'center',
     marginBottom: 24,
@@ -746,71 +702,18 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     paddingHorizontal: 20,
   },
-  statusToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-  },
-  statusToggleActive: {
-    borderColor: '#22c55e',
-    backgroundColor: '#f0fdf4',
-  },
-  statusIndicator: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-    marginRight: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusIndicatorActive: {
-    backgroundColor: '#22c55e',
-    borderColor: '#22c55e',
-  },
-  statusText: {
-    fontSize: 16,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  statusTextActive: {
-    color: '#22c55e',
-    fontWeight: '600',
-  },
   formSection: {
     marginBottom: 32,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginLeft: 8,
-  },
   inputGroup: {
-    marginBottom: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   inputHalf: {
     flex: 1,
   },
   pickerGroup: {
     flex: 1,
+    marginBottom: 12,
   },
   documentTypeContainer: {
     flexDirection: 'row',
@@ -889,70 +792,11 @@ const styles = StyleSheet.create({
     minHeight: 100,
     textAlignVertical: 'top',
   },
-  infoSection: {
-    gap: 12,
-    marginTop: 16,
-  },
-  infoCard: {
-    flexDirection: 'row',
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'flex-start',
-    borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
-  },
-  warningCard: {
-    backgroundColor: '#fffbeb',
-    borderLeftColor: '#f59e0b',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#1e40af',
-    lineHeight: 20,
-    marginLeft: 12,
-  },
-  warningText: {
-    color: '#92400e',
-  },
   actionButtons: {
     flexDirection: 'row',
     gap: 8,
     marginTop: 'auto',
     paddingTop: 20,
-  },
-  deleteButton: {
-    backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  deleteButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ef4444',
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#64748b',
   },
   saveButton: {
     flex: 1,
