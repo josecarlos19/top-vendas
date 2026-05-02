@@ -6,17 +6,14 @@ function validateStockMovementParams(params: Partial<StockMovementInterface>) {
     throw new Error("Missing required parameters for stock movement");
   }
 
-  // unit_value pode ser 0 (ex: ajustes sem custo)
   if (params.unit_value === undefined || params.unit_value === null) {
     throw new Error("Missing unit_value for stock movement");
   }
 
-  // unit_value não pode ser negativo
   if (params.unit_value < 0) {
     throw new Error("Unit value cannot be negative");
   }
 
-  // quantity pode ser negativa (para saídas e ajustes negativos)
   if (params.quantity === 0) {
     throw new Error("Quantity cannot be zero");
   }

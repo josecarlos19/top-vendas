@@ -119,7 +119,6 @@ export async function initializeDatabase(db: SQLiteDatabase) {
     await db.execAsync(
       `ALTER TABLE customers ADD COLUMN address_number TEXT;`
     ).catch(() => {
-      // Column already exists
     });
   });
 }

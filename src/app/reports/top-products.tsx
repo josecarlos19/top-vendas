@@ -29,7 +29,7 @@ export default function TopProducts() {
   const [isLoading, setIsLoading] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
-    date.setDate(1); // Primeiro dia do mês atual
+    date.setDate(1);
     return date;
   });
   const [endDate, setEndDate] = useState(new Date());

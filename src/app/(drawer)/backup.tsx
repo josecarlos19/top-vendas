@@ -28,7 +28,6 @@ async function reloadApp() {
   try {
     await Updates.reloadAsync();
   } catch (error) {
-    // No Expo Go ou dev mode, reloadAsync não funciona
     Alert.alert(
       'Reinicie o app',
       'O backup foi importado com sucesso! Por favor, feche e abra o app manualmente para aplicar as alterações.',
@@ -123,8 +122,6 @@ export default function BackupScreen() {
                 setLoading(false);
                 return;
               }
-
-              // Valida o arquivo
               const isValid = await validateBackupFile(fileUri);
               if (!isValid) {
                 Alert.alert('Erro', 'O arquivo selecionado não é um backup válido');
@@ -132,7 +129,6 @@ export default function BackupScreen() {
                 return;
               }
 
-              // Importa o banco de dados
               await importDatabase(fileUri);
 
               Alert.alert(

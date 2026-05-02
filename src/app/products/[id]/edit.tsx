@@ -117,8 +117,7 @@ export default function EditProduct() {
           ? formatCurrency(foundProduct.wholesale_price.toString())
           : ''
       );
-      // Removido: não mais setamos currentStock do initial_stock
-      // setCurrentStock(foundProduct.initial_stock.toString());
+
       setMinimumStock(foundProduct.minimum_stock.toString());
       setCategoryId(foundProduct.category_id);
       setSupplier(foundProduct.supplier || '');
@@ -188,7 +187,6 @@ export default function EditProduct() {
 
       Alert.alert('Sucesso', 'Estoque ajustado com sucesso!');
 
-      // Recarregar produto para atualizar o estoque
       await loadProduct();
     } catch (error) {
       console.error('Error adjusting stock:', error);
@@ -276,7 +274,6 @@ export default function EditProduct() {
         cost_price: costPriceValue,
         sale_price: salePriceValue,
         wholesale_price: wholesalePriceValue,
-        // initial_stock não é mais atualizado aqui
         minimum_stock: minimumStock ? parseInt(minimumStock) : 0,
         category_id: categoryId,
         supplier: supplier.trim() || undefined,

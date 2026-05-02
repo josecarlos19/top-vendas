@@ -10,7 +10,6 @@ const DB_NAME = 'top-vendas.db';
  * Obtém o URI do banco de dados SQLite
  */
 function getDatabaseUri(): string {
-  // Converte o caminho relativo para URI absoluto
   return `file://${defaultDatabaseDirectory}/${DB_NAME}`;
 }
 
@@ -35,7 +34,6 @@ export async function exportDatabase(): Promise<string> {
   try {
     const dbUri = getDatabaseUri();
 
-    // Verifica se o banco de dados existe
     const exists = await databaseExists();
     if (!exists) {
       throw new Error(
@@ -43,15 +41,12 @@ export async function exportDatabase(): Promise<string> {
       );
     }
 
-    // Cria o nome do arquivo de backup com data/hora em horário local (UTC-3)
     const now = new Date();
-    // Ajusta para UTC-3 (horário de Brasília)
     const brazilTime = new Date(now.getTime() - (3 * 60 * 60 * 1000));
     const timestamp = brazilTime.toISOString().replace(/[:.]/g, '-').slice(0, -5);
     const backupFileName = `top-vendas-backup-${timestamp}.db`;
     const backupUri = `${FileSystem.documentDirectory}${backupFileName}`;
 
-    // Copia o banco de dados para o arquivo de backup
     await FileSystem.copyAsync({
       from: dbUri,
       to: backupUri,
@@ -89,7 +84,7 @@ export async function shareBackup(backupPath: string): Promise<void> {
 export async function pickBackupFile(): Promise<string | null> {
   try {
     const result = await DocumentPicker.getDocumentAsync({
-      type: '*/*', // Aceita qualquer tipo de arquivo (validação é feita depois)
+      type: '*/*',
       copyToCacheDirectory: true,
       multiple: false,
     });
@@ -111,36 +106,29 @@ export async function pickBackupFile(): Promise<string | null> {
  */
 export async function importDatabase(backupUri: string): Promise<boolean> {
   try {
-    // Verifica se o arquivo de backup existe
     const backupInfo = await FileSystem.getInfoAsync(backupUri);
     if (!backupInfo.exists) {
       throw new Error('Arquivo de backup não encontrado');
     }
 
     const dbUri = getDatabaseUri();
-
-    // Cria um backup temporário do banco atual antes de substituir
     const dbExists = await databaseExists();
     if (dbExists) {
       const tempBackupUri = `${FileSystem.documentDirectory}temp-backup-${Date.now()}.db`;
 
       try {
-        // Cria backup temporário
         await FileSystem.copyAsync({
           from: dbUri,
           to: tempBackupUri,
         });
 
-        // Substitui o banco de dados atual pelo backup
         await FileSystem.copyAsync({
           from: backupUri,
           to: dbUri,
         });
 
-        // Remove o backup temporário após sucesso
         await FileSystem.deleteAsync(tempBackupUri, { idempotent: true });
       } catch (error) {
-        // Restaura o backup temporário em caso de erro
         try {
           await FileSystem.copyAsync({
             from: tempBackupUri,
@@ -148,12 +136,10 @@ export async function importDatabase(backupUri: string): Promise<boolean> {
           });
           await FileSystem.deleteAsync(tempBackupUri, { idempotent: true });
         } catch (restoreError) {
-          // Silently fail restore
         }
         throw error;
       }
     } else {
-      // Se não existe banco atual, apenas copia o backup
       await FileSystem.copyAsync({
         from: backupUri,
         to: dbUri,
@@ -178,13 +164,11 @@ export async function validateBackupFile(uri: string): Promise<boolean> {
       return false;
     }
 
-    // Lê os primeiros 16 bytes para verificar o header SQLite
     const header = await FileSystem.readAsStringAsync(uri, {
       encoding: FileSystem.EncodingType.Base64,
       length: 16,
     });
 
-    // Decodifica e verifica se começa com "SQLite format 3"
     const headerBytes = atob(header);
     return headerBytes.startsWith('SQLite format 3');
   } catch (error) {
@@ -207,7 +191,6 @@ export async function getBackupInfo(uri: string): Promise<{
     throw new Error('Arquivo não encontrado');
   }
 
-  // Type guard: após verificar exists, podemos acessar size e modificationTime
   const size = 'size' in info ? (info.size || 0) : 0;
   const modifiedAt = 'modificationTime' in info ? (info.modificationTime || 0) : 0;
   const sizeFormatted = formatBytes(size);
@@ -256,22 +239,14 @@ export async function listBackups(): Promise<
       backupFiles.map(async (file) => {
         const path = `${FileSystem.documentDirectory}${file}`;
         const info = await FileSystem.getInfoAsync(path);
-
-        // Type guard para acessar propriedades quando exists é true
         const size = info.exists && 'size' in info ? (info.size || 0) : 0;
-
-        // Extrai a data do nome do arquivo
-        // Formato: top-vendas-backup-2025-01-15T18-58-30.db
         const dateMatch = file.match(/top-vendas-backup-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})\.db/);
         let date: Date;
 
         if (dateMatch) {
-          // Reconstrói o formato ISO (substitui os - por : nas horas)
           const isoString = dateMatch[1].replace(/T(\d{2})-(\d{2})-(\d{2})/, 'T$1:$2:$3');
-          // A data no arquivo já está em UTC-3, então precisamos adicionar o offset para converter corretamente
           date = new Date(isoString + '-03:00');
         } else {
-          // Fallback: usa modificationTime se não conseguir extrair do nome
           const modificationTime = info.exists && 'modificationTime' in info ? (info.modificationTime || 0) : 0;
           date = new Date(modificationTime * 1000);
         }
@@ -286,7 +261,6 @@ export async function listBackups(): Promise<
       })
     );
 
-    // Ordena por data, mais recente primeiro
     return backups.sort((a, b) => b.date.getTime() - a.date.getTime());
   } catch (error) {
     return [];

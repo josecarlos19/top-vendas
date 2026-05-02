@@ -230,9 +230,6 @@ export function useProductDatabase() {
         params.id
       );
 
-      // Não mais atualiza o initial_stock e stock_movement inicial
-      // O estoque agora é controlado apenas por movimentações
-
       return await show(params.id);
     } catch (error) {
       console.error('Error updating product:', error);
