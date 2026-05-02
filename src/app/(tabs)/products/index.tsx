@@ -420,7 +420,7 @@ export default function ProductsList() {
   const activeFiltersCount = getActiveFiltersCount();
 
   return (
-    <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <View style={styles.container}>
         <SearchBar
           value={searchText}
@@ -467,7 +467,7 @@ export default function ProductsList() {
 
         {renderFiltersModal()}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

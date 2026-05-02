@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { useCustomerDatabase } from '@/database/models/Customer';
 import { Input } from '@/components/Input';
 import WorkArea from '@/components/WorkArea';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreateCustomer() {
   const [name, setName] = useState('');
@@ -243,282 +244,284 @@ export default function CreateCustomer() {
     validateEmail(email);
 
   return (
-    <WorkArea>
-      <View style={styles.headerSection}>
-        <View style={styles.iconContainer}>
-          <Ionicons name='person-add-outline' size={48} color='#FF6B35' />
-        </View>
-        <Text style={styles.title}>Novo Cliente</Text>
-        <Text style={styles.subtitle}>Cadastre um novo cliente no sistema</Text>
-      </View>
-
-      <View>
-        <View style={styles.sectionHeader}>
-          <Ionicons name='person-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Dados Básicos</Text>
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <WorkArea>
+        <View style={styles.headerSection}>
+          <View style={styles.iconContainer}>
+            <Ionicons name='person-add-outline' size={48} color='#FF6B35' />
+          </View>
+          <Text style={styles.title}>Novo Cliente</Text>
+          <Text style={styles.subtitle}>Cadastre um novo cliente no sistema</Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome Completo *</Text>
-          <Input
-            placeholder='Nome completo do cliente'
-            value={name}
-            onChangeText={setName}
-            editable={!isLoading}
-            style={styles.input}
-          />
-        </View>
+        <View>
+          <View style={styles.sectionHeader}>
+            <Ionicons name='person-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Dados Básicos</Text>
+          </View>
 
-        <View style={styles.row}>
-          <View style={styles.pickerGroup}>
-            <Text style={styles.label}>Tipo de Documento</Text>
-            <View style={styles.documentTypeContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.documentTypeButton,
-                  documentType === 'CPF' && styles.documentTypeButtonActive,
-                ]}
-                onPress={() => setDocumentType('CPF')}
-                disabled={isLoading}
-              >
-                <Text
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nome Completo *</Text>
+            <Input
+              placeholder='Nome completo do cliente'
+              value={name}
+              onChangeText={setName}
+              editable={!isLoading}
+              style={styles.input}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.pickerGroup}>
+              <Text style={styles.label}>Tipo de Documento</Text>
+              <View style={styles.documentTypeContainer}>
+                <TouchableOpacity
                   style={[
-                    styles.documentTypeText,
-                    documentType === 'CPF' && styles.documentTypeTextActive,
+                    styles.documentTypeButton,
+                    documentType === 'CPF' && styles.documentTypeButtonActive,
                   ]}
+                  onPress={() => setDocumentType('CPF')}
+                  disabled={isLoading}
                 >
-                  CPF
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.documentTypeButton,
-                  documentType === 'CNPJ' && styles.documentTypeButtonActive,
-                ]}
-                onPress={() => setDocumentType('CNPJ')}
-                disabled={isLoading}
-              >
-                <Text
+                  <Text
+                    style={[
+                      styles.documentTypeText,
+                      documentType === 'CPF' && styles.documentTypeTextActive,
+                    ]}
+                  >
+                    CPF
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
                   style={[
-                    styles.documentTypeText,
-                    documentType === 'CNPJ' && styles.documentTypeTextActive,
+                    styles.documentTypeButton,
+                    documentType === 'CNPJ' && styles.documentTypeButtonActive,
                   ]}
+                  onPress={() => setDocumentType('CNPJ')}
+                  disabled={isLoading}
                 >
-                  CNPJ
-                </Text>
+                  <Text
+                    style={[
+                      styles.documentTypeText,
+                      documentType === 'CNPJ' && styles.documentTypeTextActive,
+                    ]}
+                  >
+                    CNPJ
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>{documentType}</Text>
+              <Input
+                placeholder={
+                  documentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'
+                }
+                value={document}
+                onChangeText={text =>
+                  setDocument(formatDocument(text, documentType))
+                }
+                editable={!isLoading}
+                style={styles.input}
+                keyboardType='numeric'
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email</Text>
+            <Input
+              placeholder='email@exemplo.com (opcional)'
+              value={email}
+              onChangeText={setEmail}
+              editable={!isLoading}
+              style={styles.input}
+              keyboardType='email-address'
+              autoCapitalize='none'
+            />
+          </View>
+
+          <View style={styles.sectionHeader}>
+            <Ionicons name='call-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Contato</Text>
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Telefone</Text>
+              <Input
+                placeholder='(11) 1234-5678'
+                value={phone}
+                onChangeText={text => setPhone(formatPhone(text))}
+                editable={!isLoading}
+                style={styles.input}
+                keyboardType='phone-pad'
+              />
+            </View>
+
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Celular</Text>
+              <Input
+                placeholder='(11) 91234-5678'
+                value={mobile}
+                onChangeText={text => setMobile(formatPhone(text))}
+                editable={!isLoading}
+                style={styles.input}
+                keyboardType='phone-pad'
+              />
+            </View>
+          </View>
+
+          <View style={styles.sectionHeader}>
+            <Ionicons name='location-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Endereço</Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>CEP</Text>
+            <View style={styles.cepContainer}>
+              <Input
+                placeholder='00000-000'
+                value={zipCode}
+                onChangeText={handleZipCodeChange}
+                editable={!isLoading && !isLoadingCep}
+                style={[styles.input, styles.cepInput]}
+                keyboardType='numeric'
+              />
+              {isLoadingCep && (
+                <View style={styles.cepLoading}>
+                  <Ionicons name='hourglass-outline' size={16} color='#FF6B35' />
+                </View>
+              )}
+              <TouchableOpacity
+                style={styles.cepButton}
+                onPress={() =>
+                  zipCode.replace(/\D/g, '').length === 8 &&
+                  fetchAddressFromCep(zipCode)
+                }
+                disabled={
+                  isLoading ||
+                  isLoadingCep ||
+                  zipCode.replace(/\D/g, '').length !== 8
+                }
+              >
+                <Ionicons
+                  name='search-outline'
+                  size={16}
+                  color={
+                    zipCode.replace(/\D/g, '').length === 8
+                      ? '#FF6B35'
+                      : '#94a3b8'
+                  }
+                />
               </TouchableOpacity>
             </View>
           </View>
 
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>{documentType}</Text>
-            <Input
-              placeholder={
-                documentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'
-              }
-              value={document}
-              onChangeText={text =>
-                setDocument(formatDocument(text, documentType))
-              }
-              editable={!isLoading}
-              style={styles.input}
-              keyboardType='numeric'
-            />
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <Input
-            placeholder='email@exemplo.com (opcional)'
-            value={email}
-            onChangeText={setEmail}
-            editable={!isLoading}
-            style={styles.input}
-            keyboardType='email-address'
-            autoCapitalize='none'
-          />
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Ionicons name='call-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Contato</Text>
-        </View>
-
-        <View style={styles.row}>
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Telefone</Text>
-            <Input
-              placeholder='(11) 1234-5678'
-              value={phone}
-              onChangeText={text => setPhone(formatPhone(text))}
-              editable={!isLoading}
-              style={styles.input}
-              keyboardType='phone-pad'
-            />
-          </View>
-
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Celular</Text>
-            <Input
-              placeholder='(11) 91234-5678'
-              value={mobile}
-              onChangeText={text => setMobile(formatPhone(text))}
-              editable={!isLoading}
-              style={styles.input}
-              keyboardType='phone-pad'
-            />
-          </View>
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Ionicons name='location-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Endereço</Text>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>CEP</Text>
-          <View style={styles.cepContainer}>
-            <Input
-              placeholder='00000-000'
-              value={zipCode}
-              onChangeText={handleZipCodeChange}
-              editable={!isLoading && !isLoadingCep}
-              style={[styles.input, styles.cepInput]}
-              keyboardType='numeric'
-            />
-            {isLoadingCep && (
-              <View style={styles.cepLoading}>
-                <Ionicons name='hourglass-outline' size={16} color='#FF6B35' />
-              </View>
-            )}
-            <TouchableOpacity
-              style={styles.cepButton}
-              onPress={() =>
-                zipCode.replace(/\D/g, '').length === 8 &&
-                fetchAddressFromCep(zipCode)
-              }
-              disabled={
-                isLoading ||
-                isLoadingCep ||
-                zipCode.replace(/\D/g, '').length !== 8
-              }
-            >
-              <Ionicons
-                name='search-outline'
-                size={16}
-                color={
-                  zipCode.replace(/\D/g, '').length === 8
-                    ? '#FF6B35'
-                    : '#94a3b8'
-                }
+          <View style={styles.row}>
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Número</Text>
+              <Input
+                placeholder='Número'
+                value={addressNumber}
+                onChangeText={setAddressNumber}
+                style={styles.input}
+                keyboardType='numeric'
               />
-            </TouchableOpacity>
-          </View>
-        </View>
+            </View>
 
-        <View style={styles.row}>
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Número</Text>
-            <Input
-              placeholder='Número'
-              value={addressNumber}
-              onChangeText={setAddressNumber}
-              style={styles.input}
-              keyboardType='numeric'
-            />
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Estado</Text>
+              <Input
+                placeholder='UF'
+                value={state}
+                onChangeText={setState}
+                style={styles.input}
+                autoCapitalize='characters'
+                maxLength={2}
+              />
+            </View>
           </View>
 
-          <View style={styles.inputHalf}>
+          <View style={styles.row}>
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Bairro</Text>
+              <Input
+                placeholder='Bairro'
+                value={neighborhood}
+                onChangeText={setNeighborhood}
+                editable={!isLoading}
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Cidade</Text>
+              <Input
+                placeholder='Cidade'
+                value={city}
+                onChangeText={setCity}
+                editable={!isLoading}
+                style={styles.input}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>Estado</Text>
             <Input
-              placeholder='UF'
+              placeholder='Estado'
               value={state}
               onChangeText={setState}
-              style={styles.input}
-              autoCapitalize='characters'
-              maxLength={2}
-            />
-          </View>
-        </View>
-
-        <View style={styles.row}>
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Bairro</Text>
-            <Input
-              placeholder='Bairro'
-              value={neighborhood}
-              onChangeText={setNeighborhood}
               editable={!isLoading}
               style={styles.input}
             />
           </View>
 
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Cidade</Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons name='document-text-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Observações</Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Observações</Text>
             <Input
-              placeholder='Cidade'
-              value={city}
-              onChangeText={setCity}
+              placeholder='Informações adicionais sobre o cliente (opcional)'
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={4}
               editable={!isLoading}
-              style={styles.input}
+              style={[styles.input, styles.textArea]}
             />
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Estado</Text>
-          <Input
-            placeholder='Estado'
-            value={state}
-            onChangeText={setState}
-            editable={!isLoading}
-            style={styles.input}
-          />
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              (!isFormValid || isLoading) && styles.saveButtonDisabled,
+            ]}
+            onPress={handleStore}
+            disabled={!isFormValid || isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Ionicons name='hourglass-outline' size={16} color='#ffffff' />
+                <Text style={styles.saveButtonText}>Salvando...</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
+                <Text style={styles.saveButtonText}>Salvar Cliente</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
-
-        <View style={styles.sectionHeader}>
-          <Ionicons name='document-text-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Observações</Text>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Observações</Text>
-          <Input
-            placeholder='Informações adicionais sobre o cliente (opcional)'
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-            numberOfLines={4}
-            editable={!isLoading}
-            style={[styles.input, styles.textArea]}
-          />
-        </View>
-      </View>
-
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            (!isFormValid || isLoading) && styles.saveButtonDisabled,
-          ]}
-          onPress={handleStore}
-          disabled={!isFormValid || isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Ionicons name='hourglass-outline' size={16} color='#ffffff' />
-              <Text style={styles.saveButtonText}>Salvando...</Text>
-            </>
-          ) : (
-            <>
-              <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
-              <Text style={styles.saveButtonText}>Salvar Cliente</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
-    </WorkArea>
+      </WorkArea>
+    </SafeAreaView>
   );
 }
 

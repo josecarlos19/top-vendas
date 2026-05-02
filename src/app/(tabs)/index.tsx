@@ -106,7 +106,7 @@ export default function Index() {
   };
 
   return (
-    <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <View style={styles.container}>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <LinearGradient
@@ -173,7 +173,7 @@ export default function Index() {
           <View style={styles.bottomSpacing} />
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

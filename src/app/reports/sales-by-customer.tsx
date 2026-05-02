@@ -14,6 +14,7 @@ import SearchableSelect from '@/components/SearchableSelect';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PeriodFilter from '@/components/PeriodFilter';
 import SaleCard from '@/components/SaleCard';
+import SalesTotals from '@/components/SalesTotals';
 
 interface Sale {
   id: number;
@@ -134,144 +135,91 @@ export default function SalesByCustomer() {
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <View style={styles.content}>
-        <View style={styles.filterSection}>
-          <SearchableSelect
-            label="Cliente"
-            selectedValue={selectedCustomerId ?? undefined}
-            onValueChange={(value) => setSelectedCustomerId(value as number)}
-            options={customerOptions}
-            placeholder="Selecione um cliente"
-            enabled={!isLoadingCustomers}
-          />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.filterSection}>
+            <SearchableSelect
+              label="Cliente"
+              selectedValue={selectedCustomerId ?? undefined}
+              onValueChange={(value) => setSelectedCustomerId(value as number)}
+              options={customerOptions}
+              placeholder="Selecione um cliente"
+              enabled={!isLoadingCustomers}
+            />
 
-          <PeriodFilter
-            startDate={startDate}
-            endDate={endDate}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-          />
+            <PeriodFilter
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+            />
 
-          <TouchableOpacity
-            style={[
-              styles.searchButton,
-              !selectedCustomerId && styles.searchButtonDisabled,
-            ]}
-            onPress={loadSales}
-            disabled={isLoading || !selectedCustomerId}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#ffffff" size="small" />
-            ) : (
-              <>
-                <Ionicons name="search" size={16} color="#ffffff" />
-                <Text
-                  style={[
-                    styles.searchButtonText,
-                    !selectedCustomerId && styles.searchButtonTextDisabled,
-                  ]}
-                >
-                  Buscar
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.searchButton,
+                !selectedCustomerId && styles.searchButtonDisabled,
+              ]}
+              onPress={loadSales}
+              disabled={isLoading || !selectedCustomerId}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="search" size={16} color="#ffffff" />
+                  <Text
+                    style={[
+                      styles.searchButtonText,
+                      !selectedCustomerId && styles.searchButtonTextDisabled,
+                    ]}
+                  >
+                    Buscar
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {sales.length > 0 && (
+            <View style={styles.resultsContainer}>
+              <Text style={styles.resultsText}>
+                {sales.length} venda{sales.length !== 1 ? 's' : ''} de {selectedCustomer?.name}
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.listWrapper}>
+            <FlatList
+              data={sales}
+              renderItem={renderSale}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={[
+                styles.listContainer,
+                sales.length === 0 && styles.emptyListContainer,
+              ]}
+              ListEmptyComponent={renderEmpty}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
         </View>
 
-        {sales.length > 0 && (
-          <View style={styles.resultsContainer}>
-            <Text style={styles.resultsText}>
-              {sales.length} venda{sales.length !== 1 ? 's' : ''} de {selectedCustomer?.name}
-            </Text>
-          </View>
+        {sales.length > 0 && !isLoading && (
+          <SalesTotals
+            totalReceived={totalReceived}
+            totalPending={totalPending}
+            totalGeneral={totalGeneral}
+            totalDiscount={totalDiscount}
+          />
         )}
 
-        <View style={styles.listWrapper}>
-          <FlatList
-            data={sales}
-            renderItem={renderSale}
-            keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={[
-              styles.listContainer,
-              sales.length === 0 && styles.emptyListContainer,
-            ]}
-            ListEmptyComponent={renderEmpty}
-            showsVerticalScrollIndicator={false}
-          />
-        </View>
+        {isLoading && sales.length === 0 && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#3b82f6" />
+            <Text style={styles.loadingOverlayText}>Carregando vendas...</Text>
+          </View>
+        )}
       </View>
-
-      {sales.length > 0 && !isLoading && (
-        <View style={styles.totalsContainer}>
-          <View style={styles.totalRow}>
-            <View style={styles.totalItem}>
-              <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
-              <View style={styles.totalInfo}>
-                <Text style={styles.totalLabel}>Total Recebido</Text>
-                <Text style={[styles.totalValue, { color: '#22c55e' }]}>
-                  {(totalReceived / 100).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.totalItem}>
-              <Ionicons name="time" size={18} color="#f59e0b" />
-              <View style={styles.totalInfo}>
-                <Text style={styles.totalLabel}>A Receber</Text>
-                <Text style={[styles.totalValue, { color: '#f59e0b' }]}>
-                  {(totalPending / 100).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.totalRow}>
-            <View style={styles.totalItem}>
-              <Ionicons name="cash" size={18} color="#3b82f6" />
-              <View style={styles.totalInfo}>
-                <Text style={styles.totalLabel}>Total Geral</Text>
-                <Text style={[styles.totalValue, { color: '#3b82f6' }]}>
-                  {(totalGeneral / 100).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.totalItem}>
-              <Ionicons name="pricetag" size={18} color="#ec4899" />
-              <View style={styles.totalInfo}>
-                <Text style={styles.totalLabel}>Total Desconto</Text>
-                <Text style={[styles.totalValue, { color: '#ec4899' }]}>
-                  {(totalDiscount / 100).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
-
-      {isLoading && sales.length === 0 && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={styles.loadingOverlayText}>Carregando vendas...</Text>
-        </View>
-      )}
     </SafeAreaView>
   );
 }
@@ -341,47 +289,6 @@ const styles = StyleSheet.create({
   },
   emptyListContainer: {
     flexGrow: 1,
-  },
-  totalsContainer: {
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 6,
-  },
-  totalRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  totalItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  totalInfo: {
-    flex: 1,
-  },
-  totalLabel: {
-    fontSize: 11,
-    color: '#64748b',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  totalValue: {
-    fontSize: 14,
-    fontWeight: '700',
   },
   loadingOverlay: {
     position: 'absolute',

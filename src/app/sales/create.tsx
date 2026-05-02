@@ -22,6 +22,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { DateTime } from 'luxon';
 import WorkArea from '@/components/WorkArea';
 import SearchableSelect from '@/components/SearchableSelect';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Customer {
   id: number;
@@ -420,288 +421,290 @@ export default function CreateSale() {
   );
 
   return (
-    <WorkArea>
-      <View style={styles.headerSection}>
-        <View style={styles.iconContainer}>
-          <Ionicons name='receipt-outline' size={48} color='#FF6B35' />
-        </View>
-        <Text style={styles.title}>Nova Venda</Text>
-        <Text style={styles.subtitle}>Registre uma nova venda no sistema</Text>
-      </View>
-
-      <View>
-        <View style={styles.sectionHeader}>
-          <Ionicons name='person-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Cliente</Text>
-        </View>
-
-        <SearchableSelect
-          selectedValue={customerId}
-          onValueChange={value => setCustomerId(value as number)}
-          options={customerOptions}
-          enabled={!isLoading}
-          placeholder='Selecione um cliente'
-        />
-
-        <View style={styles.sectionHeader}>
-          <Ionicons name='bag-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Produtos</Text>
-        </View>
-
-        <SearchableSelect
-          selectedValue={undefined}
-          onValueChange={addProductToSale}
-          options={productOptions}
-          enabled={!isLoading}
-          placeholder='Buscar produto ou código de barras...'
-        />
-
-        {items.length > 0 && (
-          <View style={styles.itemsList}>
-            <FlatList
-              data={items}
-              renderItem={renderSaleItem}
-              keyExtractor={item => item.product_id.toString()}
-              scrollEnabled={false}
-            />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <WorkArea>
+        <View style={styles.headerSection}>
+          <View style={styles.iconContainer}>
+            <Ionicons name='receipt-outline' size={48} color='#FF6B35' />
           </View>
-        )}
-
-        {/* Pagamento */}
-        <View style={styles.sectionHeader}>
-          <Ionicons name='card-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Forma de Pagamento</Text>
+          <Text style={styles.title}>Nova Venda</Text>
+          <Text style={styles.subtitle}>Registre uma nova venda no sistema</Text>
         </View>
 
-        <SearchableSelect
-          selectedValue={paymentMethod}
-          onValueChange={value => setPaymentMethod(value as string)}
-          options={PAYMENT_METHODS}
-          enabled={!isLoading}
-        />
+        <View>
+          <View style={styles.sectionHeader}>
+            <Ionicons name='person-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Cliente</Text>
+          </View>
 
-        {paymentMethod === 'installment' && (
-          <>
-            {/* Parcelamento */}
-            <View style={styles.sectionHeader}>
-              <Ionicons name='wallet-outline' size={20} color='#FF6B35' />
-              <Text style={styles.sectionTitle}>Parcelamento</Text>
+          <SearchableSelect
+            selectedValue={customerId}
+            onValueChange={value => setCustomerId(value as number)}
+            options={customerOptions}
+            enabled={!isLoading}
+            placeholder='Selecione um cliente'
+          />
+
+          <View style={styles.sectionHeader}>
+            <Ionicons name='bag-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Produtos</Text>
+          </View>
+
+          <SearchableSelect
+            selectedValue={undefined}
+            onValueChange={addProductToSale}
+            options={productOptions}
+            enabled={!isLoading}
+            placeholder='Buscar produto ou código de barras...'
+          />
+
+          {items.length > 0 && (
+            <View style={styles.itemsList}>
+              <FlatList
+                data={items}
+                renderItem={renderSaleItem}
+                keyExtractor={item => item.product_id.toString()}
+                scrollEnabled={false}
+              />
             </View>
+          )}
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Número de Parcelas</Text>
-              <Input
-                placeholder='Número de parcelas'
-                value={installments}
-                onChangeText={text => setInstallments(formatNumber(text))}
-                editable={!isLoading}
-                style={styles.input}
-                keyboardType='numeric'
+          {/* Pagamento */}
+          <View style={styles.sectionHeader}>
+            <Ionicons name='card-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Forma de Pagamento</Text>
+          </View>
+
+          <SearchableSelect
+            selectedValue={paymentMethod}
+            onValueChange={value => setPaymentMethod(value as string)}
+            options={PAYMENT_METHODS}
+            enabled={!isLoading}
+          />
+
+          {paymentMethod === 'installment' && (
+            <>
+              {/* Parcelamento */}
+              <View style={styles.sectionHeader}>
+                <Ionicons name='wallet-outline' size={20} color='#FF6B35' />
+                <Text style={styles.sectionTitle}>Parcelamento</Text>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Número de Parcelas</Text>
+                <Input
+                  placeholder='Número de parcelas'
+                  value={installments}
+                  onChangeText={text => setInstallments(formatNumber(text))}
+                  editable={!isLoading}
+                  style={styles.input}
+                  keyboardType='numeric'
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Data do Primeiro Vencimento</Text>
+                <TouchableOpacity
+                  style={styles.selector}
+                  onPress={() => setShowFirstDuePicker(true)}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.selectorText}>
+                    {firstDueDate.toLocaleDateString('pt-BR')}
+                  </Text>
+                  <Ionicons name='calendar-outline' size={20} color='#64748b' />
+                </TouchableOpacity>
+
+                {showFirstDuePicker && (
+                  <DateTimePicker
+                    value={firstDueDate}
+                    mode='date'
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(_, date) => {
+                      setShowFirstDuePicker(false);
+                      if (date) setFirstDueDate(date);
+                    }}
+                  />
+                )}
+              </View>
+            </>
+          )}
+
+          {/* Data da Venda */}
+          <View style={styles.sectionHeader}>
+            <Ionicons name='calendar-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Data da Venda</Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <TouchableOpacity
+              style={styles.selector}
+              onPress={() => setShowSalePicker(true)}
+              disabled={isLoading}
+            >
+              <Text style={styles.selectorText}>
+                {saleDate.toLocaleDateString('pt-BR')}
+              </Text>
+              <Ionicons name='calendar-outline' size={20} color='#64748b' />
+            </TouchableOpacity>
+
+            {showSaleDatePicker && (
+              <DateTimePicker
+                value={saleDate}
+                mode='date'
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event, date) => {
+                  setShowSalePicker(false);
+                  if (date) setSaleDate(date);
+                }}
+              />
+            )}
+          </View>
+
+          <View style={[styles.inputGroup, styles.inputGroupCompact]}>
+            <View style={styles.switchContainer}>
+              <View style={styles.switchLabelContainer}>
+                <Ionicons name='checkmark-circle-outline' size={20} color='#22c55e' />
+                <Text style={styles.label}>Marcar como Concluída</Text>
+              </View>
+              <Switch
+                value={markAsCompleted}
+                onValueChange={(value) => {
+                  setMarkAsCompleted(value);
+                  if (value && !paymentDate) {
+                    setPaymentDate(new Date());
+                  }
+                }}
+                trackColor={{ false: '#cbd5e1', true: '#86efac' }}
+                thumbColor={markAsCompleted ? '#22c55e' : '#f1f5f9'}
+                disabled={isLoading || paymentMethod === 'installment'}
               />
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Data do Primeiro Vencimento</Text>
-              <TouchableOpacity
-                style={styles.selector}
-                onPress={() => setShowFirstDuePicker(true)}
-                disabled={isLoading}
-              >
-                <Text style={styles.selectorText}>
-                  {firstDueDate.toLocaleDateString('pt-BR')}
-                </Text>
-                <Ionicons name='calendar-outline' size={20} color='#64748b' />
-              </TouchableOpacity>
-
-              {showFirstDuePicker && (
-                <DateTimePicker
-                  value={firstDueDate}
-                  mode='date'
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={(_, date) => {
-                    setShowFirstDuePicker(false);
-                    if (date) setFirstDueDate(date);
-                  }}
-                />
-              )}
-            </View>
-          </>
-        )}
-
-        {/* Data da Venda */}
-        <View style={styles.sectionHeader}>
-          <Ionicons name='calendar-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Data da Venda</Text>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <TouchableOpacity
-            style={styles.selector}
-            onPress={() => setShowSalePicker(true)}
-            disabled={isLoading}
-          >
-            <Text style={styles.selectorText}>
-              {saleDate.toLocaleDateString('pt-BR')}
-            </Text>
-            <Ionicons name='calendar-outline' size={20} color='#64748b' />
-          </TouchableOpacity>
-
-          {showSaleDatePicker && (
-            <DateTimePicker
-              value={saleDate}
-              mode='date'
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, date) => {
-                setShowSalePicker(false);
-                if (date) setSaleDate(date);
-              }}
-            />
-          )}
-        </View>
-
-        <View style={[styles.inputGroup, styles.inputGroupCompact]}>
-          <View style={styles.switchContainer}>
-            <View style={styles.switchLabelContainer}>
-              <Ionicons name='checkmark-circle-outline' size={20} color='#22c55e' />
-              <Text style={styles.label}>Marcar como Concluída</Text>
-            </View>
-            <Switch
-              value={markAsCompleted}
-              onValueChange={(value) => {
-                setMarkAsCompleted(value);
-                if (value && !paymentDate) {
-                  setPaymentDate(new Date());
-                }
-              }}
-              trackColor={{ false: '#cbd5e1', true: '#86efac' }}
-              thumbColor={markAsCompleted ? '#22c55e' : '#f1f5f9'}
-              disabled={isLoading || paymentMethod === 'installment'}
-            />
-          </View>
-
-          {paymentMethod === 'installment' && (
-            <View style={styles.infoCard}>
-              <Ionicons name='information-circle' size={20} color='#3b82f6' />
-              <Text style={styles.infoText}>
-                Para vendas parceladas, a conclusão ocorre quando todas as parcelas são pagas.
-              </Text>
-            </View>
-          )}
-
-          {markAsCompleted && (
-            <View style={styles.paymentDateContainer}>
-              <Text style={styles.subLabel}>Data do Pagamento</Text>
-              <TouchableOpacity
-                style={styles.selector}
-                onPress={() => setShowPaymentDatePicker(true)}
-                disabled={isLoading}
-              >
-                <Text style={styles.selectorText}>
-                  {(paymentDate || new Date()).toLocaleDateString('pt-BR')}
-                </Text>
-                <Ionicons name='calendar-outline' size={20} color='#64748b' />
-              </TouchableOpacity>
-
-              {showPaymentDatePicker && (
-                <DateTimePicker
-                  value={paymentDate || new Date()}
-                  mode='date'
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={(_, date) => {
-                    setShowPaymentDatePicker(false);
-                    if (date) setPaymentDate(date);
-                  }}
-                />
-              )}
-            </View>
-          )}
-        </View>
-
-        {/* Desconto e Resumo */}
-        <View style={styles.sectionHeader}>
-          <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Desconto e Resumo</Text>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Input
-            placeholder='R$ 0,00'
-            value={discount}
-            onChangeText={text => setDiscount(formatCurrency(text))}
-            editable={!isLoading}
-            style={styles.input}
-            keyboardType='numeric'
-          />
-        </View>
-
-        {/* Resumo */}
-        {items.length > 0 && (
-          <View style={styles.summaryContainer}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Subtotal:</Text>
-              <Text style={styles.summaryValue}>
-                {formatCurrency(getSubtotal().toString())}
-              </Text>
-            </View>
-            {getDiscountValue() > 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Desconto:</Text>
-                <Text style={[styles.summaryValue, styles.discountValue]}>
-                  -{formatCurrency(getDiscountValue().toString())}
+            {paymentMethod === 'installment' && (
+              <View style={styles.infoCard}>
+                <Ionicons name='information-circle' size={20} color='#3b82f6' />
+                <Text style={styles.infoText}>
+                  Para vendas parceladas, a conclusão ocorre quando todas as parcelas são pagas.
                 </Text>
               </View>
             )}
-            <View style={[styles.summaryRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Total:</Text>
-              <Text style={styles.totalValue}>
-                {formatCurrency(getTotal().toString())}
-              </Text>
-            </View>
+
+            {markAsCompleted && (
+              <View style={styles.paymentDateContainer}>
+                <Text style={styles.subLabel}>Data do Pagamento</Text>
+                <TouchableOpacity
+                  style={styles.selector}
+                  onPress={() => setShowPaymentDatePicker(true)}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.selectorText}>
+                    {(paymentDate || new Date()).toLocaleDateString('pt-BR')}
+                  </Text>
+                  <Ionicons name='calendar-outline' size={20} color='#64748b' />
+                </TouchableOpacity>
+
+                {showPaymentDatePicker && (
+                  <DateTimePicker
+                    value={paymentDate || new Date()}
+                    mode='date'
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(_, date) => {
+                      setShowPaymentDatePicker(false);
+                      if (date) setPaymentDate(date);
+                    }}
+                  />
+                )}
+              </View>
+            )}
           </View>
-        )}
 
-        {/* Observações */}
-        <View style={styles.sectionHeader}>
-          <Ionicons name='document-text-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Observações</Text>
-        </View>
+          {/* Desconto e Resumo */}
+          <View style={styles.sectionHeader}>
+            <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Desconto e Resumo</Text>
+          </View>
 
-        <View style={styles.inputGroup}>
-          <Input
-            placeholder='Informações adicionais sobre a venda (opcional)'
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-            numberOfLines={3}
-            editable={!isLoading}
-            style={[styles.input, styles.textArea]}
-          />
-        </View>
-      </View>
+          <View style={styles.inputGroup}>
+            <Input
+              placeholder='R$ 0,00'
+              value={discount}
+              onChangeText={text => setDiscount(formatCurrency(text))}
+              editable={!isLoading}
+              style={styles.input}
+              keyboardType='numeric'
+            />
+          </View>
 
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            (!isFormValid || isLoading) && styles.saveButtonDisabled,
-          ]}
-          onPress={handleStore}
-          disabled={!isFormValid || isLoading}
-        >
-          {isLoading ? (
-            <>
-              <ActivityIndicator size='small' color='#ffffff' />
-              <Text style={styles.saveButtonText}>Salvando...</Text>
-            </>
-          ) : (
-            <>
-              <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
-              <Text style={styles.saveButtonText}>Registrar</Text>
-            </>
+          {/* Resumo */}
+          {items.length > 0 && (
+            <View style={styles.summaryContainer}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Subtotal:</Text>
+                <Text style={styles.summaryValue}>
+                  {formatCurrency(getSubtotal().toString())}
+                </Text>
+              </View>
+              {getDiscountValue() > 0 && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Desconto:</Text>
+                  <Text style={[styles.summaryValue, styles.discountValue]}>
+                    -{formatCurrency(getDiscountValue().toString())}
+                  </Text>
+                </View>
+              )}
+              <View style={[styles.summaryRow, styles.totalRow]}>
+                <Text style={styles.totalLabel}>Total:</Text>
+                <Text style={styles.totalValue}>
+                  {formatCurrency(getTotal().toString())}
+                </Text>
+              </View>
+            </View>
           )}
-        </TouchableOpacity>
-      </View>
-    </WorkArea>
+
+          {/* Observações */}
+          <View style={styles.sectionHeader}>
+            <Ionicons name='document-text-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Observações</Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Input
+              placeholder='Informações adicionais sobre a venda (opcional)'
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={3}
+              editable={!isLoading}
+              style={[styles.input, styles.textArea]}
+            />
+          </View>
+        </View>
+
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              (!isFormValid || isLoading) && styles.saveButtonDisabled,
+            ]}
+            onPress={handleStore}
+            disabled={!isFormValid || isLoading}
+          >
+            {isLoading ? (
+              <>
+                <ActivityIndicator size='small' color='#ffffff' />
+                <Text style={styles.saveButtonText}>Salvando...</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
+                <Text style={styles.saveButtonText}>Registrar</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      </WorkArea>
+    </SafeAreaView>
   );
 }
 

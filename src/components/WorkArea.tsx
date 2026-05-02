@@ -6,7 +6,7 @@ import {
   Platform,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function WorkArea({
   children,
@@ -15,16 +15,18 @@ export default function WorkArea({
   children: React.ReactNode;
   noScrollView?: boolean;
 }) {
+  const insets = useSafeAreaInsets();
+
   if (noScrollView) {
     return (
-      <SafeAreaView edges={['bottom']} style={styles.sav}>
+      <View style={[styles.sav, { paddingBottom: insets.bottom }]}>
         {children}
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView edges={['bottom']} style={styles.sav}>
+    <View style={styles.sav}>
       <KeyboardAvoidingView
         style={styles.keyboard}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -32,7 +34,7 @@ export default function WorkArea({
       >
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 40 + insets.bottom }]}
           keyboardDismissMode='interactive'
           keyboardShouldPersistTaps='handled'
           showsVerticalScrollIndicator={false}
@@ -40,7 +42,7 @@ export default function WorkArea({
           {children}
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -55,7 +57,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 20,
-    paddingBottom: 40,
+    // paddingBottom removido daqui, agora é dinâmico
   },
   keyboard: {
     flex: 1,

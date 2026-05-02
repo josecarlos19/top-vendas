@@ -22,69 +22,40 @@ export default function RootLayout() {
           headerTintColor: '#000',
           headerTitleStyle: { fontWeight: '600' },
         }}>
-          <Stack.Screen name='(drawer)' options={{ headerShown: false }} />
+          <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
           <Stack.Screen
             name='categories/create'
-            options={{
-              presentation: 'card',
-              title: 'Nova Categoria',
-            }}
+            options={{ presentation: 'card', title: 'Nova Categoria' }}
           />
           <Stack.Screen
             name='categories/[id]/edit'
-            options={{
-              presentation: 'card',
-              title: 'Editar Categoria',
-            }}
+            options={{ presentation: 'card', title: 'Editar Categoria' }}
           />
           <Stack.Screen
             name='customers/create'
-            options={{
-              presentation: 'card',
-              title: 'Novo Cliente',
-            }}
+            options={{ presentation: 'card', title: 'Novo Cliente' }}
           />
           <Stack.Screen
             name='customers/[id]/edit'
-            options={{
-              presentation: 'card',
-              title: 'Editar Cliente',
-            }}
+            options={{ presentation: 'card', title: 'Editar Cliente' }}
           />
           <Stack.Screen
             name='products/create'
-            options={{
-              presentation: 'card',
-              title: 'Novo Produto',
-            }}
+            options={{ presentation: 'card', title: 'Novo Produto' }}
           />
           <Stack.Screen
             name='products/[id]/edit'
-            options={{
-              presentation: 'card',
-              title: 'Editar Produto',
-            }}
+            options={{ presentation: 'card', title: 'Editar Produto' }}
           />
           <Stack.Screen
             name='sales/create'
-            options={{
-              presentation: 'card',
-              title: 'Nova Venda',
-            }}
+            options={{ presentation: 'card', title: 'Nova Venda' }}
           />
           <Stack.Screen
             name='sales/[id]/edit'
-            options={{
-              presentation: 'card',
-              title: 'Editar Venda',
-            }}
+            options={{ presentation: 'card', title: 'Editar Venda' }}
           />
-          <Stack.Screen
-            name='reports'
-            options={{
-              headerShown: false,
-            }}
-          />
+          <Stack.Screen name='reports' options={{ headerShown: false }} />
         </Stack>
       </SQLiteProvider>
     </SafeAreaProvider>

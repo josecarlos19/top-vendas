@@ -15,11 +15,12 @@ import { useProductDatabase } from '@/database/models/Product';
 import { useCategoryDatabase } from '@/database/models/Category';
 import { Input } from '@/components/Input';
 import formatCurrency from '@/components/utils/formatCurrency';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import WorkArea from '@/components/WorkArea';
 import { HeaderDeleteButton } from '@/components/HeaderDeleteButton';
 import SearchableSelect from '@/components/SearchableSelect';
 import StockAdjustmentModal, { StockAdjustmentType } from '@/components/modals/StockAdjustmentModal';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 interface Category {
   id: number;
@@ -364,232 +365,234 @@ export default function EditProduct() {
   }));
 
   return (
-    <WorkArea>
-      <HeaderDeleteButton
-        onDelete={handleDelete}
-        itemName={product?.name || ''}
-        itemType='o produto'
-        successMessage='Produto excluído com sucesso!'
-      />
-      <View style={styles.headerSection}>
-        <View style={styles.iconContainer}>
-          <Ionicons name='bag-outline' size={48} color='#FF6B35' />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <WorkArea>
+        <HeaderDeleteButton
+          onDelete={handleDelete}
+          itemName={product?.name || ''}
+          itemType='o produto'
+          successMessage='Produto excluído com sucesso!'
+        />
+        <View style={styles.headerSection}>
+          <View style={styles.iconContainer}>
+            <Ionicons name='bag-outline' size={48} color='#FF6B35' />
+          </View>
+          <Text style={styles.title}>Editar Produto</Text>
+          <Text style={styles.subtitle}>Atualize as informações do produto</Text>
         </View>
-        <Text style={styles.title}>Editar Produto</Text>
-        <Text style={styles.subtitle}>Atualize as informações do produto</Text>
-      </View>
 
-      <TouchableOpacity
-        style={[
-          styles.statusToggle,
-          product.active === 1 && styles.statusToggleActive,
-        ]}
-        onPress={handleToggleActive}
-        disabled={isSaving}
-      >
-        <View
+        <TouchableOpacity
           style={[
-            styles.statusIndicator,
-            product.active === 1 && styles.statusIndicatorActive,
+            styles.statusToggle,
+            product.active === 1 && styles.statusToggleActive,
           ]}
+          onPress={handleToggleActive}
+          disabled={isSaving}
         >
-          {product.active === 1 && (
-            <Ionicons name='checkmark' size={12} color='#ffffff' />
-          )}
-        </View>
-        <Text
-          style={[
-            styles.statusText,
-            product.active === 1 && styles.statusTextActive,
-          ]}
-        >
-          {product.active === 1 ? 'Produto Ativo' : 'Produto Inativo'}
-        </Text>
-      </TouchableOpacity>
+          <View
+            style={[
+              styles.statusIndicator,
+              product.active === 1 && styles.statusIndicatorActive,
+            ]}
+          >
+            {product.active === 1 && (
+              <Ionicons name='checkmark' size={12} color='#ffffff' />
+            )}
+          </View>
+          <Text
+            style={[
+              styles.statusText,
+              product.active === 1 && styles.statusTextActive,
+            ]}
+          >
+            {product.active === 1 ? 'Produto Ativo' : 'Produto Inativo'}
+          </Text>
+        </TouchableOpacity>
 
-      <View style={styles.formSection}>
-        {/* Informações Básicas */}
-        <View style={styles.sectionHeader}>
-          <Ionicons
-            name='information-circle-outline'
-            size={20}
-            color='#FF6B35'
-          />
-          <Text style={styles.sectionTitle}>Informações Básicas</Text>
-        </View>
+        <View style={styles.formSection}>
+          {/* Informações Básicas */}
+          <View style={styles.sectionHeader}>
+            <Ionicons
+              name='information-circle-outline'
+              size={20}
+              color='#FF6B35'
+            />
+            <Text style={styles.sectionTitle}>Informações Básicas</Text>
+          </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome do Produto *</Text>
-          <Input
-            placeholder='Nome do produto'
-            value={name}
-            onChangeText={setName}
-            editable={!isSaving}
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.row}>
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Código de Barras</Text>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nome do Produto *</Text>
             <Input
-              placeholder='0000000000000'
-              value={barcode}
-              onChangeText={setBarcode}
+              placeholder='Nome do produto'
+              value={name}
+              onChangeText={setName}
+              editable={!isSaving}
+              style={styles.input}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Código de Barras</Text>
+              <Input
+                placeholder='0000000000000'
+                value={barcode}
+                onChangeText={setBarcode}
+                editable={!isSaving}
+                style={styles.input}
+                keyboardType='numeric'
+              />
+            </View>
+
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Referência</Text>
+              <Input
+                placeholder='REF-001'
+                value={reference}
+                onChangeText={setReference}
+                editable={!isSaving}
+                style={styles.input}
+              />
+            </View>
+          </View>
+
+          <SearchableSelect
+            label='Categoria'
+            selectedValue={categoryId}
+            onValueChange={value => setCategoryId(value as number)}
+            options={categoryOptions}
+            enabled={!isSaving}
+            placeholder='Selecionar categoria'
+          />
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Descrição</Text>
+            <Input
+              placeholder='Descrição detalhada do produto (opcional)'
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={3}
+              editable={!isSaving}
+              style={[styles.input, styles.textArea]}
+            />
+          </View>
+
+          <View style={styles.sectionHeader}>
+            <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Preço</Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Input
+              placeholder='R$ 0,00'
+              value={salePrice}
+              onChangeText={text => setSalePrice(formatCurrency(text))}
               editable={!isSaving}
               style={styles.input}
               keyboardType='numeric'
             />
           </View>
 
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Referência</Text>
+          {/* Estoque */}
+          <View style={styles.sectionHeader}>
+            <Ionicons name='archive-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Controle de Estoque</Text>
+          </View>
+
+          <View style={styles.stockInfoContainer}>
+            <View style={styles.stockCurrentBox}>
+              <Text style={styles.stockCurrentLabel}>Estoque Atual</Text>
+              <Text style={styles.stockCurrentValue}>
+                {product?.current_stock || 0} unidades
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.adjustStockButton}
+              onPress={() => setShowStockAdjustModal(true)}
+              disabled={isSaving}
+            >
+              <Ionicons name='create-outline' size={16} color='#ffffff' />
+              <Text style={styles.adjustStockButtonText}>Ajustar Estoque</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Estoque Mínimo</Text>
+              <Input
+                placeholder='0'
+                value={minimumStock}
+                onChangeText={text => setMinimumStock(formatNumber(text))}
+                editable={!isSaving}
+                style={styles.input}
+                keyboardType='numeric'
+              />
+            </View>
+          </View>
+
+          {/* Fornecedor */}
+          <View style={styles.sectionHeader}>
+            <Ionicons name='business-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Fornecedor</Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Fornecedor</Text>
             <Input
-              placeholder='REF-001'
-              value={reference}
-              onChangeText={setReference}
+              placeholder='Nome do fornecedor (opcional)'
+              value={supplier}
+              onChangeText={setSupplier}
               editable={!isSaving}
               style={styles.input}
             />
           </View>
-        </View>
 
-        <SearchableSelect
-          label='Categoria'
-          selectedValue={categoryId}
-          onValueChange={value => setCategoryId(value as number)}
-          options={categoryOptions}
-          enabled={!isSaving}
-          placeholder='Selecionar categoria'
-        />
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Descrição</Text>
-          <Input
-            placeholder='Descrição detalhada do produto (opcional)'
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={3}
-            editable={!isSaving}
-            style={[styles.input, styles.textArea]}
-          />
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Preço</Text>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Input
-            placeholder='R$ 0,00'
-            value={salePrice}
-            onChangeText={text => setSalePrice(formatCurrency(text))}
-            editable={!isSaving}
-            style={styles.input}
-            keyboardType='numeric'
-          />
-        </View>
-
-        {/* Estoque */}
-        <View style={styles.sectionHeader}>
-          <Ionicons name='archive-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Controle de Estoque</Text>
-        </View>
-
-        <View style={styles.stockInfoContainer}>
-          <View style={styles.stockCurrentBox}>
-            <Text style={styles.stockCurrentLabel}>Estoque Atual</Text>
-            <Text style={styles.stockCurrentValue}>
-              {product?.current_stock || 0} unidades
-            </Text>
+          <View style={styles.infoSection}>
+            <View style={[styles.infoCard, styles.warningCard]}>
+              <Ionicons name='warning-outline' size={20} color='#f59e0b' />
+              <Text style={[styles.infoText, styles.warningText]}>
+                Não é possível excluir produtos que possuem vendas ou
+                movimentações de estoque.
+              </Text>
+            </View>
           </View>
+        </View>
 
+        <View style={styles.actionButtons}>
           <TouchableOpacity
-            style={styles.adjustStockButton}
-            onPress={() => setShowStockAdjustModal(true)}
-            disabled={isSaving}
+            style={[
+              styles.saveButton,
+              (!isFormValid || isSaving) && styles.saveButtonDisabled,
+            ]}
+            onPress={handleUpdate}
+            disabled={!isFormValid || isSaving}
           >
-            <Ionicons name='create-outline' size={16} color='#ffffff' />
-            <Text style={styles.adjustStockButtonText}>Ajustar Estoque</Text>
+            {isSaving ? (
+              <>
+                <ActivityIndicator size='small' color='#ffffff' />
+                <Text style={styles.saveButtonText}>Salvando...</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
+                <Text style={styles.saveButtonText}>Salvar</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
-        <View style={styles.row}>
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Estoque Mínimo</Text>
-            <Input
-              placeholder='0'
-              value={minimumStock}
-              onChangeText={text => setMinimumStock(formatNumber(text))}
-              editable={!isSaving}
-              style={styles.input}
-              keyboardType='numeric'
-            />
-          </View>
-        </View>
-
-        {/* Fornecedor */}
-        <View style={styles.sectionHeader}>
-          <Ionicons name='business-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Fornecedor</Text>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Fornecedor</Text>
-          <Input
-            placeholder='Nome do fornecedor (opcional)'
-            value={supplier}
-            onChangeText={setSupplier}
-            editable={!isSaving}
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.infoSection}>
-          <View style={[styles.infoCard, styles.warningCard]}>
-            <Ionicons name='warning-outline' size={20} color='#f59e0b' />
-            <Text style={[styles.infoText, styles.warningText]}>
-              Não é possível excluir produtos que possuem vendas ou
-              movimentações de estoque.
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            (!isFormValid || isSaving) && styles.saveButtonDisabled,
-          ]}
-          onPress={handleUpdate}
-          disabled={!isFormValid || isSaving}
-        >
-          {isSaving ? (
-            <>
-              <ActivityIndicator size='small' color='#ffffff' />
-              <Text style={styles.saveButtonText}>Salvando...</Text>
-            </>
-          ) : (
-            <>
-              <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
-              <Text style={styles.saveButtonText}>Salvar</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {/* Modal de Ajuste de Estoque */}
-      <StockAdjustmentModal
-        visible={showStockAdjustModal}
-        productName={product?.name || ''}
-        currentStock={product?.current_stock || 0}
-        onClose={() => setShowStockAdjustModal(false)}
-        onConfirm={handleStockAdjust}
-      />
-    </WorkArea>
+        {/* Modal de Ajuste de Estoque */}
+        <StockAdjustmentModal
+          visible={showStockAdjustModal}
+          productName={product?.name || ''}
+          currentStock={product?.current_stock || 0}
+          onClose={() => setShowStockAdjustModal(false)}
+          onConfirm={handleStockAdjust}
+        />
+      </WorkArea>
+    </SafeAreaView>
   );
 }
 

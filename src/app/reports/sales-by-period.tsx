@@ -13,6 +13,7 @@ import { useReportDatabase } from '@/database/models/Report';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PeriodFilter from '@/components/PeriodFilter';
 import SaleCard from '@/components/SaleCard';
+import SalesTotals from '@/components/SalesTotals';
 
 interface Sale {
   id: number;
@@ -97,126 +98,74 @@ export default function SalesByPeriod() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <View style={styles.content}>
-        <View style={styles.filterSection}>
-          <PeriodFilter
-            startDate={startDate}
-            endDate={endDate}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-          />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.filterSection}>
+            <PeriodFilter
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+            />
 
-          <TouchableOpacity
-            style={styles.searchButton}
-            onPress={loadSales}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#ffffff" size="small" />
-            ) : (
-              <>
-                <Ionicons name="search" size={16} color="#ffffff" />
-                <Text style={styles.searchButtonText}>Buscar</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={loadSales}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="search" size={16} color="#ffffff" />
+                  <Text style={styles.searchButtonText}>Buscar</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {sales.length > 0 && (
+            <View style={styles.resultsContainer}>
+              <Text style={styles.resultsText}>
+                {sales.length} venda{sales.length !== 1 ? 's' : ''} encontrada
+                {sales.length !== 1 ? 's' : ''}
+              </Text>
+            </View>
+          )}
+
+          <FlatList
+            data={sales}
+            renderItem={renderSale}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={[
+              styles.listContainer,
+              sales.length === 0 && styles.emptyListContainer,
+            ]}
+            ListEmptyComponent={renderEmpty}
+            showsVerticalScrollIndicator={false}
+          />
         </View>
 
-        {sales.length > 0 && (
-          <View style={styles.resultsContainer}>
-            <Text style={styles.resultsText}>
-              {sales.length} venda{sales.length !== 1 ? 's' : ''} encontrada
-              {sales.length !== 1 ? 's' : ''}
-            </Text>
-          </View>
+        {sales.length > 0 && !isLoading && (
+          <SalesTotals
+            totalReceived={totalReceived}
+            totalPending={totalPending}
+            totalGeneral={totalGeneral}
+            totalDiscount={totalDiscount}
+          />
         )}
 
-        <FlatList
-          data={sales}
-          renderItem={renderSale}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={[
-            styles.listContainer,
-            sales.length === 0 && styles.emptyListContainer,
-          ]}
-          ListEmptyComponent={renderEmpty}
-          showsVerticalScrollIndicator={false}
-        />
+        {isLoading && sales.length === 0 && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#3b82f6" />
+            <Text style={styles.loadingOverlayText}>Carregando vendas...</Text>
+          </View>
+        )}
       </View>
-
-      {sales.length > 0 && !isLoading && (
-        <View style={styles.totalsContainer}>
-          <View style={styles.totalRow}>
-            <View style={styles.totalItem}>
-              <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
-              <View style={styles.totalInfo}>
-                <Text style={styles.totalLabel}>Total Recebido</Text>
-                <Text style={[styles.totalValue, { color: '#22c55e' }]}>
-                  {(totalReceived / 100).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.totalItem}>
-              <Ionicons name="time" size={18} color="#f59e0b" />
-              <View style={styles.totalInfo}>
-                <Text style={styles.totalLabel}>A Receber</Text>
-                <Text style={[styles.totalValue, { color: '#f59e0b' }]}>
-                  {(totalPending / 100).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.totalRow}>
-            <View style={styles.totalItem}>
-              <Ionicons name="cash" size={18} color="#3b82f6" />
-              <View style={styles.totalInfo}>
-                <Text style={styles.totalLabel}>Total Geral</Text>
-                <Text style={[styles.totalValue, { color: '#3b82f6' }]}>
-                  {(totalGeneral / 100).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.totalItem}>
-              <Ionicons name="pricetag" size={18} color="#ec4899" />
-              <View style={styles.totalInfo}>
-                <Text style={styles.totalLabel}>Total Desconto</Text>
-                <Text style={[styles.totalValue, { color: '#ec4899' }]}>
-                  {(totalDiscount / 100).toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                    minimumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
-
-      {isLoading && sales.length === 0 && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={styles.loadingOverlayText}>Carregando vendas...</Text>
-        </View>
-      )}
     </SafeAreaView>
   );
+
 }
 
 const styles = StyleSheet.create({
@@ -273,47 +222,6 @@ const styles = StyleSheet.create({
   },
   emptyListContainer: {
     flexGrow: 1,
-  },
-  totalsContainer: {
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 6,
-  },
-  totalRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  totalItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#f8fafc',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  totalInfo: {
-    flex: 1,
-  },
-  totalLabel: {
-    fontSize: 10,
-    color: '#64748b',
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  totalValue: {
-    fontSize: 13,
-    fontWeight: '700',
   },
   loadingOverlay: {
     position: 'absolute',

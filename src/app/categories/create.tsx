@@ -4,17 +4,14 @@ import {
   Text,
   StyleSheet,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   TouchableOpacity,
-  TouchableWithoutFeedback,
-  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCategoryDatabase } from '@/database/models/Category';
 import { Input } from '@/components/Input';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import WorkArea from '@/components/WorkArea';
 
 export default function CreateCategory() {
   const [name, setName] = useState('');
@@ -72,86 +69,74 @@ export default function CreateCategory() {
   };
 
   return (
-    <SafeAreaView edges={['bottom']} style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-      >
-        <TouchableWithoutFeedback
-          style={{ flex: 1 }}
-          onPress={Keyboard.dismiss}
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}><WorkArea>
+      <View style={styles.headerSection}>
+        <View style={styles.iconContainer}>
+          <Ionicons name='folder-outline' size={48} color='#FF6B35' />
+        </View>
+        <Text style={styles.title}>Nova Categoria</Text>
+        <Text style={styles.subtitle}>
+          Organize seus produtos criando uma nova categoria
+        </Text>
+      </View>
+
+      <View style={styles.formSection}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Nome da Categoria*</Text>
+          <Input
+            placeholder='Ex: Eletrônicos, Roupas, Livros...'
+            value={name}
+            onChangeText={setName}
+            editable={!isLoading}
+            style={styles.input}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Descrição</Text>
+          <Input
+            placeholder='Descreva brevemente esta categoria (opcional)'
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={4}
+            editable={!isLoading}
+            style={[styles.input, styles.textArea]}
+          />
+        </View>
+      </View>
+
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[
+            styles.saveButton,
+            isLoading && styles.saveButtonDisabled,
+          ]}
+          onPress={handleStore}
+          disabled={isLoading || !name.trim()}
         >
-          <View>
-            <View style={styles.headerSection}>
-              <View style={styles.iconContainer}>
-                <Ionicons name='folder-outline' size={48} color='#FF6B35' />
-              </View>
-              <Text style={styles.title}>Nova Categoria</Text>
-              <Text style={styles.subtitle}>
-                Organize seus produtos criando uma nova categoria
-              </Text>
-            </View>
-
-            <View style={styles.formSection}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Nome da Categoria*</Text>
-                <Input
-                  placeholder='Ex: Eletrônicos, Roupas, Livros...'
-                  value={name}
-                  onChangeText={setName}
-                  editable={!isLoading}
-                  style={styles.input}
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Descrição</Text>
-                <Input
-                  placeholder='Descreva brevemente esta categoria (opcional)'
-                  value={description}
-                  onChangeText={setDescription}
-                  multiline
-                  numberOfLines={4}
-                  editable={!isLoading}
-                  style={[styles.input, styles.textArea]}
-                />
-              </View>
-            </View>
-
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.saveButton,
-                  isLoading && styles.saveButtonDisabled,
-                ]}
-                onPress={handleStore}
-                disabled={isLoading || !name.trim()}
-              >
-                {isLoading ? (
-                  <>
-                    <Ionicons
-                      name='hourglass-outline'
-                      size={16}
-                      color='#ffffff'
-                    />
-                    <Text style={styles.saveButtonText}>Salvando...</Text>
-                  </>
-                ) : (
-                  <>
-                    <Ionicons
-                      name='checkmark-outline'
-                      size={16}
-                      color='#ffffff'
-                    />
-                    <Text style={styles.saveButtonText}>Salvar Categoria</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+          {isLoading ? (
+            <>
+              <Ionicons
+                name='hourglass-outline'
+                size={16}
+                color='#ffffff'
+              />
+              <Text style={styles.saveButtonText}>Salvando...</Text>
+            </>
+          ) : (
+            <>
+              <Ionicons
+                name='checkmark-outline'
+                size={16}
+                color='#ffffff'
+              />
+              <Text style={styles.saveButtonText}>Salvar Categoria</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    </WorkArea>
     </SafeAreaView>
   );
 }
@@ -160,7 +145,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
-    paddingHorizontal: 10,
   },
 
   headerSection: {
@@ -253,7 +237,7 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   saveButton: {
-    flex: 2,
+    flex: 1,
     backgroundColor: '#FF6B35',
     borderRadius: 12,
     paddingVertical: 16,

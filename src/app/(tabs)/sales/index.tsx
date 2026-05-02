@@ -286,7 +286,7 @@ export default function SalesList() {
   const totalPages = Math.ceil(totalCount / perPage);
 
   return (
-    <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <View style={styles.container}>
         {/* Seção de filtros */}
         <View style={styles.filterSection}>
@@ -432,7 +432,7 @@ export default function SalesList() {
 
         <FloatingActionButton route='/sales/create' />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

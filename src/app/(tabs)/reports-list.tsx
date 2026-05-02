@@ -45,7 +45,7 @@ const reportOptions: ReportOption[] = [
 
 export default function ReportsIndex() {
   return (
-    <SafeAreaView edges={['bottom']} style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
@@ -74,7 +74,7 @@ export default function ReportsIndex() {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -113,63 +113,65 @@ export default function TopCategories() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.filterSection}>
-          <PeriodFilter
-            startDate={startDate}
-            endDate={endDate}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-          />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <View style={styles.container}>
+        <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.filterSection}>
+            <PeriodFilter
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+            />
 
-          <TouchableOpacity
-            style={styles.searchButton}
-            onPress={loadCategorySales}
-          >
-            <Ionicons name="search" size={20} color="#ffffff" />
-            <Text style={styles.searchButtonText}>Buscar</Text>
-          </TouchableOpacity>
-        </View>
-
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#3b82f6" />
-            <Text style={styles.loadingText}>Carregando dados...</Text>
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={loadCategorySales}
+            >
+              <Ionicons name="search" size={20} color="#ffffff" />
+              <Text style={styles.searchButtonText}>Buscar</Text>
+            </TouchableOpacity>
           </View>
-        ) : categorySales.length > 0 ? (
-          <View style={styles.resultsContainer}>
-            <View style={styles.chartContainer}>
-              <PieChart
-                data={pieData}
-                radius={120}
-                innerRadius={60}
-                centerLabelComponent={() => (
-                  <View style={styles.centerLabel}>
-                    <Text style={styles.centerLabelTitle}>Total</Text>
-                    <Text style={styles.centerLabelValue}>
-                      {categorySales.reduce(
-                        (sum, category) => sum + category.quantity,
-                        0
-                      )}
-                    </Text>
-                    <Text style={styles.centerLabelSubtitle}>itens</Text>
-                  </View>
-                )}
-                donut
-                showText
-                textColor="#fff"
-                textSize={14}
-                fontWeight="bold"
-              />
+
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#3b82f6" />
+              <Text style={styles.loadingText}>Carregando dados...</Text>
             </View>
+          ) : categorySales.length > 0 ? (
+            <View style={styles.resultsContainer}>
+              <View style={styles.chartContainer}>
+                <PieChart
+                  data={pieData}
+                  radius={120}
+                  innerRadius={60}
+                  centerLabelComponent={() => (
+                    <View style={styles.centerLabel}>
+                      <Text style={styles.centerLabelTitle}>Total</Text>
+                      <Text style={styles.centerLabelValue}>
+                        {categorySales.reduce(
+                          (sum, category) => sum + category.quantity,
+                          0
+                        )}
+                      </Text>
+                      <Text style={styles.centerLabelSubtitle}>itens</Text>
+                    </View>
+                  )}
+                  donut
+                  showText
+                  textColor="#fff"
+                  textSize={14}
+                  fontWeight="bold"
+                />
+              </View>
 
-            {renderLegend()}
-          </View>
-        ) : (
-          renderEmpty()
-        )}
-      </ScrollView>
+              {renderLegend()}
+            </View>
+          ) : (
+            renderEmpty()
+          )}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

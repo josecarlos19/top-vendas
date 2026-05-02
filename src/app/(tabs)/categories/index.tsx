@@ -4,23 +4,30 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
   Alert,
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import { useCustomerDatabase } from '@/database/models/Customer';
-import { CustomerSearchInterface } from '@/interfaces/models/customerInterface';
-import { Customer } from '@/components/Customer/CustomerItem';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
-import CustomerCard from '@/components/CustomerCard';
-import { SearchBar } from '@/components/SearchBar';
+import { useCategoryDatabase } from '@/database/models/Category';
+import { CategorySearchInterface } from '@/interfaces/models/categoryInterface';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import CategoryCard from '@/components/CategoryCard';
+import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { SearchBar } from '@/components/SearchBar';
 
-export default function CustomersList() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+interface Category {
+  id: number;
+  name: string;
+  description?: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export default function CategoriesList() {
+  const [categories, setCategories] = useState<Category[]>([]);
   const [searchText, setSearchText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,21 +36,21 @@ export default function CustomersList() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreData, setHasMoreData] = useState(true);
   const perPage = 10;
-  const customerDatabase = useCustomerDatabase();
+  const categoryDatabase = useCategoryDatabase();
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchText !== undefined) {
         setCurrentPage(1);
         setHasMoreData(true);
-        loadCustomers(1, false);
+        loadCategories(1, false);
       }
     }, 300);
 
     return () => clearTimeout(timeoutId);
   }, [searchText]);
 
-  const loadCustomers = async (page: number = 1, append: boolean = true) => {
+  const loadCategories = async (page: number = 1, append: boolean = true) => {
     try {
       if (page === 1) {
         setIsLoading(true);
@@ -51,60 +58,40 @@ export default function CustomersList() {
         setIsLoadingMore(true);
       }
 
-      const searchParams: CustomerSearchInterface = {
+      const searchParams: CategorySearchInterface = {
         page,
         perPage,
       };
 
       if (searchText.trim()) {
-        searchParams.q = searchText.trim();
+        searchParams.name = searchText.trim();
       }
 
       const [data, count] = await Promise.all([
-        customerDatabase.index(searchParams),
-        customerDatabase.count({
-          q: searchParams.q,
+        categoryDatabase.index(searchParams),
+        categoryDatabase.count({
+          name: searchParams.name,
         }),
       ]);
 
       if (append && page > 1) {
-        setCustomers(prev => [
+        setCategories(prev => [
           ...prev,
           ...data.map((item: any) => ({
             id: item.id,
             name: item.name,
-            document: item.document || undefined,
-            document_type: item.document_type || undefined,
-            phone: item.phone || undefined,
-            mobile: item.mobile || undefined,
-            email: item.email || undefined,
-            address: item.address || undefined,
-            neighborhood: item.neighborhood || undefined,
-            city: item.city || undefined,
-            state: item.state || undefined,
-            zip_code: item.zip_code || undefined,
-            notes: item.notes || undefined,
+            description: item.description,
             active: item.active,
             created_at: item.created_at,
             updated_at: item.updated_at,
           })),
         ]);
       } else {
-        setCustomers(
+        setCategories(
           data.map((item: any) => ({
             id: item.id,
             name: item.name,
-            document: item.document || undefined,
-            document_type: item.document_type || undefined,
-            phone: item.phone || undefined,
-            mobile: item.mobile || undefined,
-            email: item.email || undefined,
-            address: item.address || undefined,
-            neighborhood: item.neighborhood || undefined,
-            city: item.city || undefined,
-            state: item.state || undefined,
-            zip_code: item.zip_code || undefined,
-            notes: item.notes || undefined,
+            description: item.description,
             active: item.active,
             created_at: item.created_at,
             updated_at: item.updated_at,
@@ -118,8 +105,8 @@ export default function CustomersList() {
       const totalPages = Math.ceil(count / perPage);
       setHasMoreData(page < totalPages);
     } catch (error) {
-      console.error('Error loading customers:', error);
-      Alert.alert('Erro', 'Falha ao carregar clientes');
+      console.error('Error loading categories:', error);
+      Alert.alert('Erro', 'Falha ao carregar categorias');
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -132,77 +119,30 @@ export default function CustomersList() {
 
   const loadMore = () => {
     if (hasMoreData && !isLoadingMore && !isLoading) {
-      loadCustomers(currentPage + 1, true);
+      loadCategories(currentPage + 1, true);
     }
   };
 
   const handleRefresh = () => {
     setCurrentPage(1);
     setHasMoreData(true);
-    loadCustomers(1, false);
+    loadCategories(1, false);
   };
 
-  const handleRedirect = (customer: { id: number }) => {
-    router.push(`/customers/${customer.id}/edit`);
-  };
-
-  const handleDelete = async (id: number) => {
-    const customer = customers.find(c => c.id === id);
-    const customerName = customer?.name || 'este cliente';
-
-    Alert.alert(
-      'Confirmar exclusão',
-      `Tem certeza que deseja excluir "${customerName}"? Esta ação não pode ser desfeita.`,
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await customerDatabase.remove(id);
-              setCustomers(prev => prev.filter(c => c.id !== id));
-              setTotalCount(prev => prev - 1);
-
-              Alert.alert('Sucesso', 'Cliente excluído com sucesso!');
-            } catch (error) {
-              console.error('Error deleting customer:', error);
-              loadCustomers(1, false);
-              const errorMessage = error instanceof Error ? error.message : '';
-              if (
-                errorMessage.includes('vendas') ||
-                errorMessage.includes('FOREIGN KEY')
-              ) {
-                Alert.alert(
-                  'Não é possível excluir',
-                  'Este cliente possui vendas associadas. Para excluir o cliente, remova todas as vendas primeiro.'
-                );
-              } else {
-                Alert.alert(
-                  'Erro',
-                  'Falha ao excluir cliente. Tente novamente.'
-                );
-              }
-            }
-          },
-        },
-      ]
-    );
+  const pushToCategory = (category: Category) => {
+    router.push(`/categories/${category.id}/edit`);
   };
 
   useFocusEffect(
     useCallback(() => {
-      loadCustomers(1, false);
+      loadCategories(1, false);
     }, [searchText])
   );
 
-  const renderCustomer = ({ item }: { item: Customer }) => (
-    <CustomerCard
-      customer={item}
-      onPress={handleRedirect}
+  const renderCategory = ({ item }: { item: Category }) => (
+    <CategoryCard
+      category={item}
+      onPress={() => pushToCategory(item)}
     />
   );
 
@@ -219,25 +159,25 @@ export default function CustomersList() {
 
   const renderEmpty = () => (
     <View style={styles.emptyState}>
-      <Ionicons name='people-outline' size={64} color='#cbd5e1' />
-      <Text style={styles.emptyTitle}>Nenhum cliente encontrado</Text>
+      <Ionicons name='folder-outline' size={64} color='#cbd5e1' />
+      <Text style={styles.emptyTitle}>Nenhuma categoria encontrada</Text>
     </View>
   );
 
   const totalPages = Math.ceil(totalCount / perPage);
 
   return (
-    <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <View style={styles.container}>
         <SearchBar
           value={searchText}
           onChangeText={handleSearch}
-          placeholder='Buscar clientes...'
+          placeholder='Buscar categorias...'
         />
 
         <View style={styles.resultsContainer}>
           <Text style={styles.resultsText}>
-            {totalCount} cliente{totalCount !== 1 ? 's' : ''} encontrado
+            {totalCount} categoria{totalCount !== 1 ? 's' : ''} encontrada
             {totalCount !== 1 ? 's' : ''}
           </Text>
           {totalPages > 1 && (
@@ -248,8 +188,8 @@ export default function CustomersList() {
         </View>
 
         <FlatList
-          data={customers}
-          renderItem={renderCustomer}
+          data={categories}
+          renderItem={renderCategory}
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
@@ -267,9 +207,9 @@ export default function CustomersList() {
           onEndReachedThreshold={0.1}
         />
 
-        <FloatingActionButton route='/customers/create' />
+        <FloatingActionButton route='/categories/create' />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

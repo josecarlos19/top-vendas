@@ -114,68 +114,68 @@ export default function TopProducts() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      {/* Content */}
-      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-        {/* Filtros */}
-        <View style={styles.filterSection}>
-          <PeriodFilter
-            startDate={startDate}
-            endDate={endDate}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-          />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <View style={styles.container}>
+        <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.filterSection}>
+            <PeriodFilter
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+            />
 
-          <TouchableOpacity
-            style={styles.searchButton}
-            onPress={loadProductSales}
-          >
-            <Ionicons name="search" size={20} color="#ffffff" />
-            <Text style={styles.searchButtonText}>Buscar</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Gráfico e Legenda */}
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#3b82f6" />
-            <Text style={styles.loadingText}>Carregando dados...</Text>
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={loadProductSales}
+            >
+              <Ionicons name="search" size={20} color="#ffffff" />
+              <Text style={styles.searchButtonText}>Buscar</Text>
+            </TouchableOpacity>
           </View>
-        ) : productSales.length > 0 ? (
-          <View style={styles.resultsContainer}>
-            {/* Gráfico */}
-            <View style={styles.chartContainer}>
-              <PieChart
-                data={pieData}
-                radius={120}
-                innerRadius={60}
-                centerLabelComponent={() => (
-                  <View style={styles.centerLabel}>
-                    <Text style={styles.centerLabelTitle}>Total</Text>
-                    <Text style={styles.centerLabelValue}>
-                      {productSales.reduce(
-                        (sum, product) => sum + product.quantity,
-                        0
-                      )}
-                    </Text>
-                    <Text style={styles.centerLabelSubtitle}>unidades</Text>
-                  </View>
-                )}
-                donut
-                showText
-                textColor="#fff"
-                textSize={14}
-                fontWeight="bold"
-              />
+
+          {/* Gráfico e Legenda */}
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#3b82f6" />
+              <Text style={styles.loadingText}>Carregando dados...</Text>
             </View>
+          ) : productSales.length > 0 ? (
+            <View style={styles.resultsContainer}>
+              {/* Gráfico */}
+              <View style={styles.chartContainer}>
+                <PieChart
+                  data={pieData}
+                  radius={120}
+                  innerRadius={60}
+                  centerLabelComponent={() => (
+                    <View style={styles.centerLabel}>
+                      <Text style={styles.centerLabelTitle}>Total</Text>
+                      <Text style={styles.centerLabelValue}>
+                        {productSales.reduce(
+                          (sum, product) => sum + product.quantity,
+                          0
+                        )}
+                      </Text>
+                      <Text style={styles.centerLabelSubtitle}>unidades</Text>
+                    </View>
+                  )}
+                  donut
+                  showText
+                  textColor="#fff"
+                  textSize={14}
+                  fontWeight="bold"
+                />
+              </View>
 
-            {/* Legenda */}
-            {renderLegend()}
-          </View>
-        ) : (
-          renderEmpty()
-        )}
-      </ScrollView>
+              {/* Legenda */}
+              {renderLegend()}
+            </View>
+          ) : (
+            renderEmpty()
+          )}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

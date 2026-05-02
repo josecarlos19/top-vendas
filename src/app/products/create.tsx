@@ -4,9 +4,6 @@ import {
   Text,
   StyleSheet,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
@@ -18,6 +15,7 @@ import { Input } from '@/components/Input';
 import formatCurrency from '@/components/utils/formatCurrency';
 import WorkArea from '@/components/WorkArea';
 import SearchableSelect from '@/components/SearchableSelect';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Category {
   id: number;
@@ -203,178 +201,180 @@ export default function CreateProduct() {
     name.trim() && salePrice.trim() && getCurrencyValue(salePrice) > 0;
 
   return (
-    <WorkArea>
-      <View style={styles.headerSection}>
-        <View style={styles.iconContainer}>
-          <Ionicons name='bag-outline' size={48} color='#FF6B35' />
-        </View>
-        <Text style={styles.title}>Novo Produto</Text>
-        <Text style={styles.subtitle}>Cadastre um novo produto no estoque</Text>
-      </View>
-
-      <View style={styles.formSection}>
-        <View style={styles.sectionHeader}>
-          <Ionicons
-            name='information-circle-outline'
-            size={20}
-            color='#FF6B35'
-          />
-          <Text style={styles.sectionTitle}>Informações Básicas</Text>
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <WorkArea>
+        <View style={styles.headerSection}>
+          <View style={styles.iconContainer}>
+            <Ionicons name='bag-outline' size={48} color='#FF6B35' />
+          </View>
+          <Text style={styles.title}>Novo Produto</Text>
+          <Text style={styles.subtitle}>Cadastre um novo produto no estoque</Text>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome do Produto *</Text>
-          <Input
-            placeholder='Nome do produto'
-            value={name}
-            onChangeText={setName}
-            editable={!isLoading}
-            style={styles.input}
-          />
-        </View>
+        <View style={styles.formSection}>
+          <View style={styles.sectionHeader}>
+            <Ionicons
+              name='information-circle-outline'
+              size={20}
+              color='#FF6B35'
+            />
+            <Text style={styles.sectionTitle}>Informações Básicas</Text>
+          </View>
 
-        <View style={styles.row}>
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Código de Barras</Text>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nome do Produto *</Text>
             <Input
-              placeholder='0000000000000'
-              value={barcode}
-              onChangeText={setBarcode}
+              placeholder='Nome do produto'
+              value={name}
+              onChangeText={setName}
+              editable={!isLoading}
+              style={styles.input}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Código de Barras</Text>
+              <Input
+                placeholder='0000000000000'
+                value={barcode}
+                onChangeText={setBarcode}
+                editable={!isLoading}
+                style={styles.input}
+                keyboardType='numeric'
+              />
+            </View>
+
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Referência</Text>
+              <Input
+                placeholder='REF-001'
+                value={reference}
+                onChangeText={setReference}
+                editable={!isLoading}
+                style={styles.input}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <SearchableSelect
+              label='Categoria'
+              options={categories.map(cat => ({
+                label: cat.name,
+                value: cat.id,
+              }))}
+              selectedValue={categoryId}
+              onValueChange={(value: string | number) => setCategoryId(value as number)}
+              placeholder='Selecionar categoria'
+              enabled={!isLoading}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Descrição</Text>
+            <Input
+              placeholder='Descrição detalhada do produto (opcional)'
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={3}
+              editable={!isLoading}
+              style={[styles.input, styles.textArea]}
+            />
+          </View>
+
+          {/* Preços */}
+          <View style={styles.sectionHeader}>
+            <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Preços</Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Preço de Venda *</Text>
+            <Input
+              placeholder='R$ 0,00'
+              value={salePrice}
+              onChangeText={text => setSalePrice(formatCurrency(text))}
               editable={!isLoading}
               style={styles.input}
               keyboardType='numeric'
             />
           </View>
 
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Referência</Text>
+          {/* Estoque */}
+          <View style={styles.sectionHeader}>
+            <Ionicons name='archive-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Controle de Estoque</Text>
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Estoque Inicial</Text>
+              <Input
+                placeholder='0'
+                value={currentStock}
+                onChangeText={text => setCurrentStock(formatNumber(text))}
+                editable={!isLoading}
+                style={styles.input}
+                keyboardType='numeric'
+              />
+            </View>
+
+            <View style={styles.inputHalf}>
+              <Text style={styles.label}>Estoque Mínimo</Text>
+              <Input
+                placeholder='0'
+                value={minimumStock}
+                onChangeText={text => setMinimumStock(formatNumber(text))}
+                editable={!isLoading}
+                style={styles.input}
+                keyboardType='numeric'
+              />
+            </View>
+          </View>
+
+          <View style={styles.sectionHeader}>
+            <Ionicons name='business-outline' size={20} color='#FF6B35' />
+            <Text style={styles.sectionTitle}>Fornecedor</Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Fornecedor</Text>
             <Input
-              placeholder='REF-001'
-              value={reference}
-              onChangeText={setReference}
+              placeholder='Nome do fornecedor (opcional)'
+              value={supplier}
+              onChangeText={setSupplier}
               editable={!isLoading}
               style={styles.input}
             />
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <SearchableSelect
-            label='Categoria'
-            options={categories.map(cat => ({
-              label: cat.name,
-              value: cat.id,
-            }))}
-            selectedValue={categoryId}
-            onValueChange={(value: string | number) => setCategoryId(value as number)}
-            placeholder='Selecionar categoria'
-            enabled={!isLoading}
-          />
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              (!isFormValid || isLoading) && styles.saveButtonDisabled,
+            ]}
+            onPress={handleStore}
+            disabled={!isFormValid || isLoading}
+          >
+            {isLoading ? (
+              <>
+                <ActivityIndicator size='small' color='#ffffff' />
+                <Text style={styles.saveButtonText}>Salvando...</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
+                <Text style={styles.saveButtonText}>Salvar</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Descrição</Text>
-          <Input
-            placeholder='Descrição detalhada do produto (opcional)'
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={3}
-            editable={!isLoading}
-            style={[styles.input, styles.textArea]}
-          />
-        </View>
-
-        {/* Preços */}
-        <View style={styles.sectionHeader}>
-          <Ionicons name='pricetag-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Preços</Text>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Preço de Venda *</Text>
-          <Input
-            placeholder='R$ 0,00'
-            value={salePrice}
-            onChangeText={text => setSalePrice(formatCurrency(text))}
-            editable={!isLoading}
-            style={styles.input}
-            keyboardType='numeric'
-          />
-        </View>
-
-        {/* Estoque */}
-        <View style={styles.sectionHeader}>
-          <Ionicons name='archive-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Controle de Estoque</Text>
-        </View>
-
-        <View style={styles.row}>
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Estoque Inicial</Text>
-            <Input
-              placeholder='0'
-              value={currentStock}
-              onChangeText={text => setCurrentStock(formatNumber(text))}
-              editable={!isLoading}
-              style={styles.input}
-              keyboardType='numeric'
-            />
-          </View>
-
-          <View style={styles.inputHalf}>
-            <Text style={styles.label}>Estoque Mínimo</Text>
-            <Input
-              placeholder='0'
-              value={minimumStock}
-              onChangeText={text => setMinimumStock(formatNumber(text))}
-              editable={!isLoading}
-              style={styles.input}
-              keyboardType='numeric'
-            />
-          </View>
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Ionicons name='business-outline' size={20} color='#FF6B35' />
-          <Text style={styles.sectionTitle}>Fornecedor</Text>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Fornecedor</Text>
-          <Input
-            placeholder='Nome do fornecedor (opcional)'
-            value={supplier}
-            onChangeText={setSupplier}
-            editable={!isLoading}
-            style={styles.input}
-          />
-        </View>
-      </View>
-
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            (!isFormValid || isLoading) && styles.saveButtonDisabled,
-          ]}
-          onPress={handleStore}
-          disabled={!isFormValid || isLoading}
-        >
-          {isLoading ? (
-            <>
-              <ActivityIndicator size='small' color='#ffffff' />
-              <Text style={styles.saveButtonText}>Salvando...</Text>
-            </>
-          ) : (
-            <>
-              <Ionicons name='checkmark-outline' size={16} color='#ffffff' />
-              <Text style={styles.saveButtonText}>Salvar</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
-    </WorkArea>
+      </WorkArea>
+    </SafeAreaView>
   );
 }
 
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   saveButton: {
-    flex: 2,
+    flex: 1,
     backgroundColor: '#FF6B35',
     borderRadius: 12,
     paddingVertical: 16,

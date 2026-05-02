@@ -4,9 +4,6 @@ import {
   Text,
   StyleSheet,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
@@ -16,6 +13,7 @@ import { useCategoryDatabase } from '@/database/models/Category';
 import { Input } from '@/components/Input';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HeaderDeleteButton } from '@/components/HeaderDeleteButton';
+import WorkArea from '@/components/WorkArea';
 
 interface Category {
   id: number;
@@ -138,23 +136,15 @@ export default function EditCategory() {
   }
 
   return (
-    <SafeAreaView edges={['bottom']} style={styles.container}>
+    <>
       <HeaderDeleteButton
         onDelete={handleDelete}
         itemName={category?.name || ''}
         itemType='a categoria'
         successMessage='Categoria excluída com sucesso!'
       />
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps='handled'
-        >
+      <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+        <WorkArea>
           <View style={styles.headerSection}>
             <View style={styles.iconContainer}>
               <Ionicons name='pencil-outline' size={48} color='#FF6B35' />
@@ -224,9 +214,9 @@ export default function EditCategory() {
               )}
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </WorkArea>
+      </SafeAreaView>
+    </>
   );
 }
 

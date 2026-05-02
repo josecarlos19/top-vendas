@@ -229,7 +229,7 @@ export default function BackupScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <View style={styles.container}>
       <ScrollView
         style={styles.content}
         refreshControl={
@@ -351,7 +351,7 @@ export default function BackupScreen() {
           </View>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
