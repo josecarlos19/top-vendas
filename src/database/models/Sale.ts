@@ -128,7 +128,7 @@ export function useSaleDatabase() {
         query += ' LIMIT ? OFFSET ?';
         queryParams.push(params.perPage, offset);
       }
-      console.log(query, queryParams);
+
       const sales = await database.getAllAsync(query, queryParams);
 
       const salesWithItems = await Promise.all(
