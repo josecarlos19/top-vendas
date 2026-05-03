@@ -180,6 +180,7 @@ export function useReportDatabase() {
         WHERE s.customer_id = ?
           AND DATE(s.sale_date) BETWEEN DATE(?) AND DATE(?)
           AND s.deleted_at IS NULL
+          AND s.status != 'cancelled'
         ORDER BY s.sale_date DESC, s.created_at DESC
         `,
         [customerId, startDate, endDate]
@@ -224,6 +225,7 @@ export function useReportDatabase() {
         LEFT JOIN customers c ON s.customer_id = c.id
         WHERE DATE(s.sale_date) BETWEEN DATE(?) AND DATE(?)
           AND s.deleted_at IS NULL
+          AND s.status != 'cancelled'
         ORDER BY s.sale_date DESC, s.created_at DESC
         `,
         [startDate, endDate]
