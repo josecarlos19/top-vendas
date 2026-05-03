@@ -9,6 +9,8 @@ import {
   TextInput,
   ActivityIndicator,
   Modal,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
@@ -359,10 +361,11 @@ export default function ProductsList() {
     <Modal
       visible={showFilters}
       animationType='slide'
-      presentationStyle='pageSheet'
+      presentationStyle='fullScreen'
       onRequestClose={() => setShowFilters(false)}
+      statusBarTranslucent={false}
     >
-      <View style={styles.modalContainer}>
+      <SafeAreaView style={styles.modalContainer} edges={['top']}>
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>Filtros</Text>
           <TouchableOpacity onPress={() => setShowFilters(false)}>
@@ -459,7 +462,7 @@ export default function ProductsList() {
           </View>
         </View>
 
-        <View style={styles.modalActions}>
+        <SafeAreaView style={styles.modalActions} edges={['bottom']}>
           <TouchableOpacity
             style={styles.clearFiltersButton}
             onPress={clearFilters}
@@ -472,8 +475,8 @@ export default function ProductsList() {
           >
             <Text style={styles.applyFiltersButtonText}>Aplicar</Text>
           </TouchableOpacity>
-        </View>
-      </View>
+        </SafeAreaView>
+      </SafeAreaView>
     </Modal>
   );
 
