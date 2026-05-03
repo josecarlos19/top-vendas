@@ -21,11 +21,8 @@ import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SearchBar } from '@/components/SearchBar';
 import SaleCard from '@/components/SaleCard';
-import PeriodFilter from '@/components/PeriodFilter';
-import SearchableSelect from '@/components/SearchableSelect';
-import MultipleStatusFilter from '@/components/MultipleStatusFilter';
 import SalePreviewModal from '@/components/modals/SalePreviewModal';
-import SalesFilters from '@/components/SalesFilters';
+import SalesPeriodFilter from '@/components/SalesPeriodFilter';
 
 interface Sale {
   id: number;
@@ -265,7 +262,6 @@ export default function SalesList() {
 
   const handleSalePress = async (sale: Sale) => {
     try {
-      // Carregar dados completos da venda para o preview
       setSelectedSaleForPreview(sale);
       setPreviewModalVisible(true);
     } catch (error) {
@@ -350,101 +346,54 @@ export default function SalesList() {
     <View style={{ flex: 1 }}>
       <View style={styles.container}>
         {/* Seção de filtros */}
-        <View style={styles.filterSection}>
-          {/* Botão para mostrar/ocultar filtro de data */}
-          <TouchableOpacity
-            style={styles.filterToggleButton}
-            onPress={() => setShowDateFilter(!showDateFilter)}
-          >
-            <Ionicons
-              name={showDateFilter ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color='#64748b'
-            />
-            <Text style={styles.filterToggleText}>
-              Filtrar por período
-            </Text>
-            {(startDate || endDate || dueDateStart || dueDateEnd || paymentDateStart || paymentDateEnd || selectedStatus.length > 0 || selectedPaymentMethod.length > 0 || selectedCustomerId) && (
-              <View style={styles.filterActiveBadge}>
-                <Ionicons name='checkmark-circle' size={16} color='#22c55e' />
-              </View>
-            )}
-          </TouchableOpacity>
-
-          {/* Filtros - mostrado condicionalmente */}
-          {showDateFilter && (
-            <View style={styles.periodFilterContainer}>
-              <SalesFilters
-                startDate={startDate}
-                endDate={endDate}
-                dueDateStart={dueDateStart}
-                dueDateEnd={dueDateEnd}
-                paymentDateStart={paymentDateStart}
-                paymentDateEnd={paymentDateEnd}
-                onStartDateChange={setStartDate}
-                onEndDateChange={setEndDate}
-                onDueDateStartChange={setDueDateStart}
-                onDueDateEndChange={setDueDateEnd}
-                onPaymentDateStartChange={setPaymentDateStart}
-                onPaymentDateEndChange={setPaymentDateEnd}
-                selectedStatus={selectedStatus}
-                selectedPaymentMethod={selectedPaymentMethod}
-                selectedCustomerId={selectedCustomerId}
-                onStatusChange={setSelectedStatus}
-                onPaymentMethodChange={setSelectedPaymentMethod}
-                onCustomerChange={setSelectedCustomerId}
-                statusOptions={statusOptions}
-                paymentMethodOptions={paymentMethodOptions}
-                customers={customers}
-              />
-
-              <View style={styles.filterActions}>
-                <TouchableOpacity
-                  style={styles.clearFilterButton}
-                  onPress={() => {
-                    setStartDate(null);
-                    setEndDate(null);
-                    setDueDateStart(null);
-                    setDueDateEnd(null);
-                    setPaymentDateStart(null);
-                    setPaymentDateEnd(null);
-                    setSelectedStatus([]);
-                    setSelectedPaymentMethod([]);
-                    setSelectedCustomerId(null);
-                    setCurrentPage(1);
-                    setHasMoreData(true);
-                  }}
-                  disabled={!startDate && !endDate && !dueDateStart && !dueDateEnd && !paymentDateStart && !paymentDateEnd && selectedStatus.length === 0 && selectedPaymentMethod.length === 0 && !selectedCustomerId}
-                >
-                  <Ionicons name='close-circle-outline' size={16} color={(!startDate && !endDate && !dueDateStart && !dueDateEnd && !paymentDateStart && !paymentDateEnd && selectedStatus.length === 0 && selectedPaymentMethod.length === 0 && !selectedCustomerId) ? '#cbd5e1' : '#64748b'} />
-                  <Text style={[styles.clearFilterButtonText, (!startDate && !endDate && !dueDateStart && !dueDateEnd && !paymentDateStart && !paymentDateEnd && selectedStatus.length === 0 && selectedPaymentMethod.length === 0 && !selectedCustomerId) && styles.disabledText]}>
-                    Limpar
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.applyFilterButton}
-                  onPress={() => {
-                    setCurrentPage(1);
-                    setHasMoreData(true);
-                    loadSales(1, false);
-                    setShowDateFilter(false);
-                  }}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color='#ffffff' size='small' />
-                  ) : (
-                    <>
-                      <Ionicons name='search' size={16} color='#ffffff' />
-                      <Text style={styles.applyFilterButtonText}>Buscar</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        </View>
+        <SalesPeriodFilter
+          visible={showDateFilter}
+          onToggle={() => setShowDateFilter(!showDateFilter)}
+          startDate={startDate}
+          endDate={endDate}
+          dueDateStart={dueDateStart}
+          dueDateEnd={dueDateEnd}
+          paymentDateStart={paymentDateStart}
+          paymentDateEnd={paymentDateEnd}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onDueDateStartChange={setDueDateStart}
+          onDueDateEndChange={setDueDateEnd}
+          onPaymentDateStartChange={setPaymentDateStart}
+          onPaymentDateEndChange={setPaymentDateEnd}
+          selectedStatus={selectedStatus}
+          selectedPaymentMethod={selectedPaymentMethod}
+          selectedCustomerId={selectedCustomerId}
+          onStatusChange={setSelectedStatus}
+          onPaymentMethodChange={setSelectedPaymentMethod}
+          onCustomerChange={setSelectedCustomerId}
+          statusOptions={statusOptions}
+          paymentMethodOptions={paymentMethodOptions}
+          customers={customers}
+          onClear={() => {
+            setStartDate(null);
+            setEndDate(null);
+            setDueDateStart(null);
+            setDueDateEnd(null);
+            setPaymentDateStart(null);
+            setPaymentDateEnd(null);
+            setSelectedStatus([]);
+            setSelectedPaymentMethod([]);
+            setSelectedCustomerId(null);
+            setCurrentPage(1);
+            setHasMoreData(true);
+          }}
+          onApply={() => {
+            setCurrentPage(1);
+            setHasMoreData(true);
+            loadSales(1, false);
+            setShowDateFilter(false);
+          }}
+          isLoading={isLoading}
+          hasActiveFilters={
+            !!(startDate || endDate || dueDateStart || dueDateEnd || paymentDateStart || paymentDateEnd || selectedStatus.length > 0 || selectedPaymentMethod.length > 0 || selectedCustomerId)
+          }
+        />
 
         <SearchBar
           value={searchText}
@@ -505,6 +454,10 @@ export default function SalesList() {
         onClose={() => {
           setPreviewModalVisible(false);
           setSelectedSaleForPreview(null);
+
+          loadSales();
+        }}
+        onPaymentUpdate={() => {
         }}
       />
     </View>
@@ -515,135 +468,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
-  },
-  filterSection: {
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  filterToggleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  filterToggleText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1e293b',
-    flex: 1,
-  },
-  filterActiveBadge: {
-    marginLeft: 'auto',
-  },
-  periodFilterContainer: {
-    paddingHorizontal: 12,
-    paddingBottom: 12,
-    gap: 12,
-  },
-  subLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#475569',
-    marginTop: 4,
-  },
-  filterActions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 4,
-  },
-  clearFilterButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#f8fafc',
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  clearFilterButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  disabledText: {
-    color: '#cbd5e1',
-  },
-  applyFilterButton: {
-    flex: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#3b82f6',
-    paddingVertical: 8,
-    borderRadius: 6,
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  applyFilterButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  header: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  headerTitleContainer: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  searchInputContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1e293b',
-  },
-  clearButton: {
-    padding: 4,
   },
   resultsContainer: {
     paddingHorizontal: 20,

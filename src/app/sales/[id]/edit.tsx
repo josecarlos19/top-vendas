@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
-  Modal,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +20,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useInstallmentDatabase } from '@/database/models/Installment';
 import WorkArea from '@/components/WorkArea';
 import SearchableSelect from '@/components/SearchableSelect';
+import CollapsibleSection from '@/components/CollapsibleSection';
 import { formatDate } from '@/database/utils/formatDate';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -107,9 +107,6 @@ export default function EditSale() {
   const [isSaving, setIsSaving] = useState(false);
   const [firstDueDate, setFirstDueDate] = useState(new Date());
   const [showFirstDuePicker, setShowFirstDuePicker] = useState(false);
-  const [selectedInstallment, setSelectedInstallment] =
-    useState<Installment | null>(null);
-  const [showInstallmentModal, setShowInstallmentModal] = useState(false);
   const [paymentDate, setPaymentDate] = useState<Date | null>(null);
   const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
   const [saleDate, setSaleDate] = useState<Date | null>(null);
@@ -233,51 +230,6 @@ export default function EditSale() {
     return Math.max(0, getSubtotal() - getDiscountValue());
   };
 
-  const handleInstallment = async (status: statusTypes) => {
-    if (!selectedInstallment) {
-      return;
-    }
-
-    try {
-      await installmentDatabase.updateStatus({
-        id: selectedInstallment.id,
-        status,
-        payment_date: paymentDate!.toISOString(),
-      });
-
-      Alert.alert(
-        'Sucesso',
-        status === 'completed'
-          ? 'Pagamento registrado!'
-          : 'Pagamento revertido!'
-      );
-      setSale(prev =>
-        prev
-          ? {
-            ...prev,
-            installments: prev.installments?.map(inst =>
-              inst.id === selectedInstallment.id
-                ? {
-                  ...inst,
-                  status,
-                  payment_date:
-                    status === 'completed'
-                      ? paymentDate!.toISOString()
-                      : undefined,
-                }
-                : inst
-            ),
-          }
-          : prev
-      );
-
-      setShowInstallmentModal(false);
-      await loadSale();
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível atualizar a parcela.');
-    }
-  };
-
   const handlePaymentDateChange = async (date: Date) => {
     setPaymentDate(date);
     await installmentDatabase.updateStatus({
@@ -333,12 +285,6 @@ export default function EditSale() {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const openInstallmentModal = (inst: Installment) => () => {
-    setSelectedInstallment(inst);
-    setPaymentDate(new Date());
-    setShowInstallmentModal(true);
   };
 
   if (isLoading) {
@@ -495,17 +441,20 @@ export default function EditSale() {
               )}
 
               {sale?.installments && sale.installments.length > 0 && (
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Parcelas</Text>
+                <CollapsibleSection
+                  title="Parcelas"
+                  icon="list-outline"
+                  iconColor="#3b82f6"
+                  defaultCollapsed={true}
+                  badge={`${sale.installments.filter(i => i.status === 'completed').length}/${sale.installments.length} pagas`}
+                >
                   {sale.installments.map(inst => (
-                    <TouchableOpacity
+                    <View
                       key={inst.id}
                       style={[
                         styles.installmentItem,
                         inst.status === 'completed' && styles.installmentPaid,
                       ]}
-                      activeOpacity={0.7}
-                      onPress={openInstallmentModal(inst)}
                     >
                       <View>
                         <Text style={styles.installmentText}>
@@ -535,9 +484,9 @@ export default function EditSale() {
                       >
                         {inst.status === 'completed' ? 'Paga' : 'Pendente'}
                       </Text>
-                    </TouchableOpacity>
+                    </View>
                   ))}
-                </View>
+                </CollapsibleSection>
               )}
             </FormSection>
           )}
@@ -643,86 +592,6 @@ export default function EditSale() {
             )}
           </TouchableOpacity>
         </View>
-
-        <Modal
-          visible={showInstallmentModal}
-          transparent
-          animationType='slide'
-          onRequestClose={() => setShowInstallmentModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              {selectedInstallment && (
-                <>
-                  <Text style={styles.modalTitle}>
-                    {selectedInstallment.number}ª parcela
-                  </Text>
-                  <Text style={styles.modalAmount}>
-                    Valor: {formatCurrency(selectedInstallment.amount.toString())}
-                  </Text>
-                  <Text style={styles.modalDueDate}>
-                    Vencimento:{' '}
-                    {new Date(selectedInstallment.due_date).toLocaleDateString(
-                      'pt-BR'
-                    )}
-                  </Text>
-
-                  <Text style={styles.modalLabel}>Data do pagamento</Text>
-                  <TouchableOpacity
-                    style={styles.dateSelector}
-                    onPress={() => setShowPaymentDatePicker(true)}
-                  >
-                    <Text style={styles.dateText}>
-                      {paymentDate
-                        ? paymentDate.toLocaleDateString('pt-BR')
-                        : new Date().toLocaleDateString('pt-BR')}
-                    </Text>
-                    <Ionicons name='calendar-outline' size={20} color='#64748b' />
-                  </TouchableOpacity>
-
-                  {showPaymentDatePicker && (
-                    <DateTimePicker
-                      value={paymentDate ? paymentDate : new Date()}
-                      mode='date'
-                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                      onChange={(e, date) => {
-                        setShowPaymentDatePicker(false);
-                        if (date) setPaymentDate(date);
-                      }}
-                    />
-                  )}
-
-                  {selectedInstallment.status === 'pending' ? (
-                    <TouchableOpacity
-                      style={styles.confirmButton}
-                      onPress={() => handleInstallment('completed')}
-                    >
-                      <Text style={styles.confirmButtonText}>
-                        Confirmar pagamento
-                      </Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.revertButton}
-                      onPress={() => handleInstallment('pending')}
-                    >
-                      <Text style={styles.confirmButtonText}>
-                        Estornar pagamento
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={() => setShowInstallmentModal(false)}
-                  >
-                    <Text style={styles.closeButtonText}>Fechar</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          </View>
-        </Modal>
       </WorkArea>
     </SafeAreaView>
   );

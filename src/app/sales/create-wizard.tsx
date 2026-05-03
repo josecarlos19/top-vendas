@@ -56,10 +56,7 @@ const PAYMENT_METHODS = [
 type Step = 1 | 2 | 3 | 4;
 
 export default function CreateSaleWizard() {
-  // Controle de steps
   const [currentStep, setCurrentStep] = useState<Step>(1);
-
-  // Dados da venda
   const [customerId, setCustomerId] = useState<number | undefined>();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -643,6 +640,32 @@ export default function CreateSaleWizard() {
             {(paymentMethod === 'cash' || paymentMethod === 'pix') && (
               <>
                 <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Data da Venda</Text>
+                  <TouchableOpacity
+                    style={styles.selector}
+                    onPress={() => setShowSalePicker(true)}
+                    disabled={isLoading}
+                  >
+                    <Text style={styles.selectorText}>
+                      {saleDate.toLocaleDateString('pt-BR')}
+                    </Text>
+                    <Ionicons name='calendar-outline' size={24} color='#64748b' />
+                  </TouchableOpacity>
+
+                  {showSaleDatePicker && (
+                    <DateTimePicker
+                      value={saleDate}
+                      mode='date'
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={(event, date) => {
+                        setShowSalePicker(false);
+                        if (date) setSaleDate(date);
+                      }}
+                    />
+                  )}
+                </View>
+
+                <View style={styles.inputGroup}>
                   <View style={styles.switchContainer}>
                     <View style={styles.switchLabelContainer}>
                       <Ionicons name='checkmark-circle-outline' size={24} color='#22c55e' />
@@ -720,32 +743,6 @@ export default function CreateSaleWizard() {
                 )}
               </>
             )}
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Data da Venda</Text>
-              <TouchableOpacity
-                style={styles.selector}
-                onPress={() => setShowSalePicker(true)}
-                disabled={isLoading}
-              >
-                <Text style={styles.selectorText}>
-                  {saleDate.toLocaleDateString('pt-BR')}
-                </Text>
-                <Ionicons name='calendar-outline' size={24} color='#64748b' />
-              </TouchableOpacity>
-
-              {showSaleDatePicker && (
-                <DateTimePicker
-                  value={saleDate}
-                  mode='date'
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={(event, date) => {
-                    setShowSalePicker(false);
-                    if (date) setSaleDate(date);
-                  }}
-                />
-              )}
-            </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Observações (opcional)</Text>

@@ -5,33 +5,26 @@ import MultipleStatusFilter from '@/components/MultipleStatusFilter';
 import SearchableSelect from '@/components/SearchableSelect';
 
 interface SalesFiltersProps {
-  // Datas
   startDate: Date | null;
   endDate: Date | null;
   dueDateStart: Date | null;
   dueDateEnd: Date | null;
   paymentDateStart: Date | null;
   paymentDateEnd: Date | null;
-
-  // Handlers de datas
   onStartDateChange: (date: Date | null) => void;
   onEndDateChange: (date: Date | null) => void;
   onDueDateStartChange: (date: Date | null) => void;
   onDueDateEndChange: (date: Date | null) => void;
   onPaymentDateStartChange: (date: Date | null) => void;
   onPaymentDateEndChange: (date: Date | null) => void;
-
-  // Status e pagamento
   selectedStatus: string[];
   selectedPaymentMethod: string[];
   selectedCustomerId: number | null;
 
-  // Handlers de filtros
   onStatusChange: (status: string[]) => void;
   onPaymentMethodChange: (methods: string[]) => void;
   onCustomerChange: (customerId: number | null) => void;
 
-  // Opções
   statusOptions: Array<{ label: string; value: string; color: string }>;
   paymentMethodOptions: Array<{ label: string; value: string; color: string }>;
   customers: Array<{ id: number; name: string }>;

@@ -71,30 +71,25 @@ export function useSaleDatabase() {
         queryParams.push(params.dueDateEnd);
       }
 
-      // Filtro de status: suporta múltiplos valores ou exclui canceladas por padrão
       if (params?.status && params.status.length > 0) {
         const placeholders = params.status.map(() => '?').join(',');
         query += ` AND sales.status IN (${placeholders})`;
         queryParams.push(...params.status);
       } else {
-        // Por padrão, não mostrar vendas canceladas
         query += ` AND sales.status != 'cancelled'`;
       }
 
-      // Filtro de forma de pagamento: suporta múltiplos valores
       if (params?.paymentMethod && params.paymentMethod.length > 0) {
         const placeholders = params.paymentMethod.map(() => '?').join(',');
         query += ` AND sales.payment_method IN (${placeholders})`;
         queryParams.push(...params.paymentMethod);
       }
 
-      // Filtro por cliente
       if (params?.customerId) {
         query += ` AND sales.customer_id = ?`;
         queryParams.push(params.customerId);
       }
 
-      // Filtro por data de pagamento (primeira parcela paga)
       if (params?.paymentDateStart) {
         query += ` AND (
           SELECT payment_date
@@ -217,30 +212,25 @@ export function useSaleDatabase() {
         queryParams.push(params.dueDateEnd);
       }
 
-      // Filtro de status: suporta múltiplos valores ou exclui canceladas por padrão
       if (params?.status && params.status.length > 0) {
         const placeholders = params.status.map(() => '?').join(',');
         query += ` AND sales.status IN (${placeholders})`;
         queryParams.push(...params.status);
       } else {
-        // Por padrão, não mostrar vendas canceladas
         query += ` AND sales.status != 'cancelled'`;
       }
 
-      // Filtro de forma de pagamento: suporta múltiplos valores
       if (params?.paymentMethod && params.paymentMethod.length > 0) {
         const placeholders = params.paymentMethod.map(() => '?').join(',');
         query += ` AND sales.payment_method IN (${placeholders})`;
         queryParams.push(...params.paymentMethod);
       }
 
-      // Filtro por cliente
       if (params?.customerId) {
         query += ` AND sales.customer_id = ?`;
         queryParams.push(params.customerId);
       }
 
-      // Filtro por data de pagamento (primeira parcela paga)
       if (params?.paymentDateStart) {
         query += ` AND (
           SELECT payment_date

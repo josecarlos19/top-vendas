@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Share,
   ScrollView,
-  Alert,
   Platform,
   Image,
 } from 'react-native';
@@ -15,12 +14,27 @@ import { useRouter } from 'expo-router';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSQLiteContext } from 'expo-sqlite';
+import CustomDialog from './modals/CustomDialog';
+import PaymentDateModal from './modals/PaymentDateModal';
+import { useCustomDialog } from '@/hooks/useCustomDialog';
+import { useInstallmentDatabase } from '@/database/models/Installment';
+import { useSaleDatabase } from '@/database/models/Sale';
 
 interface SaleItem {
   product_name: string;
   quantity: number;
   unit_price: number;
   subtotal: number;
+}
+
+interface Installment {
+  id: number;
+  number: number;
+  amount: number;
+  due_date: string;
+  payment_date?: string;
+  status: string;
 }
 
 interface SalePreviewProps {
@@ -35,8 +49,10 @@ interface SalePreviewProps {
     installments?: number;
     paidInstallments?: number;
     totalInstallments?: number;
+    status?: string;
   };
   saleId: string;
+  onPaymentUpdate?: () => void;
 }
 
 const PAYMENT_METHOD_LABELS: { [key: string]: string } = {
@@ -62,7 +78,6 @@ const formatDate = (dateString: string) => {
 };
 
 const formatCurrencyFromNumber = (value: number): string => {
-  // Valores vêm em centavos, precisam ser divididos por 100
   const valueInReais = value / 100;
   return valueInReais.toLocaleString('pt-BR', {
     style: 'currency',
@@ -70,27 +85,64 @@ const formatCurrencyFromNumber = (value: number): string => {
   });
 };
 
-export default function SalePreview({ sale, saleId }: SalePreviewProps) {
+export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePreviewProps) {
   const router = useRouter();
   const viewShotRef = useRef<ViewShot>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollPositionRef = useRef(0);
   const insets = useSafeAreaInsets();
+  const dialog = useCustomDialog();
+  const database = useSQLiteContext();
+  const installmentDatabase = useInstallmentDatabase();
+  const saleDatabase = useSaleDatabase();
+  const [installments, setInstallments] = useState<Installment[]>([]);
+  const [isLoadingInstallments, setIsLoadingInstallments] = useState(false);
+  const paymentModalOpenRef = useRef(false);
+  const [saleStatus, setSaleStatus] = useState<string>(sale.status || 'pending');
+  const [showPaymentDateModal, setShowPaymentDateModal] = useState(false);
+  const [paymentAction, setPaymentAction] = useState<{
+    type: 'single' | 'installment' | 'all';
+    data?: Installment;
+  } | null>(null);
+
+  useEffect(() => {
+    if (sale.payment_method === 'installment') {
+      loadInstallments();
+    }
+  }, [sale.payment_method, saleId]);
+
+  const loadInstallments = async () => {
+    try {
+      setIsLoadingInstallments(true);
+      const result = await database.getAllAsync<Installment>(
+        `SELECT id, number, amount, due_date, payment_date, status
+         FROM installments
+         WHERE sale_id = ?
+         ORDER BY number ASC`,
+        [parseInt(saleId)]
+      );
+      setInstallments(result || []);
+    } catch (error) {
+      console.error('Error loading installments:', error);
+    } finally {
+      setIsLoadingInstallments(false);
+    }
+  };
 
   const handleShareImage = async () => {
     try {
       if (!viewShotRef.current) {
-        Alert.alert('Erro', 'Não foi possível capturar a imagem.');
+        dialog.showError('Erro', 'Não foi possível capturar a imagem.');
         return;
       }
 
-      // Capturar a view como imagem
       const uri = await viewShotRef.current.capture?.();
 
       if (!uri) {
-        Alert.alert('Erro', 'Não foi possível gerar a imagem.');
+        dialog.showError('Erro', 'Não foi possível gerar a imagem.');
         return;
       }
 
-      // Verificar se o compartilhamento está disponível
       const isAvailable = await Sharing.isAvailableAsync();
 
       if (isAvailable) {
@@ -99,10 +151,10 @@ export default function SalePreview({ sale, saleId }: SalePreviewProps) {
           dialogTitle: 'Compartilhar Comprovante',
         });
       } else {
-        Alert.alert('Erro', 'Compartilhamento não está disponível neste dispositivo.');
+        dialog.showError('Erro', 'Compartilhamento não está disponível neste dispositivo.');
       }
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível compartilhar a imagem.');
+      dialog.showError('Erro', 'Não foi possível compartilhar a imagem.');
       console.error('Erro ao compartilhar imagem:', error);
     }
   };
@@ -111,145 +163,469 @@ export default function SalePreview({ sale, saleId }: SalePreviewProps) {
     router.push(`/sales/${saleId}/edit`);
   };
 
+  const handlePayInstallment = (installment: Installment) => {
+    setPaymentAction({ type: 'installment', data: installment });
+    setShowPaymentDateModal(true);
+  };
+
+  const handleRevertPayment = (installment: Installment) => {
+    dialog.showConfirm(
+      'Reverter Pagamento',
+      `Tem certeza que deseja reverter o pagamento da parcela ${installment.number}?`,
+      async () => {
+        try {
+          await installmentDatabase.updateStatus({
+            id: installment.id,
+            status: 'pending',
+            payment_date: null,
+          });
+
+          setInstallments(prev =>
+            prev.map(inst =>
+              inst.id === installment.id
+                ? { ...inst, status: 'pending', payment_date: undefined }
+                : inst
+            )
+          );
+
+          if (onPaymentUpdate) {
+            onPaymentUpdate();
+          }
+
+          dialog.showSuccess('Sucesso', 'Pagamento revertido com sucesso!');
+        } catch (error) {
+          console.error('Error reverting payment:', error);
+          dialog.showError('Erro', 'Não foi possível reverter o pagamento.');
+          await loadInstallments();
+        }
+      },
+      dialog.hideDialog,
+      'Reverter',
+      'Cancelar'
+    );
+  };
+
+  const handlePaymentUpdate = async () => {
+    await loadInstallments();
+    if (onPaymentUpdate) {
+      onPaymentUpdate();
+    }
+  };
+
+  const handlePayAllInstallments = () => {
+    const pendingInstallments = installments.filter(inst => inst.status === 'pending');
+
+    if (pendingInstallments.length === 0) {
+      return;
+    }
+
+    setPaymentAction({ type: 'all' });
+    setShowPaymentDateModal(true);
+  };
+
+  const handlePaySingleSale = () => {
+    setPaymentAction({ type: 'single' });
+    setShowPaymentDateModal(true);
+  };
+
+  const handleRevertSingleSale = () => {
+    dialog.showConfirm(
+      'Reverter Pagamento',
+      'Tem certeza que deseja reverter o pagamento desta venda?',
+      async () => {
+        try {
+          await saleDatabase.updateStatus(parseInt(saleId), 'pending');
+          setSaleStatus('pending');
+
+          if (onPaymentUpdate) {
+            onPaymentUpdate();
+          }
+
+          dialog.showSuccess('Sucesso', 'Pagamento revertido com sucesso!');
+        } catch (error) {
+          console.error('Error reverting sale payment:', error);
+          dialog.showError('Erro', 'Não foi possível reverter o pagamento.');
+        }
+      },
+      dialog.hideDialog,
+      'Reverter',
+      'Cancelar'
+    );
+  };
+
+  const handleConfirmPayment = async (paymentDate: Date) => {
+    setShowPaymentDateModal(false);
+    const paymentDateISO = paymentDate.toISOString();
+
+    if (!paymentAction) return;
+
+    try {
+      if (paymentAction.type === 'installment' && paymentAction.data) {
+        const installment = paymentAction.data;
+
+        await installmentDatabase.updateStatus({
+          id: installment.id,
+          status: 'completed',
+          payment_date: paymentDateISO,
+        });
+
+        setInstallments(prev =>
+          prev.map(inst =>
+            inst.id === installment.id
+              ? { ...inst, status: 'completed', payment_date: paymentDateISO }
+              : inst
+          )
+        );
+
+        if (onPaymentUpdate) {
+          onPaymentUpdate();
+        }
+
+        dialog.showSuccess('Sucesso', 'Pagamento registrado com sucesso!');
+      } else if (paymentAction.type === 'all') {
+        const pendingInstallments = installments.filter(inst => inst.status === 'pending');
+        const count = pendingInstallments.length;
+
+        for (const installment of pendingInstallments) {
+          await installmentDatabase.updateStatus({
+            id: installment.id,
+            status: 'completed',
+            payment_date: paymentDateISO,
+          });
+        }
+
+        setInstallments(prev =>
+          prev.map(inst =>
+            inst.status === 'pending'
+              ? { ...inst, status: 'completed', payment_date: paymentDateISO }
+              : inst
+          )
+        );
+
+        if (onPaymentUpdate) {
+          onPaymentUpdate();
+        }
+
+        dialog.showSuccess('Sucesso', `${count} parcela${count > 1 ? 's' : ''} paga${count > 1 ? 's' : ''} com sucesso!`);
+      } else if (paymentAction.type === 'single') {
+        await saleDatabase.updateStatus(parseInt(saleId), 'completed');
+
+        setSaleStatus('completed');
+
+        if (onPaymentUpdate) {
+          onPaymentUpdate();
+        }
+
+        dialog.showSuccess('Sucesso', 'Pagamento registrado com sucesso!');
+      }
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      dialog.showError('Erro', 'Não foi possível registrar o pagamento.');
+
+      if (paymentAction.type !== 'single') {
+        await loadInstallments();
+      }
+    } finally {
+      setPaymentAction(null);
+    }
+  };
+
+  const formatInstallmentDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 80 + insets.bottom }]}
-      >
-        <ViewShot
-          ref={viewShotRef}
-          options={{
-            format: 'png',
-            quality: 1.0,
+    <>
+      <View style={styles.container}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 16 }]}
+          onScroll={(event) => {
+            scrollPositionRef.current = event.nativeEvent.contentOffset.y;
           }}
-          style={styles.captureContainer}
+          scrollEventThrottle={16}
         >
-          <View style={styles.previewCard}>
-            {/* Header compacto */}
-            <View style={styles.header}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="receipt-outline" size={24} color="#3b82f6" />
-              </View>
-              <Text style={styles.title}>Comprovante</Text>
-            </View>
-
-            {/* Cliente e Info em layout compacto */}
-            <View style={styles.compactInfoSection}>
-              <View style={styles.infoRow}>
-                <Ionicons name="person-outline" size={14} color="#64748b" />
-                <Text style={styles.infoText} numberOfLines={1}>
-                  {sale.customer_name || 'Cliente não informado'}
-                </Text>
-              </View>
-
-              <View style={styles.infoRow}>
-                <Ionicons name="calendar-outline" size={14} color="#64748b" />
-                <Text style={styles.infoText}>{formatDate(sale.sale_date)}</Text>
+          <ViewShot
+            ref={viewShotRef}
+            options={{
+              format: 'png',
+              quality: 1.0,
+            }}
+            style={styles.captureContainer}
+          >
+            <View style={styles.previewCard}>
+              {/* Header compacto */}
+              <View style={styles.header}>
+                <View style={styles.iconContainer}>
+                  <Ionicons name="receipt-outline" size={24} color="#3b82f6" />
+                </View>
+                <Text style={styles.title}>Comprovante</Text>
               </View>
 
-              <View style={styles.infoRow}>
-                <Ionicons name="card-outline" size={14} color="#64748b" />
-                <Text style={styles.infoText}>
-                  {PAYMENT_METHOD_LABELS[sale.payment_method] || sale.payment_method}
-                  {sale.payment_method === 'installment' && sale.totalInstallments && sale.totalInstallments > 0
-                    ? `: ${sale.paidInstallments || 0}/${sale.totalInstallments}`
-                    : sale.installments && sale.installments > 1
-                      ? ` (${sale.installments}x)`
-                      : ''}
-                </Text>
-              </View>
-            </View>
+              {/* Cliente e Info em layout compacto */}
+              <View style={styles.compactInfoSection}>
+                <View style={styles.infoRow}>
+                  <Ionicons name="person-outline" size={14} color="#64748b" />
+                  <Text style={styles.infoText} numberOfLines={1}>
+                    {sale.customer_name || 'Cliente não informado'}
+                  </Text>
+                </View>
 
-            {/* Lista de Produtos Compacta */}
-            <View style={styles.productsSection}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="bag-outline" size={14} color="#3b82f6" />
-                <Text style={styles.sectionTitle}>Produtos</Text>
+                <View style={styles.infoRow}>
+                  <Ionicons name="calendar-outline" size={14} color="#64748b" />
+                  <Text style={styles.infoText}>{formatDate(sale.sale_date)}</Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                  <Ionicons name="card-outline" size={14} color="#64748b" />
+                  <Text style={styles.infoText}>
+                    {PAYMENT_METHOD_LABELS[sale.payment_method] || sale.payment_method}
+                    {sale.payment_method === 'installment' && sale.totalInstallments && sale.totalInstallments > 0
+                      ? `: ${sale.paidInstallments || 0}/${sale.totalInstallments}`
+                      : sale.installments && sale.installments > 1
+                        ? ` (${sale.installments}x)`
+                        : ''}
+                  </Text>
+                </View>
               </View>
 
-              <View style={styles.itemsList}>
-                {sale.items.map((item, index) => (
-                  <View key={index} style={styles.itemRow}>
-                    <View style={styles.itemLeft}>
-                      <Text style={styles.itemName} numberOfLines={1}>
-                        {item.product_name}
-                      </Text>
-                      <Text style={styles.itemQuantity}>
-                        {item.quantity}x {formatCurrencyFromNumber(item.unit_price)}
+              {/* Lista de Produtos Compacta */}
+              <View style={styles.productsSection}>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="bag-outline" size={14} color="#3b82f6" />
+                  <Text style={styles.sectionTitle}>Produtos</Text>
+                </View>
+
+                <View style={styles.itemsList}>
+                  {sale.items.map((item, index) => (
+                    <View key={index} style={styles.itemRow}>
+                      <View style={styles.itemLeft}>
+                        <Text style={styles.itemName} numberOfLines={1}>
+                          {item.product_name}
+                        </Text>
+                        <Text style={styles.itemQuantity}>
+                          {item.quantity}x {formatCurrencyFromNumber(item.unit_price)}
+                        </Text>
+                      </View>
+                      <Text style={styles.itemSubtotal}>
+                        {formatCurrencyFromNumber(item.subtotal)}
                       </Text>
                     </View>
-                    <Text style={styles.itemSubtotal}>
-                      {formatCurrencyFromNumber(item.subtotal)}
+                  ))}
+                </View>
+              </View>
+
+              {/* Totais Compactos */}
+              <View style={styles.totalsSection}>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Subtotal</Text>
+                  <Text style={styles.totalValue}>
+                    {formatCurrencyFromNumber(sale.subtotal)}
+                  </Text>
+                </View>
+
+                {sale.discount > 0 && (
+                  <View style={styles.totalRow}>
+                    <Text style={styles.discountLabel}>Desconto</Text>
+                    <Text style={styles.discountValue}>
+                      -{formatCurrencyFromNumber(sale.discount)}
                     </Text>
+                  </View>
+                )}
+
+                <View style={styles.divider} />
+
+                <View style={styles.totalRow}>
+                  <Text style={styles.grandTotalLabel}>Total</Text>
+                  <Text style={styles.grandTotalValue}>
+                    {formatCurrencyFromNumber(sale.total)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.footer}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+                  <Image
+                    source={require('../../assets/images/favicon.png')}
+                    style={{ width: 28, height: 28, marginRight: 8, borderRadius: 6 }}
+                  />
+                  <Text style={{ fontWeight: '600', fontSize: 18, color: '#1e293b' }}>Top Vendas</Text>
+                </View>
+              </View>
+            </View>
+          </ViewShot>
+
+          {/* Seção de Parcelas */}
+          {sale.payment_method === 'installment' && installments.length > 0 && (
+            <View style={styles.installmentsContainer}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="list-outline" size={18} color="#3b82f6" />
+                <Text style={styles.sectionTitle}>Parcelas</Text>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {installments.filter(i => i.status === 'completed').length}/{installments.length} pagas
+                  </Text>
+                </View>
+              </View>
+
+              {/* Botão Pagar Todas */}
+              {installments.some(i => i.status === 'pending') && (
+                <TouchableOpacity
+                  style={styles.payAllButton}
+                  onPress={handlePayAllInstallments}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="checkmark-done-circle" size={20} color="#ffffff" />
+                  <Text style={styles.payAllButtonText}>Pagar Todas as Parcelas Pendentes</Text>
+                </TouchableOpacity>
+              )}
+
+              <View style={styles.installmentsList}>
+                {installments.map((installment) => (
+                  <View key={installment.id} style={styles.installmentRow}>
+                    <View style={styles.installmentLeft}>
+                      <View style={styles.installmentHeader}>
+                        <Text style={styles.installmentNumber}>
+                          Parcela {installment.number}
+                        </Text>
+                        <View
+                          style={[
+                            styles.statusBadge,
+                            installment.status === 'completed'
+                              ? styles.statusBadgePaid
+                              : styles.statusBadgePending,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.statusBadgeText,
+                              installment.status === 'completed'
+                                ? styles.statusBadgeTextPaid
+                                : styles.statusBadgeTextPending,
+                            ]}
+                          >
+                            {installment.status === 'completed' ? 'Paga' : 'Pendente'}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.installmentDate}>
+                        {installment.payment_date
+                          ? `Pago em ${formatInstallmentDate(installment.payment_date)}`
+                          : `Vence em ${formatInstallmentDate(installment.due_date)}`}
+                      </Text>
+                      <Text style={styles.installmentAmount}>
+                        {formatCurrencyFromNumber(installment.amount)}
+                      </Text>
+                    </View>
+                    <View style={styles.installmentActions}>
+                      {installment.status === 'completed' ? (
+                        <TouchableOpacity
+                          style={styles.revertButton}
+                          onPress={() => handleRevertPayment(installment)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="arrow-undo" size={18} color="#ef4444" />
+                          <Text style={styles.revertButtonText}>Reverter</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.payInstallmentButton}
+                          onPress={() => handlePayInstallment(installment)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="checkmark-circle" size={18} color="#ffffff" />
+                          <Text style={styles.payInstallmentButtonText}>Pagar</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                 ))}
               </View>
             </View>
+          )}
+        </ScrollView>
 
-            {/* Totais Compactos */}
-            <View style={styles.totalsSection}>
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Subtotal</Text>
-                <Text style={styles.totalValue}>
-                  {formatCurrencyFromNumber(sale.subtotal)}
-                </Text>
-              </View>
+        {/* Botões de Ação */}
+        <View style={styles.actionsContainer}>
+          {/* Botões de Pagamento (para vendas não parceladas) */}
+          {sale.payment_method !== 'installment' && (
+            saleStatus === 'pending' ? (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.payButton]}
+                onPress={handlePaySingleSale}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="checkmark-circle" size={18} color="#ffffff" />
+                <Text style={styles.actionButtonText}>Pagar</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.revertSaleButton]}
+                onPress={handleRevertSingleSale}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="arrow-undo" size={18} color="#ef4444" />
+                <Text style={styles.revertSaleButtonText}>Reverter</Text>
+              </TouchableOpacity>
+            )
+          )}
 
-              {sale.discount > 0 && (
-                <View style={styles.totalRow}>
-                  <Text style={styles.discountLabel}>Desconto</Text>
-                  <Text style={styles.discountValue}>
-                    -{formatCurrencyFromNumber(sale.discount)}
-                  </Text>
-                </View>
-              )}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.editButton]}
+            onPress={handleEditSale}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="pencil" size={18} color="#ffffff" />
+            <Text style={styles.actionButtonText}>Editar</Text>
+          </TouchableOpacity>
 
-              <View style={styles.divider} />
-
-              <View style={styles.totalRow}>
-                <Text style={styles.grandTotalLabel}>Total</Text>
-                <Text style={styles.grandTotalValue}>
-                  {formatCurrencyFromNumber(sale.total)}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.footer}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
-                <Image
-                  source={require('../../assets/images/favicon.png')}
-                  style={{ width: 28, height: 28, marginRight: 8, borderRadius: 6 }}
-                />
-                <Text style={{ fontWeight: '600', fontSize: 18, color: '#1e293b' }}>Top Vendas</Text>
-              </View>
-            </View>
-          </View>
-        </ViewShot>
-      </ScrollView>
-
-      {/* Botões de Ação */}
-      <View style={[styles.actionsContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.editButton]}
-          onPress={handleEditSale}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="pencil" size={18} color="#ffffff" />
-          <Text style={styles.actionButtonText}>Editar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.shareButton]}
-          onPress={handleShareImage}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="camera" size={18} color="#ffffff" />
-          <Text style={styles.actionButtonText}>Compartilhar</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.shareButton]}
+            onPress={handleShareImage}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="camera" size={18} color="#ffffff" />
+            <Text style={styles.actionButtonText}>Compartilhar</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+
+      {/* Modal de seleção de data */}
+      <PaymentDateModal
+        visible={showPaymentDateModal}
+        onConfirm={handleConfirmPayment}
+        onCancel={() => {
+          setShowPaymentDateModal(false);
+          setPaymentAction(null);
+        }}
+        title="Selecionar Data de Pagamento"
+        message={paymentAction?.type === 'all'
+          ? `Escolha a data de pagamento para ${installments.filter(i => i.status === 'pending').length} parcela(s) pendente(s):`
+          : paymentAction?.type === 'installment' && paymentAction.data
+            ? `Escolha a data de pagamento da parcela ${paymentAction.data.number}:`
+            : 'Escolha a data em que o pagamento foi ou será realizado:'}
+      />
+
+      <CustomDialog
+        visible={dialog.config.visible}
+        title={dialog.config.title}
+        message={dialog.config.message}
+        icon={dialog.config.icon}
+        iconColor={dialog.config.iconColor}
+        buttons={dialog.config.buttons}
+        onClose={dialog.hideDialog}
+      />
+    </>
   );
 }
 
@@ -257,7 +633,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
-    paddingBottom: 0,
   },
   scrollView: {
     flex: 1,
@@ -327,7 +702,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 13,
@@ -433,33 +808,37 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingTop: 12,
     gap: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(226, 232, 240, 0.8)',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    borderTopColor: '#e2e8f0',
   },
   actionButton: {
     flex: 1,
     borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
   },
   editButton: {
     backgroundColor: '#f59e0b',
+  },
+  payButton: {
+    backgroundColor: '#22c55e',
+  },
+  revertSaleButton: {
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  revertSaleButtonText: {
+    color: '#ef4444',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   shareButton: {
     backgroundColor: '#3b82f6',
@@ -467,7 +846,145 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: '#ffffff',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
     marginLeft: 6,
+  },
+  badge: {
+    backgroundColor: '#dbeafe',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginLeft: 'auto',
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#3b82f6',
+  },
+  installmentsContainer: {
+    marginTop: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  payAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginTop: 12,
+    marginBottom: 12,
+    gap: 8,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  payAllButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  installmentsList: {
+    gap: 8,
+  },
+  installmentRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  installmentLeft: {
+    flex: 1,
+    marginRight: 12,
+  },
+  installmentActions: {
+    justifyContent: 'center',
+  },
+  payInstallmentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+  },
+  payInstallmentButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  revertButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    gap: 6,
+  },
+  revertButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#ef4444',
+  },
+  installmentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  installmentNumber: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginRight: 8,
+  },
+  installmentDate: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  installmentAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#3b82f6',
+    marginTop: 4,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  statusBadgePaid: {
+    backgroundColor: '#dcfce7',
+  },
+  statusBadgePending: {
+    backgroundColor: '#f1f5f9',
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  statusBadgeTextPaid: {
+    color: '#16a34a',
+  },
+  statusBadgeTextPending: {
+    color: '#64748b',
   },
 });

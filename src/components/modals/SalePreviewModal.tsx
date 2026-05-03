@@ -16,11 +16,13 @@ interface SalePreviewModalProps {
     sale_date: string;
     payment_method: string;
     installments: number;
+    status?: string;
   } | null;
   onClose: () => void;
+  onPaymentUpdate?: () => void;
 }
 
-export default function SalePreviewModal({ visible, sale, onClose }: SalePreviewModalProps) {
+export default function SalePreviewModal({ visible, sale, onClose, onPaymentUpdate }: SalePreviewModalProps) {
   const database = useSQLiteContext();
   const [paidInstallments, setPaidInstallments] = useState(0);
   const [totalInstallments, setTotalInstallments] = useState(0);
@@ -61,12 +63,12 @@ export default function SalePreviewModal({ visible, sale, onClose }: SalePreview
 
   if (!sale) return null;
 
-  // Garantir que items não seja undefined
   const saleWithItems = {
     ...sale,
     items: sale.items || [],
     paidInstallments,
     totalInstallments,
+    status: sale.status,
   };
 
   return (
@@ -91,7 +93,14 @@ export default function SalePreviewModal({ visible, sale, onClose }: SalePreview
             <Text style={styles.loadingText}>Carregando informações...</Text>
           </View>
         ) : (
-          <SalePreview sale={saleWithItems} saleId={String(sale.id)} />
+          <SalePreview
+            sale={saleWithItems}
+            saleId={String(sale.id)}
+            onPaymentUpdate={async () => {
+              await loadInstallmentsInfo();
+              onPaymentUpdate?.();
+            }}
+          />
         )}
       </View>
     </Modal>
