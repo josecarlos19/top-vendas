@@ -14,8 +14,6 @@ import { router, useFocusEffect } from 'expo-router';
 import { useSaleDatabase } from '@/database/models/Sale';
 import { useCustomerDatabase } from '@/database/models/Customer';
 import { SaleSearchInterface } from '@/interfaces/models/saleInterface';
-import formatCurrency from '@/components/utils/formatCurrency';
-import WorkArea from '@/components/WorkArea';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SearchBar } from '@/components/SearchBar';
