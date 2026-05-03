@@ -54,14 +54,17 @@ export default function SalesFilters({
   customers,
 }: SalesFiltersProps) {
   // Detectar automaticamente qual tipo de filtro está ativo baseado nos valores
-  const getInitialFilterType = (): 'sale' | 'due' => {
+  const getInitialFilterType = (): 'sale' | 'due' | 'payment' => {
     if (dueDateStart || dueDateEnd) {
       return 'due';
+    }
+    if (paymentDateStart || paymentDateEnd) {
+      return 'payment';
     }
     return 'sale'; // Padrão
   };
 
-  const [dateFilterType, setDateFilterType] = useState<'sale' | 'due'>(getInitialFilterType());
+  const [dateFilterType, setDateFilterType] = useState<'sale' | 'due' | 'payment'>(getInitialFilterType());
 
   // Sincronizar o tipo de filtro quando as props mudarem (ex: ao limpar filtros)
   useEffect(() => {
@@ -69,35 +72,30 @@ export default function SalesFilters({
     if (newType !== dateFilterType) {
       setDateFilterType(newType);
     }
-  }, [startDate, endDate, dueDateStart, dueDateEnd]);
+  }, [startDate, endDate, dueDateStart, dueDateEnd, paymentDateStart, paymentDateEnd]);
 
-  const handleDateFilterTypeChange = (type: 'sale' | 'due') => {
+  const handleDateFilterTypeChange = (type: 'sale' | 'due' | 'payment') => {
     setDateFilterType(type);
-    // Limpar os filtros do tipo não selecionado
+    // Limpar os filtros dos tipos não selecionados
     if (type === 'sale') {
       onDueDateStartChange(null);
       onDueDateEndChange(null);
-      // Inicializar datas de venda se estiverem vazias
-      if (!startDate && !endDate) {
-        const defaultStart = new Date();
-        defaultStart.setDate(defaultStart.getDate() - 30);
-        const defaultEnd = new Date();
-        onStartDateChange(defaultStart);
-        onEndDateChange(defaultEnd);
-      }
+      onPaymentDateStartChange(null);
+      onPaymentDateEndChange(null);
+    } else if (type === 'due') {
+      onStartDateChange(null);
+      onEndDateChange(null);
+      onPaymentDateStartChange(null);
+      onPaymentDateEndChange(null);
     } else {
       onStartDateChange(null);
       onEndDateChange(null);
-      // Inicializar datas de vencimento se estiverem vazias
-      if (!dueDateStart && !dueDateEnd) {
-        const today = new Date();
-        onDueDateStartChange(today);
-        onDueDateEndChange(today);
-      }
+      onDueDateStartChange(null);
+      onDueDateEndChange(null);
     }
   };
 
-  // Garantir que os valores padrão existam para o PeriodFilter
+  // Usar data atual como fallback apenas para exibição do PeriodFilter
   const getSafeDate = (date: Date | null): Date => {
     return date || new Date();
   };
@@ -127,6 +125,16 @@ export default function SalesFilters({
             </View>
             <Text style={styles.radioLabel}>Data de Vencimento</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.radioOption}
+            onPress={() => handleDateFilterTypeChange('payment')}
+          >
+            <View style={styles.radioButton}>
+              {dateFilterType === 'payment' && <View style={styles.radioButtonInner} />}
+            </View>
+            <Text style={styles.radioLabel}>Data de Pagamento</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -135,14 +143,10 @@ export default function SalesFilters({
         <>
           <Text style={styles.subLabel}>Período da Venda</Text>
           <PeriodFilter
-            startDate={getSafeDate(startDate)}
-            endDate={getSafeDate(endDate)}
-            onStartDateChange={(date) => {
-              onStartDateChange(date);
-            }}
-            onEndDateChange={(date) => {
-              onEndDateChange(date);
-            }}
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={onStartDateChange}
+            onEndDateChange={onEndDateChange}
           />
         </>
       )}
@@ -152,14 +156,23 @@ export default function SalesFilters({
         <>
           <Text style={styles.subLabel}>Data de Vencimento</Text>
           <PeriodFilter
-            startDate={getSafeDate(dueDateStart)}
-            endDate={getSafeDate(dueDateEnd)}
-            onStartDateChange={(date) => {
-              onDueDateStartChange(date);
-            }}
-            onEndDateChange={(date) => {
-              onDueDateEndChange(date);
-            }}
+            startDate={dueDateStart}
+            endDate={dueDateEnd}
+            onStartDateChange={onDueDateStartChange}
+            onEndDateChange={onDueDateEndChange}
+          />
+        </>
+      )}
+
+      {/* Data de Pagamento - mostrado apenas se selecionado */}
+      {dateFilterType === 'payment' && (
+        <>
+          <Text style={styles.subLabel}>Data de Pagamento</Text>
+          <PeriodFilter
+            startDate={paymentDateStart}
+            endDate={paymentDateEnd}
+            onStartDateChange={onPaymentDateStartChange}
+            onEndDateChange={onPaymentDateEndChange}
           />
         </>
       )}
@@ -187,15 +200,6 @@ export default function SalesFilters({
         onValueChange={(value) => onCustomerChange(value ? Number(value) : null)}
         options={customers.map(c => ({ label: c.name, value: c.id.toString() }))}
         placeholder="Todos os clientes"
-      />
-
-      {/* Data de Pagamento */}
-      <Text style={styles.subLabel}>Data de Pagamento</Text>
-      <PeriodFilter
-        startDate={paymentDateStart || new Date()}
-        endDate={paymentDateEnd || new Date()}
-        onStartDateChange={onPaymentDateStartChange}
-        onEndDateChange={onPaymentDateEndChange}
       />
     </View>
   );

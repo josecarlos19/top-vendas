@@ -10,10 +10,10 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface PeriodFilterProps {
-  startDate: Date;
-  endDate: Date;
-  onStartDateChange: (date: Date) => void;
-  onEndDateChange: (date: Date) => void;
+  startDate: Date | null;
+  endDate: Date | null;
+  onStartDateChange: (date: Date | null) => void;
+  onEndDateChange: (date: Date | null) => void;
 }
 
 export default function PeriodFilter({
@@ -25,7 +25,8 @@ export default function PeriodFilter({
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | null) => {
+    if (!date) return 'Selecione';
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -43,7 +44,9 @@ export default function PeriodFilter({
             onPress={() => setShowStartPicker(true)}
           >
             <Ionicons name="calendar-outline" size={20} color="#64748b" />
-            <Text style={styles.dateText}>{formatDate(startDate)}</Text>
+            <Text style={[styles.dateText, !startDate && styles.placeholderText]}>
+              {formatDate(startDate)}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -54,14 +57,16 @@ export default function PeriodFilter({
             onPress={() => setShowEndPicker(true)}
           >
             <Ionicons name="calendar-outline" size={20} color="#64748b" />
-            <Text style={styles.dateText}>{formatDate(endDate)}</Text>
+            <Text style={[styles.dateText, !endDate && styles.placeholderText]}>
+              {formatDate(endDate)}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {showStartPicker && (
         <DateTimePicker
-          value={startDate}
+          value={startDate || new Date()}
           mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={(event, date) => {
@@ -73,7 +78,7 @@ export default function PeriodFilter({
 
       {showEndPicker && (
         <DateTimePicker
-          value={endDate}
+          value={endDate || new Date()}
           mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={(event, date) => {
@@ -125,5 +130,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#1e293b',
     fontWeight: '500',
+  },
+  placeholderText: {
+    color: '#94a3b8',
+    fontWeight: '400',
   },
 });

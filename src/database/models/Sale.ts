@@ -112,7 +112,7 @@ export function useSaleDatabase() {
         queryParams.push(params.paymentDateEnd);
       }
 
-      if (!params?.startDate && !params?.endDate && !params?.dueDateStart && !params?.dueDateEnd) {
+      if (!params?.startDate && !params?.endDate && !params?.dueDateStart && !params?.dueDateEnd && !params?.paymentDateStart && !params?.paymentDateEnd) {
         const today = DateTime.now().toISODate();
         const thirtyDaysAgo = DateTime.now().minus({ days: 30 }).toISODate();
         query += ` AND DATE(sales.sale_date) >= DATE(?)`;
@@ -128,7 +128,7 @@ export function useSaleDatabase() {
         query += ' LIMIT ? OFFSET ?';
         queryParams.push(params.perPage, offset);
       }
-
+      console.log(query, queryParams);
       const sales = await database.getAllAsync(query, queryParams);
 
       const salesWithItems = await Promise.all(
