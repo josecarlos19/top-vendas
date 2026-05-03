@@ -253,6 +253,31 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
     );
   };
 
+  const handleCancelSale = () => {
+    dialog.showConfirm(
+      'Cancelar Venda',
+      'Tem certeza que deseja cancelar esta venda? Esta ação pode ser revertida editando a venda.',
+      async () => {
+        try {
+          await saleDatabase.updateStatus(parseInt(saleId), 'cancelled');
+          setSaleStatus('cancelled');
+
+          if (onPaymentUpdate) {
+            onPaymentUpdate();
+          }
+
+          dialog.showSuccess('Sucesso', 'Venda cancelada com sucesso!');
+        } catch (error) {
+          console.error('Error cancelling sale:', error);
+          dialog.showError('Erro', 'Não foi possível cancelar a venda.');
+        }
+      },
+      dialog.hideDialog,
+      'Cancelar Venda',
+      'Voltar'
+    );
+  };
+
   const handleConfirmPayment = async (paymentDate: Date) => {
     setShowPaymentDateModal(false);
     const paymentDateISO = paymentDate.toISOString();
@@ -370,9 +395,12 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
                   <Ionicons name="receipt-outline" size={24} color="#3b82f6" />
                 </View>
                 <Text style={styles.title}>Comprovante</Text>
+                {saleStatus === 'cancelled' && (
+                  <View style={styles.cancelledBadge}>
+                    <Text style={styles.cancelledBadgeText}>CANCELADA</Text>
+                  </View>
+                )}
               </View>
-
-              {/* Cliente e Info em layout compacto */}
               <View style={styles.compactInfoSection}>
                 <View style={styles.infoRow}>
                   <Ionicons name="person-outline" size={14} color="#64748b" />
@@ -465,6 +493,16 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
             </View>
           </ViewShot>
 
+
+          <TouchableOpacity
+            style={styles.shareButtonInline}
+            onPress={handleShareImage}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="share-outline" size={20} color="#3b82f6" />
+            <Text style={styles.shareButtonInlineText}>Compartilhar Comprovante</Text>
+          </TouchableOpacity>
+
           {/* Seção de Parcelas */}
           {sale.payment_method === 'installment' && installments.length > 0 && (
             <View style={styles.installmentsContainer}>
@@ -535,7 +573,7 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
                           activeOpacity={0.7}
                         >
                           <Ionicons name="arrow-undo" size={18} color="#ef4444" />
-                          <Text style={styles.revertButtonText}>Reverter</Text>
+                          <Text style={styles.revertButtonText}>Reverter Pagamento</Text>
                         </TouchableOpacity>
                       ) : (
                         <TouchableOpacity
@@ -555,48 +593,51 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
           )}
         </ScrollView>
 
-        {/* Botões de Ação */}
+
         <View style={styles.actionsContainer}>
-          {/* Botões de Pagamento (para vendas não parceladas) */}
-          {sale.payment_method !== 'installment' && (
-            saleStatus === 'pending' ? (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.payButton]}
-                onPress={handlePaySingleSale}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="checkmark-circle" size={18} color="#ffffff" />
-                <Text style={styles.actionButtonText}>Pagar</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.revertSaleButton]}
-                onPress={handleRevertSingleSale}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="arrow-undo" size={18} color="#ef4444" />
-                <Text style={styles.revertSaleButtonText}>Reverter</Text>
-              </TouchableOpacity>
-            )
+          <View style={styles.actionsRow}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.editButton]}
+              onPress={handleEditSale}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="pencil" size={18} color="#ffffff" />
+              <Text style={styles.actionButtonText}>Editar</Text>
+            </TouchableOpacity>
+
+            {sale.payment_method !== 'installment' && (
+              saleStatus === 'pending' ? (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.payButton]}
+                  onPress={handlePaySingleSale}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="checkmark-circle" size={18} color="#ffffff" />
+                  <Text style={styles.actionButtonText}>Pagar</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.revertSaleButton]}
+                  onPress={handleRevertSingleSale}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="arrow-undo" size={18} color="#ef4444" />
+                  <Text style={styles.revertSaleButtonText}>Reverter Pagamento</Text>
+                </TouchableOpacity>
+              )
+            )}
+          </View>
+
+          {saleStatus !== 'cancelled' && (
+            <TouchableOpacity
+              style={styles.cancelSaleButton}
+              onPress={handleCancelSale}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="close-circle-outline" size={16} color="#dc2626" />
+              <Text style={styles.cancelSaleButtonText}>Cancelar Venda</Text>
+            </TouchableOpacity>
           )}
-
-          <TouchableOpacity
-            style={[styles.actionButton, styles.editButton]}
-            onPress={handleEditSale}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="pencil" size={18} color="#ffffff" />
-            <Text style={styles.actionButtonText}>Editar</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.actionButton, styles.shareButton]}
-            onPress={handleShareImage}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="camera" size={18} color="#ffffff" />
-            <Text style={styles.actionButtonText}>Compartilhar</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -675,6 +716,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#1e293b',
+  },
+  cancelledBadge: {
+    backgroundColor: '#fee2e2',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 'auto',
+  },
+  cancelledBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#dc2626',
+  },
+  shareButtonInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    borderRadius: 10,
+    paddingVertical: 12,
+    marginTop: 12,
+    gap: 8,
+  },
+  shareButtonInlineText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#3b82f6',
   },
   compactInfoSection: {
     backgroundColor: '#f8fafc',
@@ -807,13 +877,17 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   actionsContainer: {
-    flexDirection: 'row',
-    gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: 8,
     backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
+    gap: 6,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
   },
   actionButton: {
     flex: 1,
@@ -824,24 +898,58 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   editButton: {
-    backgroundColor: '#f59e0b',
+    backgroundColor: '#3b82f6',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   payButton: {
-    backgroundColor: '#22c55e',
+    backgroundColor: '#10b981',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   revertSaleButton: {
+    backgroundColor: '#fff7ed',
+    borderWidth: 1,
+    borderColor: '#fed7aa',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  revertSaleButtonText: {
+    color: '#ea580c',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  cancelSaleButton: {
     backgroundColor: '#fef2f2',
     borderWidth: 1,
     borderColor: '#fecaca',
+    borderRadius: 8,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
   },
-  revertSaleButtonText: {
-    color: '#ef4444',
-    fontSize: 14,
+  cancelSaleButtonText: {
+    color: '#dc2626',
+    fontSize: 13,
     fontWeight: '600',
     marginLeft: 6,
-  },
-  shareButton: {
-    backgroundColor: '#3b82f6',
   },
   actionButtonText: {
     color: '#ffffff',
@@ -929,20 +1037,19 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   revertButton: {
+    backgroundColor: '#f97316',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef2f2',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#fecaca',
+    justifyContent: 'center',
     gap: 6,
   },
   revertButtonText: {
-    fontSize: 13,
+    color: '#ffffff',
+    fontSize: 14,
     fontWeight: '600',
-    color: '#ef4444',
   },
   installmentHeader: {
     flexDirection: 'row',

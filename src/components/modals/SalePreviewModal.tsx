@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSQLiteContext } from 'expo-sqlite';
 import SalePreview from '@/components/SalePreview';
@@ -78,36 +79,42 @@ export default function SalePreviewModal({ visible, sale, onClose, onPaymentUpda
       transparent={false}
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={28} color="#64748b" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Detalhes da Venda</Text>
-          <View style={styles.placeholder} />
-        </View>
-
-        {isLoadingInstallments && sale.payment_method === 'installment' ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#667eea" />
-            <Text style={styles.loadingText}>Carregando informações...</Text>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Ionicons name="close" size={28} color="#64748b" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Detalhes da Venda</Text>
+            <View style={styles.placeholder} />
           </View>
-        ) : (
-          <SalePreview
-            sale={saleWithItems}
-            saleId={String(sale.id)}
-            onPaymentUpdate={async () => {
-              await loadInstallmentsInfo();
-              onPaymentUpdate?.();
-            }}
-          />
-        )}
-      </View>
+
+          {isLoadingInstallments && sale.payment_method === 'installment' ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#667eea" />
+              <Text style={styles.loadingText}>Carregando informações...</Text>
+            </View>
+          ) : (
+            <SalePreview
+              sale={saleWithItems}
+              saleId={String(sale.id)}
+              onPaymentUpdate={async () => {
+                await loadInstallmentsInfo();
+                onPaymentUpdate?.();
+              }}
+            />
+          )}
+        </View>
+      </SafeAreaView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
@@ -121,7 +128,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
-    paddingTop: 60,
   },
   closeButton: {
     padding: 4,
