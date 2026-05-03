@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   Platform,
   TouchableOpacity,
   ActivityIndicator,
@@ -22,6 +21,7 @@ import { DateTime } from 'luxon';
 import WorkArea from '@/components/WorkArea';
 import SearchableSelect from '@/components/SearchableSelect';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 interface Customer {
   id: number;
@@ -73,6 +73,14 @@ export default function CreateSaleWizard() {
   const [paymentDate, setPaymentDate] = useState<Date | undefined>();
   const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
   const [markAsCompleted, setMarkAsCompleted] = useState(false);
+
+  // CustomDialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogIcon, setDialogIcon] = useState<any>('information-circle');
+  const [dialogIconColor, setDialogIconColor] = useState('#3b82f6');
+  const [dialogButtons, setDialogButtons] = useState<any[]>([]);
 
   const saleDatabase = useSaleDatabase();
   const customerDatabase = useCustomerDatabase();
@@ -157,7 +165,18 @@ export default function CreateSaleWizard() {
     const availableStock = product.current_stock ?? 0;
 
     if (availableStock <= 0) {
-      Alert.alert('Estoque insuficiente', 'Este produto não possui estoque disponível.');
+      setDialogTitle('Estoque insuficiente');
+      setDialogMessage('Este produto não possui estoque disponível.');
+      setDialogIcon('warning');
+      setDialogIconColor('#f59e0b');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'primary',
+        },
+      ]);
+      setDialogVisible(true);
       return;
     }
 
@@ -167,10 +186,20 @@ export default function CreateSaleWizard() {
       const newQuantity = existingItem.quantity + 1;
 
       if (newQuantity > availableStock) {
-        Alert.alert(
-          'Estoque insuficiente',
+        setDialogTitle('Estoque insuficiente');
+        setDialogMessage(
           `Apenas ${availableStock} unidade${availableStock > 1 ? 's' : ''} disponível${availableStock > 1 ? 'eis' : ''} para este produto.`
         );
+        setDialogIcon('warning');
+        setDialogIconColor('#f59e0b');
+        setDialogButtons([
+          {
+            text: 'OK',
+            onPress: () => setDialogVisible(false),
+            style: 'primary',
+          },
+        ]);
+        setDialogVisible(true);
         return;
       }
 
@@ -196,10 +225,20 @@ export default function CreateSaleWizard() {
     const availableStock = product?.current_stock ?? 0;
 
     if (newQuantity > availableStock) {
-      Alert.alert(
-        'Estoque insuficiente',
+      setDialogTitle('Estoque insuficiente');
+      setDialogMessage(
         `Este produto possui apenas ${availableStock} unidade${availableStock !== 1 ? 's' : ''} em estoque.`
       );
+      setDialogIcon('warning');
+      setDialogIconColor('#f59e0b');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'primary',
+        },
+      ]);
+      setDialogVisible(true);
       return;
     }
 
@@ -224,32 +263,87 @@ export default function CreateSaleWizard() {
     switch (step) {
       case 1:
         if (!customerId) {
-          Alert.alert('Atenção', 'Por favor, selecione um cliente antes de continuar.');
+          setDialogTitle('Atenção');
+          setDialogMessage('Por favor, selecione um cliente antes de continuar.');
+          setDialogIcon('information-circle');
+          setDialogIconColor('#3b82f6');
+          setDialogButtons([
+            {
+              text: 'OK',
+              onPress: () => setDialogVisible(false),
+              style: 'primary',
+            },
+          ]);
+          setDialogVisible(true);
           return false;
         }
         return true;
 
       case 2:
         if (items.length === 0) {
-          Alert.alert('Atenção', 'Por favor, adicione pelo menos um produto antes de continuar.');
+          setDialogTitle('Atenção');
+          setDialogMessage('Por favor, adicione pelo menos um produto antes de continuar.');
+          setDialogIcon('information-circle');
+          setDialogIconColor('#3b82f6');
+          setDialogButtons([
+            {
+              text: 'OK',
+              onPress: () => setDialogVisible(false),
+              style: 'primary',
+            },
+          ]);
+          setDialogVisible(true);
           return false;
         }
         return true;
 
       case 3:
         if (getTotal() <= 0) {
-          Alert.alert('Atenção', 'O total da venda deve ser maior que zero.');
+          setDialogTitle('Atenção');
+          setDialogMessage('O total da venda deve ser maior que zero.');
+          setDialogIcon('information-circle');
+          setDialogIconColor('#3b82f6');
+          setDialogButtons([
+            {
+              text: 'OK',
+              onPress: () => setDialogVisible(false),
+              style: 'primary',
+            },
+          ]);
+          setDialogVisible(true);
           return false;
         }
         return true;
 
       case 4:
         if (!paymentMethod) {
-          Alert.alert('Atenção', 'Por favor, selecione uma forma de pagamento.');
+          setDialogTitle('Atenção');
+          setDialogMessage('Por favor, selecione uma forma de pagamento.');
+          setDialogIcon('information-circle');
+          setDialogIconColor('#3b82f6');
+          setDialogButtons([
+            {
+              text: 'OK',
+              onPress: () => setDialogVisible(false),
+              style: 'primary',
+            },
+          ]);
+          setDialogVisible(true);
           return false;
         }
         if (paymentMethod === 'installment' && parseInt(installments) <= 1) {
-          Alert.alert('Atenção', 'Para pagamento parcelado, informe mais de 1 parcela.');
+          setDialogTitle('Atenção');
+          setDialogMessage('Para pagamento parcelado, informe mais de 1 parcela.');
+          setDialogIcon('information-circle');
+          setDialogIconColor('#3b82f6');
+          setDialogButtons([
+            {
+              text: 'OK',
+              onPress: () => setDialogVisible(false),
+              style: 'primary',
+            },
+          ]);
+          setDialogVisible(true);
           return false;
         }
         return true;
@@ -300,15 +394,35 @@ export default function CreateSaleWizard() {
         payment_date: markAsCompleted ? paymentDate : undefined,
       });
 
-      Alert.alert('Sucesso', 'Venda criada com sucesso!', [
+      setDialogTitle('Sucesso');
+      setDialogMessage('Venda criada com sucesso!');
+      setDialogIcon('checkmark-circle');
+      setDialogIconColor('#22c55e');
+      setDialogButtons([
         {
           text: 'OK',
-          onPress: () => router.back(),
+          onPress: () => {
+            setDialogVisible(false);
+            router.back();
+          },
+          style: 'primary',
         },
       ]);
+      setDialogVisible(true);
     } catch (error) {
       console.error('Error creating sale:', error);
-      Alert.alert('Erro', 'Falha ao criar venda. Tente novamente.');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao criar venda. Tente novamente.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'primary',
+        },
+      ]);
+      setDialogVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -319,18 +433,26 @@ export default function CreateSaleWizard() {
       items.length > 0 || discount.trim() || notes.trim() || customerId;
 
     if (hasChanges) {
-      Alert.alert(
-        'Descartar alterações?',
-        'Você tem alterações não salvas. Deseja realmente sair?',
-        [
-          { text: 'Continuar editando', style: 'cancel' },
-          {
-            text: 'Descartar',
-            style: 'destructive',
-            onPress: () => router.back(),
+      setDialogTitle('Descartar alterações?');
+      setDialogMessage('Você tem alterações não salvas. Deseja realmente sair?');
+      setDialogIcon('warning');
+      setDialogIconColor('#f59e0b');
+      setDialogButtons([
+        {
+          text: 'Continuar editando',
+          onPress: () => setDialogVisible(false),
+          style: 'default',
+        },
+        {
+          text: 'Descartar',
+          onPress: () => {
+            setDialogVisible(false);
+            router.back();
           },
-        ]
-      );
+          style: 'danger',
+        },
+      ]);
+      setDialogVisible(true);
     } else {
       router.back();
     }
@@ -878,6 +1000,16 @@ export default function CreateSaleWizard() {
           <Text style={styles.cancelButtonText}>Cancelar</Text>
         </TouchableOpacity>
       </WorkArea>
+
+      <CustomDialog
+        visible={dialogVisible}
+        title={dialogTitle}
+        message={dialogMessage}
+        icon={dialogIcon}
+        iconColor={dialogIconColor}
+        buttons={dialogButtons}
+        onClose={() => setDialogVisible(false)}
+      />
     </SafeAreaView>
   );
 }

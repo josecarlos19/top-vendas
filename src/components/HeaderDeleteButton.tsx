@@ -1,7 +1,8 @@
-import React, { useLayoutEffect, useCallback } from 'react';
-import { TouchableOpacity, Alert } from 'react-native';
+import React, { useLayoutEffect, useCallback, useState } from 'react';
+import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from 'expo-router';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 interface HeaderDeleteButtonProps {
   onDelete: () => Promise<void> | void;
@@ -21,20 +22,52 @@ export function HeaderDeleteButton({
   successMessage,
 }: HeaderDeleteButtonProps) {
   const navigation = useNavigation();
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogConfig, setDialogConfig] = useState<{
+    title: string;
+    message: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    iconColor: string;
+    buttons: Array<{
+      text: string;
+      onPress: () => void;
+      style?: 'default' | 'primary' | 'danger' | 'success';
+    }>;
+  }>({
+    title: '',
+    message: '',
+    icon: 'help-circle',
+    iconColor: '#f59e0b',
+    buttons: [],
+  });
 
   const handleDelete = useCallback(() => {
     const message =
       confirmMessage ||
       `Deseja realmente excluir ${itemType} "${itemName}"? Esta ação não pode ser desfeita.`;
 
-    Alert.alert(confirmTitle, message, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: confirmDelete,
-      },
-    ]);
+    setDialogConfig({
+      title: confirmTitle,
+      message,
+      icon: 'help-circle',
+      iconColor: '#f59e0b',
+      buttons: [
+        {
+          text: 'Cancelar',
+          onPress: () => setDialogVisible(false),
+          style: 'default',
+        },
+        {
+          text: 'Excluir',
+          onPress: () => {
+            setDialogVisible(false);
+            confirmDelete();
+          },
+          style: 'danger',
+        },
+      ],
+    });
+    setDialogVisible(true);
   }, [itemName, itemType, confirmTitle, confirmMessage]);
 
   const confirmDelete = async () => {
@@ -42,10 +75,36 @@ export function HeaderDeleteButton({
       await onDelete();
 
       const message = successMessage || `${itemType} excluído com sucesso!`;
-      Alert.alert('Sucesso', message);
+      setDialogConfig({
+        title: 'Sucesso',
+        message,
+        icon: 'checkmark-circle',
+        iconColor: '#22c55e',
+        buttons: [
+          {
+            text: 'OK',
+            onPress: () => setDialogVisible(false),
+            style: 'primary',
+          },
+        ],
+      });
+      setDialogVisible(true);
     } catch (error) {
       console.error('Error deleting:', error);
-      Alert.alert('Erro', `Falha ao excluir ${itemType}`);
+      setDialogConfig({
+        title: 'Erro',
+        message: `Falha ao excluir ${itemType}`,
+        icon: 'alert-circle',
+        iconColor: '#ef4444',
+        buttons: [
+          {
+            text: 'OK',
+            onPress: () => setDialogVisible(false),
+            style: 'primary',
+          },
+        ],
+      });
+      setDialogVisible(true);
     }
   };
 
@@ -63,5 +122,15 @@ export function HeaderDeleteButton({
     });
   }, [navigation, handleDelete]);
 
-  return null;
+  return (
+    <CustomDialog
+      visible={dialogVisible}
+      title={dialogConfig.title}
+      message={dialogConfig.message}
+      icon={dialogConfig.icon}
+      iconColor={dialogConfig.iconColor}
+      buttons={dialogConfig.buttons}
+      onClose={() => setDialogVisible(false)}
+    />
+  );
 }

@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import CustomDialog from '@/components/modals/CustomDialog';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useProductDatabase } from '@/database/models/Product';
@@ -37,6 +37,14 @@ export default function CreateProduct() {
   const [supplier, setSupplier] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Dialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogIcon, setDialogIcon] = useState<any>('information-circle');
+  const [dialogIconColor, setDialogIconColor] = useState('#3b82f6');
+  const [dialogButtons, setDialogButtons] = useState<any[]>([]);
 
   const productDatabase = useProductDatabase();
   const categoryDatabase = useCategoryDatabase();
@@ -71,28 +79,73 @@ export default function CreateProduct() {
 
   const validateForm = () => {
     if (!name.trim()) {
-      Alert.alert('Erro', 'Por favor, preencha o nome do produto.');
+      setDialogTitle('Erro');
+      setDialogMessage('Por favor, preencha o nome do produto.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
       return false;
     }
 
     if (!salePrice.trim()) {
-      Alert.alert('Erro', 'Por favor, preencha o preço de venda.');
+      setDialogTitle('Erro');
+      setDialogMessage('Por favor, preencha o preço de venda.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
       return false;
     }
 
     const salePriceValue = getCurrencyValue(salePrice);
     if (salePriceValue <= 0) {
-      Alert.alert('Erro', 'O preço de venda deve ser maior que zero.');
+      setDialogTitle('Erro');
+      setDialogMessage('O preço de venda deve ser maior que zero.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
       return false;
     }
 
     if (!minimumStock || isNaN(parseInt(minimumStock))) {
-      Alert.alert('Erro', 'O estoque mínimo deve ser um número válido.');
+      setDialogTitle('Erro');
+      setDialogMessage('O estoque mínimo deve ser um número válido.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
       return false;
     }
 
     if (!currentStock || isNaN(parseInt(minimumStock))) {
-      Alert.alert('Erro', 'O estoque inicial deve ser um número válido.');
+      setDialogTitle('Erro');
+      setDialogMessage('O estoque inicial deve ser um número válido.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
       return false;
     }
 
@@ -109,10 +162,16 @@ export default function CreateProduct() {
           barcode.trim()
         );
         if (existingByBarcode) {
-          Alert.alert(
-            'Erro',
-            'Já existe um produto cadastrado com este código de barras.'
-          );
+          setDialogTitle('Erro');
+          setDialogMessage('Já existe um produto cadastrado com este código de barras.');
+          setDialogIcon('alert-circle');
+          setDialogIconColor('#ef4444');
+          setDialogButtons([{
+            text: 'OK',
+            onPress: () => setDialogVisible(false),
+            style: 'primary',
+          }]);
+          setDialogVisible(true);
           return;
         }
       }
@@ -122,10 +181,16 @@ export default function CreateProduct() {
           reference.trim()
         );
         if (existingByReference) {
-          Alert.alert(
-            'Erro',
-            'Já existe um produto cadastrado com esta referência.'
-          );
+          setDialogTitle('Erro');
+          setDialogMessage('Já existe um produto cadastrado com esta referência.');
+          setDialogIcon('alert-circle');
+          setDialogIconColor('#ef4444');
+          setDialogButtons([{
+            text: 'OK',
+            onPress: () => setDialogVisible(false),
+            style: 'primary',
+          }]);
+          setDialogVisible(true);
           return;
         }
       }
@@ -152,15 +217,31 @@ export default function CreateProduct() {
         supplier: supplier.trim() || undefined,
       });
 
-      Alert.alert('Sucesso', 'Produto criado com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
+      setDialogTitle('Sucesso');
+      setDialogMessage('Produto criado com sucesso!');
+      setDialogIcon('checkmark-circle');
+      setDialogIconColor('#22c55e');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => {
+          setDialogVisible(false);
+          router.back();
         },
-      ]);
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
     } catch (error) {
       console.error('Error creating product:', error);
-      Alert.alert('Erro', 'Falha ao criar produto. Tente novamente.');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao criar produto. Tente novamente.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -181,18 +262,26 @@ export default function CreateProduct() {
       categoryId;
 
     if (hasChanges) {
-      Alert.alert(
-        'Descartar alterações?',
-        'Você tem alterações não salvas. Deseja realmente sair?',
-        [
-          { text: 'Continuar editando', style: 'cancel' },
-          {
-            text: 'Descartar',
-            style: 'destructive',
-            onPress: () => router.back(),
+      setDialogTitle('Descartar alterações?');
+      setDialogMessage('Você tem alterações não salvas. Deseja realmente sair?');
+      setDialogIcon('help-circle');
+      setDialogIconColor('#f59e0b');
+      setDialogButtons([
+        {
+          text: 'Continuar editando',
+          onPress: () => setDialogVisible(false),
+          style: 'default',
+        },
+        {
+          text: 'Descartar',
+          onPress: () => {
+            setDialogVisible(false);
+            router.back();
           },
-        ]
-      );
+          style: 'danger',
+        },
+      ]);
+      setDialogVisible(true);
     } else {
       router.back();
     }
@@ -295,9 +384,6 @@ export default function CreateProduct() {
                   />
                 </View>
               </FormRow>
-              <Text style={styles.stockHelperText}>
-                💡 Você será notificado quando o estoque atingir o mínimo
-              </Text>
             </View>
           </FormSection>
 
@@ -366,6 +452,17 @@ export default function CreateProduct() {
             )}
           </TouchableOpacity>
         </View>
+
+        {/* Custom Dialog */}
+        <CustomDialog
+          visible={dialogVisible}
+          title={dialogTitle}
+          message={dialogMessage}
+          icon={dialogIcon}
+          iconColor={dialogIconColor}
+          buttons={dialogButtons}
+          onClose={() => setDialogVisible(false)}
+        />
       </WorkArea>
     </SafeAreaView>
   );
@@ -437,11 +534,6 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     textAlign: 'center',
     fontWeight: '600',
-  },
-  stockHelperText: {
-    fontSize: 12,
-    color: '#64748b',
-    lineHeight: 16,
   },
   actionButtons: {
     flexDirection: 'row',

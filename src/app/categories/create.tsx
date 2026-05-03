@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +11,7 @@ import { useCategoryDatabase } from '@/database/models/Category';
 import { Input } from '@/components/Input';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import WorkArea from '@/components/WorkArea';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 export default function CreateCategory() {
   const [name, setName] = useState('');
@@ -20,9 +20,28 @@ export default function CreateCategory() {
 
   const categoryDatabase = useCategoryDatabase();
 
+  // CustomDialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogIcon, setDialogIcon] = useState<any>('information-circle');
+  const [dialogIconColor, setDialogIconColor] = useState('#3b82f6');
+  const [dialogButtons, setDialogButtons] = useState<any[]>([]);
+
   async function handleStore() {
     if (!name.trim()) {
-      Alert.alert('Erro', 'Por favor, preencha o nome da categoria.');
+      setDialogTitle('Erro');
+      setDialogMessage('Por favor, preencha o nome da categoria.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'default',
+        },
+      ]);
+      setDialogVisible(true);
       return;
     }
 
@@ -33,17 +52,35 @@ export default function CreateCategory() {
         description: description.trim() || undefined,
       });
 
-      Alert.alert('Sucesso', 'Categoria criada com sucesso!', [
+      setDialogTitle('Sucesso');
+      setDialogMessage('Categoria criada com sucesso!');
+      setDialogIcon('checkmark-circle');
+      setDialogIconColor('#22c55e');
+      setDialogButtons([
         {
           text: 'OK',
           onPress: () => {
+            setDialogVisible(false);
             router.back();
           },
+          style: 'primary',
         },
       ]);
+      setDialogVisible(true);
     } catch (error) {
       console.error('Error creating category:', error);
-      Alert.alert('Erro', 'Falha ao criar categoria. Tente novamente.');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao criar categoria. Tente novamente.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'default',
+        },
+      ]);
+      setDialogVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -51,18 +88,26 @@ export default function CreateCategory() {
 
   const handleCancel = () => {
     if (name.trim() || description.trim()) {
-      Alert.alert(
-        'Descartar alterações?',
-        'Você tem alterações não salvas. Deseja realmente sair?',
-        [
-          { text: 'Continuar editando', style: 'cancel' },
-          {
-            text: 'Descartar',
-            style: 'destructive',
-            onPress: () => router.back(),
+      setDialogTitle('Descartar alterações?');
+      setDialogMessage('Você tem alterações não salvas. Deseja realmente sair?');
+      setDialogIcon('help-circle');
+      setDialogIconColor('#f59e0b');
+      setDialogButtons([
+        {
+          text: 'Continuar editando',
+          onPress: () => setDialogVisible(false),
+          style: 'default',
+        },
+        {
+          text: 'Descartar',
+          onPress: () => {
+            setDialogVisible(false);
+            router.back();
           },
-        ]
-      );
+          style: 'danger',
+        },
+      ]);
+      setDialogVisible(true);
     } else {
       router.back();
     }
@@ -138,6 +183,16 @@ export default function CreateCategory() {
           </TouchableOpacity>
         </View>
       </WorkArea>
+
+      <CustomDialog
+        visible={dialogVisible}
+        title={dialogTitle}
+        message={dialogMessage}
+        icon={dialogIcon}
+        iconColor={dialogIconColor}
+        buttons={dialogButtons}
+        onClose={() => setDialogVisible(false)}
+      />
     </SafeAreaView>
   );
 }

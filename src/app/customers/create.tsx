@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCustomerDatabase } from '@/database/models/Customer';
@@ -7,6 +7,7 @@ import { Input } from '@/components/Input';
 import WorkArea from '@/components/WorkArea';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FormSection, FormInput, FormRow } from '@/components/Form';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 export default function CreateCustomer() {
   const [name, setName] = useState('');
@@ -24,6 +25,14 @@ export default function CreateCustomer() {
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
+
+  // CustomDialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogIcon, setDialogIcon] = useState<keyof typeof Ionicons.glyphMap>('information-circle');
+  const [dialogIconColor, setDialogIconColor] = useState('#3b82f6');
+  const [dialogButtons, setDialogButtons] = useState<Array<{ text: string; onPress: () => void; style?: 'default' | 'primary' | 'danger' | 'success' }>>([]);
 
   const customerDatabase = useCustomerDatabase();
 
@@ -121,10 +130,16 @@ export default function CreateCustomer() {
       const data = await response.json();
 
       if (data.erro) {
-        Alert.alert(
-          'CEP não encontrado',
-          'O CEP informado não foi encontrado.'
-        );
+        setDialogTitle('CEP não encontrado');
+        setDialogMessage('O CEP informado não foi encontrado.');
+        setDialogIcon('alert-circle');
+        setDialogIconColor('#ef4444');
+        setDialogButtons([{
+          text: 'OK',
+          onPress: () => { },
+          style: 'default'
+        }]);
+        setDialogVisible(true);
         return;
       }
 
@@ -133,17 +148,28 @@ export default function CreateCustomer() {
       setCity(data.localidade || '');
       setState(data.uf || '');
 
-      Alert.alert(
-        'Endereço encontrado!',
-        `${data.logradouro ? data.logradouro + ', ' : ''}${data.bairro ? data.bairro + ', ' : ''}${data.localidade || ''} - ${data.uf || ''}`,
-        [{ text: 'OK' }]
-      );
+      setDialogTitle('Endereço encontrado!');
+      setDialogMessage(`${data.logradouro ? data.logradouro + ', ' : ''}${data.bairro ? data.bairro + ', ' : ''}${data.localidade || ''} - ${data.uf || ''}`);
+      setDialogIcon('checkmark-circle');
+      setDialogIconColor('#22c55e');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'primary'
+      }]);
+      setDialogVisible(true);
     } catch (error) {
       console.error('Erro ao buscar CEP:', error);
-      Alert.alert(
-        'Erro',
-        'Não foi possível buscar o endereço. Verifique sua conexão.'
-      );
+      setDialogTitle('Erro');
+      setDialogMessage('Não foi possível buscar o endereço. Verifique sua conexão.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'default'
+      }]);
+      setDialogVisible(true);
     } finally {
       setIsLoadingCep(false);
     }
@@ -161,21 +187,45 @@ export default function CreateCustomer() {
 
   async function handleStore() {
     if (!name.trim()) {
-      Alert.alert('Erro', 'Por favor, preencha o nome do cliente.');
+      setDialogTitle('Erro');
+      setDialogMessage('Por favor, preencha o nome do cliente.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'default'
+      }]);
+      setDialogVisible(true);
       return;
     }
 
     if (document.trim() && !validateDocument(document, documentType)) {
       const expectedLength = documentType === 'CPF' ? '11' : '14';
-      Alert.alert(
-        'Erro',
-        `${documentType} deve ter ${expectedLength} dígitos.`
-      );
+      setDialogTitle('Erro');
+      setDialogMessage(`${documentType} deve ter ${expectedLength} dígitos.`);
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'default'
+      }]);
+      setDialogVisible(true);
       return;
     }
 
     if (email.trim() && !validateEmail(email)) {
-      Alert.alert('Erro', 'Por favor, insira um email válido.');
+      setDialogTitle('Erro');
+      setDialogMessage('Por favor, insira um email válido.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'default'
+      }]);
+      setDialogVisible(true);
       return;
     }
 
@@ -186,10 +236,16 @@ export default function CreateCustomer() {
           email.trim()
         );
         if (existingByEmail) {
-          Alert.alert(
-            'Erro',
-            'Já existe um cliente cadastrado com este email.'
-          );
+          setDialogTitle('Erro');
+          setDialogMessage('Já existe um cliente cadastrado com este email.');
+          setDialogIcon('alert-circle');
+          setDialogIconColor('#ef4444');
+          setDialogButtons([{
+            text: 'OK',
+            onPress: () => { },
+            style: 'default'
+          }]);
+          setDialogVisible(true);
           return;
         }
       }
@@ -199,10 +255,16 @@ export default function CreateCustomer() {
         const existingByDocument =
           await customerDatabase.findByDocument(cleanDocument);
         if (existingByDocument) {
-          Alert.alert(
-            'Erro',
-            'Já existe um cliente cadastrado com este documento.'
-          );
+          setDialogTitle('Erro');
+          setDialogMessage('Já existe um cliente cadastrado com este documento.');
+          setDialogIcon('alert-circle');
+          setDialogIconColor('#ef4444');
+          setDialogButtons([{
+            text: 'OK',
+            onPress: () => { },
+            style: 'default'
+          }]);
+          setDialogVisible(true);
           return;
         }
       }
@@ -223,17 +285,30 @@ export default function CreateCustomer() {
         notes: notes.trim() || undefined,
       });
 
-      Alert.alert('Sucesso', 'Cliente criado com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => {
-            router.back();
-          },
+      setDialogTitle('Sucesso');
+      setDialogMessage('Cliente criado com sucesso!');
+      setDialogIcon('checkmark-circle');
+      setDialogIconColor('#22c55e');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => {
+          router.back();
         },
-      ]);
+        style: 'primary'
+      }]);
+      setDialogVisible(true);
     } catch (error) {
       console.error('Error creating customer:', error);
-      Alert.alert('Erro', 'Falha ao criar cliente. Tente novamente.');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao criar cliente. Tente novamente.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'default'
+      }]);
+      setDialogVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -500,6 +575,16 @@ export default function CreateCustomer() {
           </TouchableOpacity>
         </View>
       </WorkArea>
+
+      <CustomDialog
+        visible={dialogVisible}
+        title={dialogTitle}
+        message={dialogMessage}
+        icon={dialogIcon}
+        iconColor={dialogIconColor}
+        buttons={dialogButtons}
+        onClose={() => setDialogVisible(false)}
+      />
     </SafeAreaView>
   );
 }

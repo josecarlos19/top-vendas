@@ -14,15 +14,26 @@ export default function FormInput({
   error,
   required = false,
   containerStyle,
+  editable = true,
   ...inputProps
 }: FormInputProps) {
+  const isReadOnly = editable === false;
+
   return (
     <View style={[styles.container, containerStyle]}>
-      <Text style={styles.label}>
+      <Text style={[styles.label, isReadOnly && styles.labelReadOnly]}>
         {label}
         {required && <Text style={styles.required}> *</Text>}
       </Text>
-      <Input {...inputProps} style={[styles.input, inputProps.style]} />
+      <Input
+        {...inputProps}
+        editable={editable}
+        style={[
+          styles.input,
+          isReadOnly && styles.inputReadOnly,
+          inputProps.style,
+        ]}
+      />
       {error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
@@ -38,6 +49,9 @@ const styles = StyleSheet.create({
     color: '#374151',
     marginBottom: 8,
   },
+  labelReadOnly: {
+    color: '#374151',
+  },
   required: {
     color: '#ef4444',
   },
@@ -49,6 +63,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
+    color: '#1e293b',
+  },
+  inputReadOnly: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0',
     color: '#1e293b',
   },
   error: {

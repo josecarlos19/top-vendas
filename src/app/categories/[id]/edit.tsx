@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
@@ -14,6 +13,7 @@ import { Input } from '@/components/Input';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HeaderDeleteButton } from '@/components/HeaderDeleteButton';
 import WorkArea from '@/components/WorkArea';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 interface Category {
   id: number;
@@ -32,6 +32,14 @@ export default function EditCategory() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const categoryDatabase = useCategoryDatabase();
+
+  // CustomDialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogIcon, setDialogIcon] = useState<any>('information-circle');
+  const [dialogIconColor, setDialogIconColor] = useState('#3b82f6');
+  const [dialogButtons, setDialogButtons] = useState<any[]>([]);
 
   const handleDelete = useCallback(async () => {
     if (!category) return;
@@ -55,8 +63,21 @@ export default function EditCategory() {
       )) as Category | null;
 
       if (!foundCategory) {
-        Alert.alert('Erro', 'Categoria não encontrada');
-        router.back();
+        setDialogTitle('Erro');
+        setDialogMessage('Categoria não encontrada');
+        setDialogIcon('alert-circle');
+        setDialogIconColor('#ef4444');
+        setDialogButtons([
+          {
+            text: 'OK',
+            onPress: () => {
+              setDialogVisible(false);
+              router.back();
+            },
+            style: 'default',
+          },
+        ]);
+        setDialogVisible(true);
         return;
       }
 
@@ -65,13 +86,36 @@ export default function EditCategory() {
         setName(foundCategory.name || '');
         setDescription(foundCategory.description || '');
       } else {
-        Alert.alert('Erro', 'Categoria não encontrada', [
-          { text: 'OK', onPress: () => router.back() },
+        setDialogTitle('Erro');
+        setDialogMessage('Categoria não encontrada');
+        setDialogIcon('alert-circle');
+        setDialogIconColor('#ef4444');
+        setDialogButtons([
+          {
+            text: 'OK',
+            onPress: () => {
+              setDialogVisible(false);
+              router.back();
+            },
+            style: 'default',
+          },
         ]);
+        setDialogVisible(true);
       }
     } catch (error) {
       console.error('Error loading category:', error);
-      Alert.alert('Erro', 'Falha ao carregar categoria');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao carregar categoria');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'default',
+        },
+      ]);
+      setDialogVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +123,18 @@ export default function EditCategory() {
 
   const handleUpdate = async () => {
     if (!name.trim()) {
-      Alert.alert('Erro', 'Por favor, preencha o name da categoria.');
+      setDialogTitle('Erro');
+      setDialogMessage('Por favor, preencha o name da categoria.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'default',
+        },
+      ]);
+      setDialogVisible(true);
       return;
     }
 
@@ -93,15 +148,35 @@ export default function EditCategory() {
         description: description.trim() || undefined,
       });
 
-      Alert.alert('Sucesso', 'Categoria atualizada com sucesso!', [
+      setDialogTitle('Sucesso');
+      setDialogMessage('Categoria atualizada com sucesso!');
+      setDialogIcon('checkmark-circle');
+      setDialogIconColor('#22c55e');
+      setDialogButtons([
         {
           text: 'OK',
-          onPress: () => router.back(),
+          onPress: () => {
+            setDialogVisible(false);
+            router.back();
+          },
+          style: 'primary',
         },
       ]);
+      setDialogVisible(true);
     } catch (error) {
       console.error('Error updating category:', error);
-      Alert.alert('Erro', 'Falha ao atualizar categoria. Tente novamente.');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao atualizar categoria. Tente novamente.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'default',
+        },
+      ]);
+      setDialogVisible(true);
     } finally {
       setIsSaving(false);
     }
@@ -215,6 +290,16 @@ export default function EditCategory() {
             </TouchableOpacity>
           </View>
         </WorkArea>
+
+        <CustomDialog
+          visible={dialogVisible}
+          title={dialogTitle}
+          message={dialogMessage}
+          icon={dialogIcon}
+          iconColor={dialogIconColor}
+          buttons={dialogButtons}
+          onClose={() => setDialogVisible(false)}
+        />
       </SafeAreaView>
     </>
   );

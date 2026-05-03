@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
@@ -14,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import CollapsibleSection from '../CollapsibleSection';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 export type StockAdjustmentType = 'add' | 'remove' | 'set';
 
@@ -40,6 +40,24 @@ export default function StockAdjustmentModal({
   const [quantity, setQuantity] = useState('');
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogConfig, setDialogConfig] = useState<{
+    title: string;
+    message: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    iconColor: string;
+    buttons: Array<{
+      text: string;
+      onPress: () => void;
+      style?: 'default' | 'primary' | 'danger' | 'success';
+    }>;
+  }>({
+    title: '',
+    message: '',
+    icon: 'information-circle',
+    iconColor: '#3b82f6',
+    buttons: [],
+  });
 
   const formatNumber = (text: string) => {
     return text.replace(/\D/g, '');
@@ -56,20 +74,56 @@ export default function StockAdjustmentModal({
     const quantityValue = parseInt(quantity);
 
     if (!quantityValue || quantityValue <= 0) {
-      Alert.alert('Erro', 'Informe uma quantidade válida para o ajuste.');
+      setDialogConfig({
+        title: 'Erro',
+        message: 'Informe uma quantidade válida para o ajuste.',
+        icon: 'alert-circle',
+        iconColor: '#ef4444',
+        buttons: [
+          {
+            text: 'OK',
+            onPress: () => setDialogVisible(false),
+            style: 'primary',
+          },
+        ],
+      });
+      setDialogVisible(true);
       return;
     }
 
     if (adjustmentType === 'remove' && quantityValue > currentStock) {
-      Alert.alert(
-        'Erro',
-        `Não é possível remover ${quantityValue} unidades. Estoque atual: ${currentStock}`
-      );
+      setDialogConfig({
+        title: 'Erro',
+        message: `Não é possível remover ${quantityValue} unidades. Estoque atual: ${currentStock}`,
+        icon: 'alert-circle',
+        iconColor: '#ef4444',
+        buttons: [
+          {
+            text: 'OK',
+            onPress: () => setDialogVisible(false),
+            style: 'primary',
+          },
+        ],
+      });
+      setDialogVisible(true);
       return;
     }
 
     if (adjustmentType === 'set' && quantityValue === currentStock) {
-      Alert.alert('Aviso', 'O estoque já está no valor informado.');
+      setDialogConfig({
+        title: 'Aviso',
+        message: 'O estoque já está no valor informado.',
+        icon: 'information-circle',
+        iconColor: '#f59e0b',
+        buttons: [
+          {
+            text: 'OK',
+            onPress: () => setDialogVisible(false),
+            style: 'primary',
+          },
+        ],
+      });
+      setDialogVisible(true);
       return;
     }
 
@@ -261,6 +315,16 @@ export default function StockAdjustmentModal({
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <CustomDialog
+        visible={dialogVisible}
+        title={dialogConfig.title}
+        message={dialogConfig.message}
+        icon={dialogConfig.icon}
+        iconColor={dialogConfig.iconColor}
+        buttons={dialogConfig.buttons}
+        onClose={() => setDialogVisible(false)}
+      />
     </Modal>
   );
 }

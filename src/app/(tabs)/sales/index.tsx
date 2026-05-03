@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Alert,
   RefreshControl,
   TextInput,
   ActivityIndicator,
@@ -23,6 +22,7 @@ import { SearchBar } from '@/components/SearchBar';
 import SaleCard from '@/components/SaleCard';
 import SalePreviewModal from '@/components/modals/SalePreviewModal';
 import SalesPeriodFilter from '@/components/SalesPeriodFilter';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 interface Sale {
   id: number;
@@ -69,6 +69,14 @@ export default function SalesList() {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [selectedSaleForPreview, setSelectedSaleForPreview] = useState<Sale | null>(null);
+
+  // CustomDialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogIcon, setDialogIcon] = useState<any>('information-circle');
+  const [dialogIconColor, setDialogIconColor] = useState('#3b82f6');
+  const [dialogButtons, setDialogButtons] = useState<any[]>([]);
 
   const statusOptions = [
     { label: 'Pendente', value: 'pending', color: '#f59e0b' },
@@ -237,7 +245,18 @@ export default function SalesList() {
       setHasMoreData(page < totalPages);
     } catch (error) {
       console.error('Error loading sales:', error);
-      Alert.alert('Erro', 'Falha ao carregar vendas');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao carregar vendas');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'primary',
+        },
+      ]);
+      setDialogVisible(true);
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -266,7 +285,18 @@ export default function SalesList() {
       setPreviewModalVisible(true);
     } catch (error) {
       console.error('Error loading sale details:', error);
-      Alert.alert('Erro', 'Falha ao carregar detalhes da venda');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao carregar detalhes da venda');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'primary',
+        },
+      ]);
+      setDialogVisible(true);
     }
   };
 
@@ -310,7 +340,7 @@ export default function SalesList() {
       {!searchText && (
         <TouchableOpacity
           style={styles.createFirstButton}
-          onPress={() => router.push('/sales/create')}
+          onPress={() => router.push('/sales/create-wizard')}
         >
           <Ionicons
             name='add-outline'
@@ -459,6 +489,16 @@ export default function SalesList() {
         }}
         onPaymentUpdate={() => {
         }}
+      />
+
+      <CustomDialog
+        visible={dialogVisible}
+        title={dialogTitle}
+        message={dialogMessage}
+        icon={dialogIcon}
+        iconColor={dialogIconColor}
+        buttons={dialogButtons}
+        onClose={() => setDialogVisible(false)}
       />
     </View>
   );

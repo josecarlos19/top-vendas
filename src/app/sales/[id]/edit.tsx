@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
@@ -23,6 +22,7 @@ import SearchableSelect from '@/components/SearchableSelect';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import { formatDate } from '@/database/utils/formatDate';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 type statusTypes = 'completed' | 'pending';
 
@@ -111,6 +111,14 @@ export default function EditSale() {
   const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
   const [saleDate, setSaleDate] = useState<Date | null>(null);
 
+  // CustomDialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogIcon, setDialogIcon] = useState<any>('information-circle');
+  const [dialogIconColor, setDialogIconColor] = useState('#3b82f6');
+  const [dialogButtons, setDialogButtons] = useState<any[]>([]);
+
   const saleDatabase = useSaleDatabase();
   const installmentDatabase = useInstallmentDatabase();
   const customerDatabase = useCustomerDatabase();
@@ -129,9 +137,21 @@ export default function EditSale() {
       setIsLoading(true);
       const foundSale = (await saleDatabase.show(+id)) as Sale | null;
       if (!foundSale) {
-        Alert.alert('Erro', 'Venda não encontrada', [
-          { text: 'OK', onPress: () => router.back() },
+        setDialogTitle('Erro');
+        setDialogMessage('Venda não encontrada');
+        setDialogIcon('alert-circle');
+        setDialogIconColor('#ef4444');
+        setDialogButtons([
+          {
+            text: 'OK',
+            onPress: () => {
+              setDialogVisible(false);
+              router.back();
+            },
+            style: 'primary',
+          },
         ]);
+        setDialogVisible(true);
         return;
       }
 
@@ -172,7 +192,18 @@ export default function EditSale() {
       }
     } catch (error) {
       console.error('Error loading sale:', error);
-      Alert.alert('Erro', 'Falha ao carregar venda');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao carregar venda');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'primary',
+        },
+      ]);
+      setDialogVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -242,20 +273,50 @@ export default function EditSale() {
 
   const validateForm = () => {
     if (items.length === 0) {
-      Alert.alert('Erro', 'Adicione pelo menos um produto à venda.');
+      setDialogTitle('Erro');
+      setDialogMessage('Adicione pelo menos um produto à venda.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'primary',
+        },
+      ]);
+      setDialogVisible(true);
       return false;
     }
 
     if (getTotal() <= 0) {
-      Alert.alert('Erro', 'O total da venda deve ser maior que zero.');
+      setDialogTitle('Erro');
+      setDialogMessage('O total da venda deve ser maior que zero.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'primary',
+        },
+      ]);
+      setDialogVisible(true);
       return false;
     }
 
     if (paymentMethod === 'installment' && parseInt(installments) <= 1) {
-      Alert.alert(
-        'Erro',
-        'Para pagamento parcelado, informe mais de 1 parcela.'
-      );
+      setDialogTitle('Erro');
+      setDialogMessage('Para pagamento parcelado, informe mais de 1 parcela.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'primary',
+        },
+      ]);
+      setDialogVisible(true);
       return false;
     }
 
@@ -273,15 +334,35 @@ export default function EditSale() {
         notes: notes.trim() || undefined,
       });
 
-      Alert.alert('Sucesso', 'Venda atualizada com sucesso!', [
+      setDialogTitle('Sucesso');
+      setDialogMessage('Venda atualizada com sucesso!');
+      setDialogIcon('checkmark-circle');
+      setDialogIconColor('#22c55e');
+      setDialogButtons([
         {
           text: 'OK',
-          onPress: () => router.back(),
+          onPress: () => {
+            setDialogVisible(false);
+            router.back();
+          },
+          style: 'primary',
         },
       ]);
+      setDialogVisible(true);
     } catch (error) {
       console.error('Error updating sale:', error);
-      Alert.alert('Erro', 'Falha ao atualizar venda. Tente novamente.');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao atualizar venda. Tente novamente.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'primary',
+        },
+      ]);
+      setDialogVisible(true);
     } finally {
       setIsSaving(false);
     }
@@ -593,6 +674,16 @@ export default function EditSale() {
           </TouchableOpacity>
         </View>
       </WorkArea>
+
+      <CustomDialog
+        visible={dialogVisible}
+        title={dialogTitle}
+        message={dialogMessage}
+        icon={dialogIcon}
+        iconColor={dialogIconColor}
+        buttons={dialogButtons}
+        onClose={() => setDialogVisible(false)}
+      />
     </SafeAreaView>
   );
 }

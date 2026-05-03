@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  Alert,
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
@@ -16,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import CategoryCard from '@/components/CategoryCard';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { SearchBar } from '@/components/SearchBar';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 interface Category {
   id: number;
@@ -30,13 +30,20 @@ export default function CategoriesList() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchText, setSearchText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreData, setHasMoreData] = useState(true);
   const perPage = 10;
+
   const categoryDatabase = useCategoryDatabase();
+
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogIcon, setDialogIcon] = useState<any>('information-circle');
+  const [dialogIconColor, setDialogIconColor] = useState('#3b82f6');
+  const [dialogButtons, setDialogButtons] = useState<any[]>([]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -106,7 +113,18 @@ export default function CategoriesList() {
       setHasMoreData(page < totalPages);
     } catch (error) {
       console.error('Error loading categories:', error);
-      Alert.alert('Erro', 'Falha ao carregar categorias');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao carregar categorias');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'default',
+        },
+      ]);
+      setDialogVisible(true);
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -148,7 +166,6 @@ export default function CategoriesList() {
 
   const renderFooter = () => {
     if (!isLoadingMore) return null;
-
     return (
       <View style={styles.loadingFooter}>
         <ActivityIndicator size='small' color='#FF6B35' />
@@ -207,7 +224,19 @@ export default function CategoriesList() {
         onEndReachedThreshold={0.1}
       />
 
-      <FloatingActionButton route='/categories/create' />
+      <View>
+        <FloatingActionButton route='/categories/create' />
+      </View>
+
+      <CustomDialog
+        visible={dialogVisible}
+        title={dialogTitle}
+        message={dialogMessage}
+        icon={dialogIcon}
+        iconColor={dialogIconColor}
+        buttons={dialogButtons}
+        onClose={() => setDialogVisible(false)}
+      />
     </SafeAreaView>
   );
 }

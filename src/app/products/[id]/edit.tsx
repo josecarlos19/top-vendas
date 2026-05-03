@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import CustomDialog from '@/components/modals/CustomDialog';
 import { useSQLiteContext } from 'expo-sqlite';
 import { storeStockMovement } from '@/database/utils/stockMovementUtils';
 import { Ionicons } from '@expo/vector-icons';
@@ -68,6 +68,14 @@ export default function EditProduct() {
   const [isActive, setIsActive] = useState(true);
   const [showStockAdjustModal, setShowStockAdjustModal] = useState(false);
 
+  // Dialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogIcon, setDialogIcon] = useState<any>('information-circle');
+  const [dialogIconColor, setDialogIconColor] = useState('#3b82f6');
+  const [dialogButtons, setDialogButtons] = useState<any[]>([]);
+
   const productDatabase = useProductDatabase();
   const categoryDatabase = useCategoryDatabase();
   const database = useSQLiteContext();
@@ -97,9 +105,19 @@ export default function EditProduct() {
       const foundProduct = (await productDatabase.show(+id)) as Product | null;
 
       if (!foundProduct) {
-        Alert.alert('Erro', 'Produto não encontrado', [
-          { text: 'OK', onPress: () => router.back() },
-        ]);
+        setDialogTitle('Erro');
+        setDialogMessage('Produto não encontrado');
+        setDialogIcon('alert-circle');
+        setDialogIconColor('#ef4444');
+        setDialogButtons([{
+          text: 'OK',
+          onPress: () => {
+            setDialogVisible(false);
+            router.back();
+          },
+          style: 'primary',
+        }]);
+        setDialogVisible(true);
         return;
       }
 
@@ -126,7 +144,16 @@ export default function EditProduct() {
       setSupplier(foundProduct.supplier || '');
     } catch (error) {
       console.error('Error loading product:', error);
-      Alert.alert('Erro', 'Falha ao carregar produto');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao carregar produto');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -188,12 +215,30 @@ export default function EditProduct() {
         notes: notes,
       });
 
-      Alert.alert('Sucesso', 'Estoque ajustado com sucesso!');
+      setDialogTitle('Sucesso');
+      setDialogMessage('Estoque ajustado com sucesso!');
+      setDialogIcon('checkmark-circle');
+      setDialogIconColor('#22c55e');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
 
       await loadProduct();
     } catch (error) {
       console.error('Error adjusting stock:', error);
-      Alert.alert('Erro', 'Falha ao ajustar estoque');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao ajustar estoque');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
       throw error;
     }
   };
@@ -206,23 +251,59 @@ export default function EditProduct() {
 
   const validateForm = () => {
     if (!name.trim()) {
-      Alert.alert('Erro', 'Por favor, preencha o nome do produto.');
+      setDialogTitle('Erro');
+      setDialogMessage('Por favor, preencha o nome do produto.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
       return false;
     }
 
     if (!salePrice.trim()) {
-      Alert.alert('Erro', 'Por favor, preencha o preço de venda.');
+      setDialogTitle('Erro');
+      setDialogMessage('Por favor, preencha o preço de venda.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
       return false;
     }
 
     const salePriceValue = getCurrencyValue(salePrice);
     if (salePriceValue <= 0) {
-      Alert.alert('Erro', 'O preço de venda deve ser maior que zero.');
+      setDialogTitle('Erro');
+      setDialogMessage('O preço de venda deve ser maior que zero.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
       return false;
     }
 
     if (!minimumStock || isNaN(parseInt(minimumStock))) {
-      Alert.alert('Erro', 'O estoque mínimo deve ser um número válido.');
+      setDialogTitle('Erro');
+      setDialogMessage('O estoque mínimo deve ser um número válido.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
       return false;
     }
 
@@ -239,10 +320,16 @@ export default function EditProduct() {
           barcode.trim()
         );
         if (existingByBarcode && existingByBarcode.id !== product.id) {
-          Alert.alert(
-            'Erro',
-            'Já existe outro produto cadastrado com este código de barras.'
-          );
+          setDialogTitle('Erro');
+          setDialogMessage('Já existe outro produto cadastrado com este código de barras.');
+          setDialogIcon('alert-circle');
+          setDialogIconColor('#ef4444');
+          setDialogButtons([{
+            text: 'OK',
+            onPress: () => setDialogVisible(false),
+            style: 'primary',
+          }]);
+          setDialogVisible(true);
           return;
         }
       }
@@ -252,10 +339,16 @@ export default function EditProduct() {
           reference.trim()
         );
         if (existingByReference && existingByReference.id !== product.id) {
-          Alert.alert(
-            'Erro',
-            'Já existe outro produto cadastrado com esta referência.'
-          );
+          setDialogTitle('Erro');
+          setDialogMessage('Já existe outro produto cadastrado com esta referência.');
+          setDialogIcon('alert-circle');
+          setDialogIconColor('#ef4444');
+          setDialogButtons([{
+            text: 'OK',
+            onPress: () => setDialogVisible(false),
+            style: 'primary',
+          }]);
+          setDialogVisible(true);
           return;
         }
       }
@@ -282,15 +375,31 @@ export default function EditProduct() {
         supplier: supplier.trim() || undefined,
       });
 
-      Alert.alert('Sucesso', 'Produto atualizado com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
+      setDialogTitle('Sucesso');
+      setDialogMessage('Produto atualizado com sucesso!');
+      setDialogIcon('checkmark-circle');
+      setDialogIconColor('#22c55e');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => {
+          setDialogVisible(false);
+          router.back();
         },
-      ]);
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
     } catch (error) {
       console.error('Error updating product:', error);
-      Alert.alert('Erro', 'Falha ao atualizar produto. Tente novamente.');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao atualizar produto. Tente novamente.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => setDialogVisible(false),
+        style: 'primary',
+      }]);
+      setDialogVisible(true);
     } finally {
       setIsSaving(false);
     }
@@ -300,38 +409,62 @@ export default function EditProduct() {
     if (!product) return;
 
     const nextStatus = product.active === 1 ? 'desativar' : 'ativar';
-    Alert.alert(
-      'Confirmação',
-      `Tem certeza que deseja ${nextStatus} este produto?`,
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Confirmar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await productDatabase.toggleActive(product.id);
-              const updatedProduct = {
-                ...product,
-                active: product.active === 1 ? 0 : 1,
-              };
-              setProduct(updatedProduct);
+    setDialogTitle('Confirmação');
+    setDialogMessage(`Tem certeza que deseja ${nextStatus} este produto?`);
+    setDialogIcon('help-circle');
+    setDialogIconColor('#f59e0b');
+    setDialogButtons([
+      {
+        text: 'Cancelar',
+        onPress: () => setDialogVisible(false),
+        style: 'default',
+      },
+      {
+        text: 'Confirmar',
+        onPress: async () => {
+          try {
+            setDialogVisible(false);
+            await productDatabase.toggleActive(product.id);
+            const updatedProduct = {
+              ...product,
+              active: product.active === 1 ? 0 : 1,
+            };
+            setProduct(updatedProduct);
 
-              const status =
-                updatedProduct.active === 1 ? 'ativado' : 'desativado';
-              Alert.alert('Sucesso', `Produto ${status} com sucesso!`);
-              router.back();
-            } catch (error) {
-              console.error('Error toggling product status:', error);
-              Alert.alert('Erro', 'Falha ao alterar status do produto');
-            }
-          },
+            const status =
+              updatedProduct.active === 1 ? 'ativado' : 'desativado';
+
+            setDialogTitle('Sucesso');
+            setDialogMessage(`Produto ${status} com sucesso!`);
+            setDialogIcon('checkmark-circle');
+            setDialogIconColor('#22c55e');
+            setDialogButtons([{
+              text: 'OK',
+              onPress: () => {
+                setDialogVisible(false);
+                router.back();
+              },
+              style: 'primary',
+            }]);
+            setDialogVisible(true);
+          } catch (error) {
+            console.error('Error toggling product status:', error);
+            setDialogTitle('Erro');
+            setDialogMessage('Falha ao alterar status do produto');
+            setDialogIcon('alert-circle');
+            setDialogIconColor('#ef4444');
+            setDialogButtons([{
+              text: 'OK',
+              onPress: () => setDialogVisible(false),
+              style: 'primary',
+            }]);
+            setDialogVisible(true);
+          }
         },
-      ]
-    );
+        style: 'danger',
+      },
+    ]);
+    setDialogVisible(true);
   };
 
   if (isLoading) {
@@ -565,6 +698,17 @@ export default function EditProduct() {
           currentStock={product?.current_stock || 0}
           onClose={() => setShowStockAdjustModal(false)}
           onConfirm={handleStockAdjust}
+        />
+
+        {/* Custom Dialog */}
+        <CustomDialog
+          visible={dialogVisible}
+          title={dialogTitle}
+          message={dialogMessage}
+          icon={dialogIcon}
+          iconColor={dialogIconColor}
+          buttons={dialogButtons}
+          onClose={() => setDialogVisible(false)}
         />
       </WorkArea>
     </SafeAreaView>

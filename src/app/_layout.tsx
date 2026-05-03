@@ -52,7 +52,7 @@ export default function RootLayout() {
             options={{ presentation: 'card', title: 'Editar Produto' }}
           />
           <Stack.Screen
-            name='sales/create'
+            name='sales/create-wizard'
             options={{ presentation: 'card', title: 'Nova Venda' }}
           />
           <Stack.Screen

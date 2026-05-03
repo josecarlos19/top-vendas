@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -18,6 +17,7 @@ import WorkArea from '@/components/WorkArea';
 import { HeaderDeleteButton } from '@/components/HeaderDeleteButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FormSection, FormInput, FormRow, InfoCard } from '@/components/Form';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 interface Customer {
   id: number;
@@ -58,6 +58,14 @@ export default function EditCustomer() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
+
+  // CustomDialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogMessage, setDialogMessage] = useState('');
+  const [dialogIcon, setDialogIcon] = useState<keyof typeof Ionicons.glyphMap>('information-circle');
+  const [dialogIconColor, setDialogIconColor] = useState('#3b82f6');
+  const [dialogButtons, setDialogButtons] = useState<Array<{ text: string; onPress: () => void; style?: 'default' | 'primary' | 'danger' | 'success' }>>([]);
 
   const customerDatabase = useCustomerDatabase();
 
@@ -149,35 +157,53 @@ export default function EditCustomer() {
       const data = await response.json();
 
       if (data.erro) {
-        Alert.alert(
-          'CEP não encontrado',
-          'O CEP informado não foi encontrado.'
-        );
+        setDialogTitle('CEP não encontrado');
+        setDialogMessage('O CEP informado não foi encontrado.');
+        setDialogIcon('alert-circle');
+        setDialogIconColor('#ef4444');
+        setDialogButtons([{
+          text: 'OK',
+          onPress: () => { },
+          style: 'default'
+        }]);
+        setDialogVisible(true);
         return;
       }
 
-      Alert.alert(
-        'Endereço encontrado!',
-        `${data.logradouro ? data.logradouro + ', ' : ''}${data.bairro ? data.bairro + ', ' : ''}${data.localidade || ''} - ${data.uf || ''}\n\nDeseja substituir o endereço atual?`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Substituir',
-            onPress: () => {
-              setAddress(data.logradouro || '');
-              setNeighborhood(data.bairro || '');
-              setCity(data.localidade || '');
-              setState(data.uf || '');
-            },
+      setDialogTitle('Endereço encontrado!');
+      setDialogMessage(`${data.logradouro ? data.logradouro + ', ' : ''}${data.bairro ? data.bairro + ', ' : ''}${data.localidade || ''} - ${data.uf || ''}\n\nDeseja substituir o endereço atual?`);
+      setDialogIcon('checkmark-circle');
+      setDialogIconColor('#22c55e');
+      setDialogButtons([
+        {
+          text: 'Cancelar',
+          onPress: () => { },
+          style: 'default'
+        },
+        {
+          text: 'Substituir',
+          onPress: () => {
+            setAddress(data.logradouro || '');
+            setNeighborhood(data.bairro || '');
+            setCity(data.localidade || '');
+            setState(data.uf || '');
           },
-        ]
-      );
+          style: 'primary'
+        },
+      ]);
+      setDialogVisible(true);
     } catch (error) {
       console.error('Erro ao buscar CEP:', error);
-      Alert.alert(
-        'Erro',
-        'Não foi possível buscar o endereço. Verifique sua conexão.'
-      );
+      setDialogTitle('Erro');
+      setDialogMessage('Não foi possível buscar o endereço. Verifique sua conexão.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'default'
+      }]);
+      setDialogVisible(true);
     } finally {
       setIsLoadingCep(false);
     }
@@ -198,9 +224,16 @@ export default function EditCustomer() {
       )) as Customer | null;
 
       if (!foundCustomer) {
-        Alert.alert('Erro', 'Cliente não encontrado', [
-          { text: 'OK', onPress: () => router.back() },
-        ]);
+        setDialogTitle('Erro');
+        setDialogMessage('Cliente não encontrado');
+        setDialogIcon('alert-circle');
+        setDialogIconColor('#ef4444');
+        setDialogButtons([{
+          text: 'OK',
+          onPress: () => router.back(),
+          style: 'default'
+        }]);
+        setDialogVisible(true);
         return;
       }
 
@@ -220,7 +253,16 @@ export default function EditCustomer() {
       setNotes(foundCustomer.notes || '');
     } catch (error) {
       console.error('Error loading customer:', error);
-      Alert.alert('Erro', 'Falha ao carregar cliente');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao carregar cliente');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'default'
+      }]);
+      setDialogVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -248,21 +290,45 @@ export default function EditCustomer() {
 
   const handleUpdate = async () => {
     if (!name.trim()) {
-      Alert.alert('Erro', 'Por favor, preencha o nome do cliente.');
+      setDialogTitle('Erro');
+      setDialogMessage('Por favor, preencha o nome do cliente.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'default'
+      }]);
+      setDialogVisible(true);
       return;
     }
 
     if (document.trim() && !validateDocument(document, documentType)) {
       const expectedLength = documentType === 'CPF' ? '11' : '14';
-      Alert.alert(
-        'Erro',
-        `${documentType} deve ter ${expectedLength} dígitos.`
-      );
+      setDialogTitle('Erro');
+      setDialogMessage(`${documentType} deve ter ${expectedLength} dígitos.`);
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'default'
+      }]);
+      setDialogVisible(true);
       return;
     }
 
     if (email.trim() && !validateEmail(email)) {
-      Alert.alert('Erro', 'Por favor, insira um email válido.');
+      setDialogTitle('Erro');
+      setDialogMessage('Por favor, insira um email válido.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'default'
+      }]);
+      setDialogVisible(true);
       return;
     }
 
@@ -275,10 +341,16 @@ export default function EditCustomer() {
           email.trim()
         );
         if (existingByEmail && existingByEmail.id !== customer.id) {
-          Alert.alert(
-            'Erro',
-            'Já existe outro cliente cadastrado com este email.'
-          );
+          setDialogTitle('Erro');
+          setDialogMessage('Já existe outro cliente cadastrado com este email.');
+          setDialogIcon('alert-circle');
+          setDialogIconColor('#ef4444');
+          setDialogButtons([{
+            text: 'OK',
+            onPress: () => { },
+            style: 'default'
+          }]);
+          setDialogVisible(true);
           return;
         }
       }
@@ -288,10 +360,16 @@ export default function EditCustomer() {
         const existingByDocument =
           await customerDatabase.findByDocument(cleanDocument);
         if (existingByDocument && existingByDocument.id !== customer.id) {
-          Alert.alert(
-            'Erro',
-            'Já existe outro cliente cadastrado com este documento.'
-          );
+          setDialogTitle('Erro');
+          setDialogMessage('Já existe outro cliente cadastrado com este documento.');
+          setDialogIcon('alert-circle');
+          setDialogIconColor('#ef4444');
+          setDialogButtons([{
+            text: 'OK',
+            onPress: () => { },
+            style: 'default'
+          }]);
+          setDialogVisible(true);
           return;
         }
       }
@@ -313,15 +391,28 @@ export default function EditCustomer() {
         notes: notes.trim() || undefined,
       });
 
-      Alert.alert('Sucesso', 'Cliente atualizado com sucesso!', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]);
+      setDialogTitle('Sucesso');
+      setDialogMessage('Cliente atualizado com sucesso!');
+      setDialogIcon('checkmark-circle');
+      setDialogIconColor('#22c55e');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => router.back(),
+        style: 'primary'
+      }]);
+      setDialogVisible(true);
     } catch (error) {
       console.error('Error updating customer:', error);
-      Alert.alert('Erro', 'Falha ao atualizar cliente. Tente novamente.');
+      setDialogTitle('Erro');
+      setDialogMessage('Falha ao atualizar cliente. Tente novamente.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([{
+        text: 'OK',
+        onPress: () => { },
+        style: 'default'
+      }]);
+      setDialogVisible(true);
     } finally {
       setIsSaving(false);
     }
@@ -629,6 +720,16 @@ export default function EditCustomer() {
           </TouchableOpacity>
         </View>
       </WorkArea>
+
+      <CustomDialog
+        visible={dialogVisible}
+        title={dialogTitle}
+        message={dialogMessage}
+        icon={dialogIcon}
+        iconColor={dialogIconColor}
+        buttons={dialogButtons}
+        onClose={() => setDialogVisible(false)}
+      />
     </SafeAreaView>
   );
 }
