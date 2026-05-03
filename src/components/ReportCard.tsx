@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 3,
     elevation: 2,
-    minHeight: 90,
+    minHeight: 100,
     justifyContent: 'center',
   },
   iconContainer: {
@@ -55,12 +55,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
+    flexShrink: 0,
   },
   title: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#1e293b',
     textAlign: 'center',
     lineHeight: 16,
+    width: '100%',
+    flexShrink: 1,
   },
 });
