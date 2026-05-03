@@ -53,22 +53,8 @@ export default function SalesList() {
   const saleDatabase = useSaleDatabase();
   const customerDatabase = useCustomerDatabase();
 
-  // Configurar data padrão para os últimos 30 dias
-  const getDefaultStartDate = () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    date.setHours(0, 0, 0, 0);
-    return date;
-  };
-
-  const getDefaultEndDate = () => {
-    const date = new Date();
-    date.setHours(23, 59, 59, 999);
-    return date;
-  };
-
-  const [startDate, setStartDate] = useState<Date | null>(getDefaultStartDate());
-  const [endDate, setEndDate] = useState<Date | null>(getDefaultEndDate());
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [dueDateStart, setDueDateStart] = useState<Date | null>(null);
   const [dueDateEnd, setDueDateEnd] = useState<Date | null>(null);
   const [showDateFilter, setShowDateFilter] = useState(false);
@@ -80,6 +66,7 @@ export default function SalesList() {
   const [paymentDateStart, setPaymentDateStart] = useState<Date | null>(null);
   const [paymentDateEnd, setPaymentDateEnd] = useState<Date | null>(null);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [filterJustOpened, setFilterJustOpened] = useState(false);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [selectedSaleForPreview, setSelectedSaleForPreview] = useState<Sale | null>(null);
 
@@ -104,10 +91,17 @@ export default function SalesList() {
   ];
 
   useEffect(() => {
-    if (!isFirstLoad && (startDate || endDate || dueDateStart || dueDateEnd || selectedStatus || selectedPaymentMethod.length > 0 || selectedCustomerId || paymentDateStart || paymentDateEnd)) {
+    // Não fazer busca automática se:
+    // 1. Está no primeiro carregamento
+    // 2. O filtro acabou de ser aberto (inicialização das datas)
+    if (!isFirstLoad && !filterJustOpened && (startDate || endDate || dueDateStart || dueDateEnd || selectedStatus || selectedPaymentMethod.length > 0 || selectedCustomerId || paymentDateStart || paymentDateEnd)) {
       setCurrentPage(1);
       setHasMoreData(true);
       loadSales(1, false);
+    }
+    // Resetar a flag após a inicialização
+    if (filterJustOpened) {
+      setFilterJustOpened(false);
     }
   }, [startDate, endDate, dueDateStart, dueDateEnd, selectedStatus, selectedPaymentMethod, selectedCustomerId, paymentDateStart, paymentDateEnd]);
 
@@ -391,17 +385,32 @@ export default function SalesList() {
         {/* Seção de filtros */}
         <SalesPeriodFilter
           visible={showDateFilter}
-          onToggle={() => setShowDateFilter(!showDateFilter)}
+          onToggle={() => {
+            const newVisibleState = !showDateFilter;
+            setShowDateFilter(newVisibleState);
+            // Marcar que o filtro acabou de ser aberto para evitar busca automática
+            if (newVisibleState) {
+              setFilterJustOpened(true);
+            }
+          }}
           startDate={startDate}
           endDate={endDate}
           dueDateStart={dueDateStart}
           dueDateEnd={dueDateEnd}
           paymentDateStart={paymentDateStart}
           paymentDateEnd={paymentDateEnd}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
-          onDueDateStartChange={setDueDateStart}
-          onDueDateEndChange={setDueDateEnd}
+          onStartDateChange={(date) => {
+            setStartDate(date);
+          }}
+          onEndDateChange={(date) => {
+            setEndDate(date);
+          }}
+          onDueDateStartChange={(date) => {
+            setDueDateStart(date);
+          }}
+          onDueDateEndChange={(date) => {
+            setDueDateEnd(date);
+          }}
           onPaymentDateStartChange={setPaymentDateStart}
           onPaymentDateEndChange={setPaymentDateEnd}
           selectedStatus={selectedStatus}
@@ -414,8 +423,8 @@ export default function SalesList() {
           paymentMethodOptions={paymentMethodOptions}
           customers={customers}
           onClear={() => {
-            setStartDate(getDefaultStartDate());
-            setEndDate(getDefaultEndDate());
+            setStartDate(null);
+            setEndDate(null);
             setDueDateStart(null);
             setDueDateEnd(null);
             setPaymentDateStart(null);

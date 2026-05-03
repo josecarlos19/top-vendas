@@ -112,6 +112,15 @@ export function useSaleDatabase() {
         queryParams.push(params.paymentDateEnd);
       }
 
+      if (!params?.startDate && !params?.endDate && !params?.dueDateStart && !params?.dueDateEnd) {
+        const today = DateTime.now().toISODate();
+        const thirtyDaysAgo = DateTime.now().minus({ days: 30 }).toISODate();
+        query += ` AND DATE(sales.sale_date) >= DATE(?)`;
+        queryParams.push(thirtyDaysAgo);
+        query += ` AND DATE(sales.sale_date) <= DATE(?)`;
+        queryParams.push(today);
+      }
+
       query += ' ORDER BY sales.sale_date DESC, sales.created_at DESC';
 
       if (params?.page && params?.perPage) {
@@ -251,6 +260,15 @@ export function useSaleDatabase() {
           LIMIT 1
         ) <= DATE(?)`;
         queryParams.push(params.paymentDateEnd);
+      }
+
+      if (!params?.startDate && !params?.endDate && !params?.dueDateStart && !params?.dueDateEnd) {
+        const today = DateTime.now().toISODate();
+        const thirtyDaysAgo = DateTime.now().minus({ days: 30 }).toISODate();
+        query += ` AND DATE(sales.sale_date) >= DATE(?)`;
+        queryParams.push(thirtyDaysAgo);
+        query += ` AND DATE(sales.sale_date) <= DATE(?)`;
+        queryParams.push(today);
       }
 
       const result = (await database.getFirstAsync(query, queryParams)) as {
@@ -543,6 +561,19 @@ export function useSaleDatabase() {
     return await update({ id, status });
   }
 
+  async function getStatus(id: number) {
+    try {
+      const result = await database.getFirstAsync<{ status: string }>(
+        'SELECT status FROM sales WHERE id = ? AND deleted_at IS NULL',
+        [id]
+      );
+      return result?.status || null;
+    } catch (error) {
+      console.error('Error fetching sale status:', error);
+      throw new Error('Failed to fetch sale status');
+    }
+  }
+
   return {
     index,
     count,
@@ -550,6 +581,7 @@ export function useSaleDatabase() {
     store,
     update,
     updateStatus,
+    getStatus,
     remove,
   };
 }

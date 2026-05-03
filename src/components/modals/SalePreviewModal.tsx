@@ -28,6 +28,7 @@ export default function SalePreviewModal({ visible, sale, onClose, onPaymentUpda
   const [paidInstallments, setPaidInstallments] = useState(0);
   const [totalInstallments, setTotalInstallments] = useState(0);
   const [isLoadingInstallments, setIsLoadingInstallments] = useState(true);
+  const [mountKey, setMountKey] = useState(0);
 
   useEffect(() => {
     if (visible && sale && sale.payment_method === 'installment') {
@@ -36,6 +37,11 @@ export default function SalePreviewModal({ visible, sale, onClose, onPaymentUpda
       setPaidInstallments(0);
       setTotalInstallments(0);
       setIsLoadingInstallments(false);
+    }
+
+    // Incrementar a key para forçar re-montagem do SalePreview
+    if (visible) {
+      setMountKey(prev => prev + 1);
     }
   }, [visible, sale]);
 
@@ -96,8 +102,10 @@ export default function SalePreviewModal({ visible, sale, onClose, onPaymentUpda
             </View>
           ) : (
             <SalePreview
+              key={mountKey}
               sale={saleWithItems}
               saleId={String(sale.id)}
+              refreshTrigger={mountKey}
               onPaymentUpdate={async () => {
                 await loadInstallmentsInfo();
                 onPaymentUpdate?.();

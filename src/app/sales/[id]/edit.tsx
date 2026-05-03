@@ -23,6 +23,7 @@ import CollapsibleSection from '@/components/CollapsibleSection';
 import { formatDate } from '@/database/utils/formatDate';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomDialog from '@/components/modals/CustomDialog';
+import moment from 'moment';
 
 type statusTypes = 'completed' | 'pending';
 
@@ -111,7 +112,6 @@ export default function EditSale() {
   const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
   const [saleDate, setSaleDate] = useState<Date | null>(null);
 
-  // CustomDialog state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogMessage, setDialogMessage] = useState('');
@@ -129,6 +129,12 @@ export default function EditSale() {
     loadCustomers();
     loadProducts();
   }, [id]);
+
+  useEffect(() => {
+    if (status === 'pending') {
+      setPaymentDate(null);
+    }
+  }, [status]);
 
   const loadSale = async () => {
     if (!id) return;
@@ -156,9 +162,10 @@ export default function EditSale() {
       }
 
       setSale(foundSale);
-      setSaleDate(
-        foundSale!.sale_date ? new Date(foundSale!.sale_date) : new Date()
-      );
+      const saleDateStr = foundSale!.sale_date;
+      const saleDateTime = new Date(saleDateStr);
+      const localSaleDate = new Date(saleDateTime.getTime() + saleDateTime.getTimezoneOffset() * 60000);
+      setSaleDate(localSaleDate || new Date());
       setCustomerId(foundSale.customer_id);
       setDiscount(
         foundSale.discount ? formatCurrency(foundSale.discount.toString()) : ''
@@ -171,12 +178,21 @@ export default function EditSale() {
       );
       setStatus(foundSale.status);
       if ((foundSale as any).first_due_date) {
-        setFirstDueDate(new Date((foundSale as any).first_due_date));
+        const dueDateStr = (foundSale as any).first_due_date;
+        const dueDateTime = new Date(dueDateStr);
+        const localDueDate = new Date(dueDateTime.getTime() + dueDateTime.getTimezoneOffset() * 60000);
+        setFirstDueDate(localDueDate);
       } else {
-        setFirstDueDate(new Date(foundSale.sale_date));
+        const saleDateStr = foundSale.sale_date;
+        const saleDateTime = new Date(saleDateStr);
+        const localSaleDate = new Date(saleDateTime.getTime() + saleDateTime.getTimezoneOffset() * 60000);
+        setFirstDueDate(localSaleDate);
       }
       if ((foundSale as any).payment_date) {
-        setPaymentDate(new Date((foundSale as any).payment_date));
+        const dateStr = (foundSale as any).payment_date;
+        const date = new Date(dateStr);
+        const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+        setPaymentDate(localDate);
       }
       setNotes(foundSale.notes || '');
 
@@ -263,10 +279,12 @@ export default function EditSale() {
 
   const handlePaymentDateChange = async (date: Date) => {
     setPaymentDate(date);
+    const paymentDateISO = moment(date).toISOString();
+
     await installmentDatabase.updateStatus({
       id: sale!.first_installment_id,
       status: 'completed',
-      payment_date: date.toISOString(),
+      payment_date: paymentDateISO,
     });
     await loadSale();
   };
@@ -307,6 +325,22 @@ export default function EditSale() {
     if (paymentMethod === 'installment' && parseInt(installments) <= 1) {
       setDialogTitle('Erro');
       setDialogMessage('Para pagamento parcelado, informe mais de 1 parcela.');
+      setDialogIcon('alert-circle');
+      setDialogIconColor('#ef4444');
+      setDialogButtons([
+        {
+          text: 'OK',
+          onPress: () => setDialogVisible(false),
+          style: 'primary',
+        },
+      ]);
+      setDialogVisible(true);
+      return false;
+    }
+
+    if (status === 'completed' && !paymentDate) {
+      setDialogTitle('Erro');
+      setDialogMessage('Para marcar a venda como concluída, é necessário informar a data de pagamento.');
       setDialogIcon('alert-circle');
       setDialogIconColor('#ef4444');
       setDialogButtons([
@@ -392,7 +426,7 @@ export default function EditSale() {
     );
   }
 
-  const isFormValid = items.length > 0 && getTotal() > 0;
+  const isFormValid = items.length > 0 && getTotal() > 0 && (status !== 'completed' || paymentDate);
 
   const renderSaleItem = ({ item }: { item: SaleItem }) => (
     <View style={styles.saleItem}>
@@ -572,7 +606,7 @@ export default function EditSale() {
             </FormSection>
           )}
 
-          {paymentMethod !== 'installment' && (
+          {paymentMethod !== 'installment' && status === 'completed' && (
             <FormSection icon='calendar-outline' title='Data do Pagamento' marginTop={0}>
               <FormSelector
                 label='Data do pagamento'

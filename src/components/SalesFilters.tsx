@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import PeriodFilter from '@/components/PeriodFilter';
 import MultipleStatusFilter from '@/components/MultipleStatusFilter';
 import SearchableSelect from '@/components/SearchableSelect';
@@ -53,25 +53,116 @@ export default function SalesFilters({
   paymentMethodOptions,
   customers,
 }: SalesFiltersProps) {
+  // Detectar automaticamente qual tipo de filtro está ativo baseado nos valores
+  const getInitialFilterType = (): 'sale' | 'due' => {
+    if (dueDateStart || dueDateEnd) {
+      return 'due';
+    }
+    return 'sale'; // Padrão
+  };
+
+  const [dateFilterType, setDateFilterType] = useState<'sale' | 'due'>(getInitialFilterType());
+
+  // Sincronizar o tipo de filtro quando as props mudarem (ex: ao limpar filtros)
+  useEffect(() => {
+    const newType = getInitialFilterType();
+    if (newType !== dateFilterType) {
+      setDateFilterType(newType);
+    }
+  }, [startDate, endDate, dueDateStart, dueDateEnd]);
+
+  const handleDateFilterTypeChange = (type: 'sale' | 'due') => {
+    setDateFilterType(type);
+    // Limpar os filtros do tipo não selecionado
+    if (type === 'sale') {
+      onDueDateStartChange(null);
+      onDueDateEndChange(null);
+      // Inicializar datas de venda se estiverem vazias
+      if (!startDate && !endDate) {
+        const defaultStart = new Date();
+        defaultStart.setDate(defaultStart.getDate() - 30);
+        const defaultEnd = new Date();
+        onStartDateChange(defaultStart);
+        onEndDateChange(defaultEnd);
+      }
+    } else {
+      onStartDateChange(null);
+      onEndDateChange(null);
+      // Inicializar datas de vencimento se estiverem vazias
+      if (!dueDateStart && !dueDateEnd) {
+        const today = new Date();
+        onDueDateStartChange(today);
+        onDueDateEndChange(today);
+      }
+    }
+  };
+
+  // Garantir que os valores padrão existam para o PeriodFilter
+  const getSafeDate = (date: Date | null): Date => {
+    return date || new Date();
+  };
+
   return (
     <View style={styles.container}>
-      {/* Período da Venda */}
-      <Text style={styles.subLabel}>Período da Venda</Text>
-      <PeriodFilter
-        startDate={startDate || new Date()}
-        endDate={endDate || new Date()}
-        onStartDateChange={onStartDateChange}
-        onEndDateChange={onEndDateChange}
-      />
+      {/* Seletor de Tipo de Filtro de Data */}
+      <View style={styles.dateTypeSelector}>
+        <Text style={styles.dateTypeSelectorLabel}>Filtrar por:</Text>
+        <View style={styles.radioGroup}>
+          <TouchableOpacity
+            style={styles.radioOption}
+            onPress={() => handleDateFilterTypeChange('sale')}
+          >
+            <View style={styles.radioButton}>
+              {dateFilterType === 'sale' && <View style={styles.radioButtonInner} />}
+            </View>
+            <Text style={styles.radioLabel}>Período da Venda</Text>
+          </TouchableOpacity>
 
-      {/* Data de Vencimento */}
-      <Text style={styles.subLabel}>Data de Vencimento</Text>
-      <PeriodFilter
-        startDate={dueDateStart || new Date()}
-        endDate={dueDateStart || new Date()}
-        onStartDateChange={onDueDateStartChange}
-        onEndDateChange={onDueDateEndChange}
-      />
+          <TouchableOpacity
+            style={styles.radioOption}
+            onPress={() => handleDateFilterTypeChange('due')}
+          >
+            <View style={styles.radioButton}>
+              {dateFilterType === 'due' && <View style={styles.radioButtonInner} />}
+            </View>
+            <Text style={styles.radioLabel}>Data de Vencimento</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Período da Venda - mostrado apenas se selecionado */}
+      {dateFilterType === 'sale' && (
+        <>
+          <Text style={styles.subLabel}>Período da Venda</Text>
+          <PeriodFilter
+            startDate={getSafeDate(startDate)}
+            endDate={getSafeDate(endDate)}
+            onStartDateChange={(date) => {
+              onStartDateChange(date);
+            }}
+            onEndDateChange={(date) => {
+              onEndDateChange(date);
+            }}
+          />
+        </>
+      )}
+
+      {/* Data de Vencimento - mostrado apenas se selecionado */}
+      {dateFilterType === 'due' && (
+        <>
+          <Text style={styles.subLabel}>Data de Vencimento</Text>
+          <PeriodFilter
+            startDate={getSafeDate(dueDateStart)}
+            endDate={getSafeDate(dueDateEnd)}
+            onStartDateChange={(date) => {
+              onDueDateStartChange(date);
+            }}
+            onEndDateChange={(date) => {
+              onDueDateEndChange(date);
+            }}
+          />
+        </>
+      )}
 
       {/* Status */}
       <MultipleStatusFilter
@@ -122,5 +213,46 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     marginTop: 8,
     marginBottom: 4,
+  },
+  dateTypeSelector: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  dateTypeSelectorLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 12,
+  },
+  radioGroup: {
+    gap: 12,
+  },
+  radioOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#FF6B35',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioButtonInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FF6B35',
+  },
+  radioLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1e293b',
   },
 });

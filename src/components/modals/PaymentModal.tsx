@@ -149,10 +149,16 @@ export default function PaymentModal({
       setShowConfirmDialog(false);
       setIsLoading(true);
 
+      // Formatar data como YYYY-MM-DD para evitar problemas de timezone
+      const year = paymentDate.getFullYear();
+      const month = String(paymentDate.getMonth() + 1).padStart(2, '0');
+      const day = String(paymentDate.getDate()).padStart(2, '0');
+      const paymentDateISO = `${year}-${month}-${day}T12:00:00.000Z`;
+
       await installmentDatabase.updateStatus({
         id: selectedInstallment.id,
         status: 'completed',
-        payment_date: paymentDate.toISOString(),
+        payment_date: paymentDateISO,
       });
 
       await loadPaymentData();
@@ -176,13 +182,19 @@ export default function PaymentModal({
       setShowConfirmDialog(false);
       setIsLoading(true);
 
+      // Formatar data como YYYY-MM-DD para evitar problemas de timezone
+      const year = paymentDate.getFullYear();
+      const month = String(paymentDate.getMonth() + 1).padStart(2, '0');
+      const day = String(paymentDate.getDate()).padStart(2, '0');
+      const paymentDateISO = `${year}-${month}-${day}T12:00:00.000Z`;
+
       if (paymentMethod === 'installment' && installments.length > 0) {
         for (const inst of installments) {
           if (inst.status !== 'completed') {
             await installmentDatabase.updateStatus({
               id: inst.id,
               status: 'completed',
-              payment_date: paymentDate.toISOString(),
+              payment_date: paymentDateISO,
             });
           }
         }
@@ -193,7 +205,7 @@ export default function PaymentModal({
         await saleDatabase.update({
           id: saleId,
           status: 'completed',
-          payment_date: paymentDate.toISOString(),
+          payment_date: paymentDateISO,
         } as any);
         setShowSuccessDialog(true);
         onPaymentComplete();

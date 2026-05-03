@@ -1,25 +1,23 @@
-import React, { useRef, useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Share,
-  ScrollView,
-  Platform,
-  Image,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import ViewShot from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSQLiteContext } from 'expo-sqlite';
-import CustomDialog from './modals/CustomDialog';
-import PaymentDateModal from './modals/PaymentDateModal';
-import { useCustomDialog } from '@/hooks/useCustomDialog';
 import { useInstallmentDatabase } from '@/database/models/Installment';
 import { useSaleDatabase } from '@/database/models/Sale';
+import { useCustomDialog } from '@/hooks/useCustomDialog';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import * as Sharing from 'expo-sharing';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ViewShot from 'react-native-view-shot';
+import CustomDialog from './modals/CustomDialog';
+import PaymentDateModal from './modals/PaymentDateModal';
 
 interface SaleItem {
   product_name: string;
@@ -53,6 +51,7 @@ interface SalePreviewProps {
   };
   saleId: string;
   onPaymentUpdate?: () => void;
+  refreshTrigger?: number; // Quando este valor muda, força reload do status
 }
 
 const PAYMENT_METHOD_LABELS: { [key: string]: string } = {
@@ -85,7 +84,12 @@ const formatCurrencyFromNumber = (value: number): string => {
   });
 };
 
-export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePreviewProps) {
+export default function SalePreview({
+  sale,
+  saleId,
+  onPaymentUpdate,
+  refreshTrigger,
+}: SalePreviewProps) {
   const router = useRouter();
   const viewShotRef = useRef<ViewShot>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -98,7 +102,9 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [isLoadingInstallments, setIsLoadingInstallments] = useState(false);
   const paymentModalOpenRef = useRef(false);
-  const [saleStatus, setSaleStatus] = useState<string>(sale.status || 'pending');
+  const [saleStatus, setSaleStatus] = useState<string>(
+    sale.status || 'pending'
+  );
   const [showPaymentDateModal, setShowPaymentDateModal] = useState(false);
   const [paymentAction, setPaymentAction] = useState<{
     type: 'single' | 'installment' | 'all';
@@ -110,6 +116,22 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
       loadInstallments();
     }
   }, [sale.payment_method, saleId]);
+
+  // Recarregar status da venda do banco de dados ao montar o componente
+  useEffect(() => {
+    const loadSaleStatus = async () => {
+      try {
+        const currentStatus = await saleDatabase.getStatus(parseInt(saleId));
+        if (currentStatus) {
+          setSaleStatus(currentStatus);
+        }
+      } catch (error) {
+        console.error('Error loading sale status:', error);
+      }
+    };
+
+    loadSaleStatus();
+  }, [saleId, refreshTrigger]);
 
   const loadInstallments = async () => {
     try {
@@ -151,7 +173,10 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
           dialogTitle: 'Compartilhar Comprovante',
         });
       } else {
-        dialog.showError('Erro', 'Compartilhamento não está disponível neste dispositivo.');
+        dialog.showError(
+          'Erro',
+          'Compartilhamento não está disponível neste dispositivo.'
+        );
       }
     } catch (error) {
       dialog.showError('Erro', 'Não foi possível compartilhar a imagem.');
@@ -213,7 +238,9 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
   };
 
   const handlePayAllInstallments = () => {
-    const pendingInstallments = installments.filter(inst => inst.status === 'pending');
+    const pendingInstallments = installments.filter(
+      inst => inst.status === 'pending'
+    );
 
     if (pendingInstallments.length === 0) {
       return;
@@ -280,7 +307,10 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
 
   const handleConfirmPayment = async (paymentDate: Date) => {
     setShowPaymentDateModal(false);
-    const paymentDateISO = paymentDate.toISOString();
+    const paymentDateISO =
+      paymentDate instanceof Date
+        ? paymentDate.toISOString()
+        : new Date(paymentDate).toISOString();
 
     if (!paymentAction) return;
 
@@ -308,7 +338,9 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
 
         dialog.showSuccess('Sucesso', 'Pagamento registrado com sucesso!');
       } else if (paymentAction.type === 'all') {
-        const pendingInstallments = installments.filter(inst => inst.status === 'pending');
+        const pendingInstallments = installments.filter(
+          inst => inst.status === 'pending'
+        );
         const count = pendingInstallments.length;
 
         for (const installment of pendingInstallments) {
@@ -331,7 +363,10 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
           onPaymentUpdate();
         }
 
-        dialog.showSuccess('Sucesso', `${count} parcela${count > 1 ? 's' : ''} paga${count > 1 ? 's' : ''} com sucesso!`);
+        dialog.showSuccess(
+          'Sucesso',
+          `${count} parcela${count > 1 ? 's' : ''} paga${count > 1 ? 's' : ''} com sucesso!`
+        );
       } else if (paymentAction.type === 'single') {
         await saleDatabase.updateStatus(parseInt(saleId), 'completed');
 
@@ -375,7 +410,7 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 16 }]}
-          onScroll={(event) => {
+          onScroll={event => {
             scrollPositionRef.current = event.nativeEvent.contentOffset.y;
           }}
           scrollEventThrottle={16}
@@ -392,7 +427,7 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
               {/* Header compacto */}
               <View style={styles.header}>
                 <View style={styles.iconContainer}>
-                  <Ionicons name="receipt-outline" size={24} color="#3b82f6" />
+                  <Ionicons name='receipt-outline' size={24} color='#3b82f6' />
                 </View>
                 <Text style={styles.title}>Comprovante</Text>
                 {saleStatus === 'cancelled' && (
@@ -403,22 +438,27 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
               </View>
               <View style={styles.compactInfoSection}>
                 <View style={styles.infoRow}>
-                  <Ionicons name="person-outline" size={14} color="#64748b" />
+                  <Ionicons name='person-outline' size={14} color='#64748b' />
                   <Text style={styles.infoText} numberOfLines={1}>
                     {sale.customer_name || 'Cliente não informado'}
                   </Text>
                 </View>
 
                 <View style={styles.infoRow}>
-                  <Ionicons name="calendar-outline" size={14} color="#64748b" />
-                  <Text style={styles.infoText}>{formatDate(sale.sale_date)}</Text>
+                  <Ionicons name='calendar-outline' size={14} color='#64748b' />
+                  <Text style={styles.infoText}>
+                    {formatDate(sale.sale_date)}
+                  </Text>
                 </View>
 
                 <View style={styles.infoRow}>
-                  <Ionicons name="card-outline" size={14} color="#64748b" />
+                  <Ionicons name='card-outline' size={14} color='#64748b' />
                   <Text style={styles.infoText}>
-                    {PAYMENT_METHOD_LABELS[sale.payment_method] || sale.payment_method}
-                    {sale.payment_method === 'installment' && sale.totalInstallments && sale.totalInstallments > 0
+                    {PAYMENT_METHOD_LABELS[sale.payment_method] ||
+                      sale.payment_method}
+                    {sale.payment_method === 'installment' &&
+                      sale.totalInstallments &&
+                      sale.totalInstallments > 0
                       ? `: ${sale.paidInstallments || 0}/${sale.totalInstallments}`
                       : sale.installments && sale.installments > 1
                         ? ` (${sale.installments}x)`
@@ -430,7 +470,7 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
               {/* Lista de Produtos Compacta */}
               <View style={styles.productsSection}>
                 <View style={styles.sectionHeader}>
-                  <Ionicons name="bag-outline" size={14} color="#3b82f6" />
+                  <Ionicons name='bag-outline' size={14} color='#3b82f6' />
                   <Text style={styles.sectionTitle}>Produtos</Text>
                 </View>
 
@@ -442,7 +482,8 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
                           {item.product_name}
                         </Text>
                         <Text style={styles.itemQuantity}>
-                          {item.quantity}x {formatCurrencyFromNumber(item.unit_price)}
+                          {item.quantity}x{' '}
+                          {formatCurrencyFromNumber(item.unit_price)}
                         </Text>
                       </View>
                       <Text style={styles.itemSubtotal}>
@@ -482,36 +523,57 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
               </View>
 
               <View style={styles.footer}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginLeft: 8,
+                  }}
+                >
                   <Image
                     source={require('../../assets/images/favicon.png')}
-                    style={{ width: 28, height: 28, marginRight: 8, borderRadius: 6 }}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      marginRight: 8,
+                      borderRadius: 6,
+                    }}
                   />
-                  <Text style={{ fontWeight: '600', fontSize: 18, color: '#1e293b' }}>Top Vendas</Text>
+                  <Text
+                    style={{
+                      fontWeight: '600',
+                      fontSize: 18,
+                      color: '#1e293b',
+                    }}
+                  >
+                    Top Vendas
+                  </Text>
                 </View>
               </View>
             </View>
           </ViewShot>
-
 
           <TouchableOpacity
             style={styles.shareButtonInline}
             onPress={handleShareImage}
             activeOpacity={0.8}
           >
-            <Ionicons name="share-outline" size={20} color="#3b82f6" />
-            <Text style={styles.shareButtonInlineText}>Compartilhar Comprovante</Text>
+            <Ionicons name='share-outline' size={20} color='#3b82f6' />
+            <Text style={styles.shareButtonInlineText}>
+              Compartilhar Comprovante
+            </Text>
           </TouchableOpacity>
 
           {/* Seção de Parcelas */}
           {sale.payment_method === 'installment' && installments.length > 0 && (
             <View style={styles.installmentsContainer}>
               <View style={styles.sectionHeader}>
-                <Ionicons name="list-outline" size={18} color="#3b82f6" />
+                <Ionicons name='list-outline' size={18} color='#3b82f6' />
                 <Text style={styles.sectionTitle}>Parcelas</Text>
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>
-                    {installments.filter(i => i.status === 'completed').length}/{installments.length} pagas
+                    {installments.filter(i => i.status === 'completed').length}/
+                    {installments.length} pagas
                   </Text>
                 </View>
               </View>
@@ -523,13 +585,19 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
                   onPress={handlePayAllInstallments}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="checkmark-done-circle" size={20} color="#ffffff" />
-                  <Text style={styles.payAllButtonText}>Pagar Todas as Parcelas Pendentes</Text>
+                  <Ionicons
+                    name='checkmark-done-circle'
+                    size={20}
+                    color='#ffffff'
+                  />
+                  <Text style={styles.payAllButtonText}>
+                    Pagar Todas as Parcelas Pendentes
+                  </Text>
                 </TouchableOpacity>
               )}
 
               <View style={styles.installmentsList}>
-                {installments.map((installment) => (
+                {installments.map(installment => (
                   <View key={installment.id} style={styles.installmentRow}>
                     <View style={styles.installmentLeft}>
                       <View style={styles.installmentHeader}>
@@ -552,7 +620,9 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
                                 : styles.statusBadgeTextPending,
                             ]}
                           >
-                            {installment.status === 'completed' ? 'Paga' : 'Pendente'}
+                            {installment.status === 'completed'
+                              ? 'Paga'
+                              : 'Pendente'}
                           </Text>
                         </View>
                       </View>
@@ -572,8 +642,14 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
                           onPress={() => handleRevertPayment(installment)}
                           activeOpacity={0.7}
                         >
-                          <Ionicons name="arrow-undo" size={18} color="#ef4444" />
-                          <Text style={styles.revertButtonText}>Reverter Pagamento</Text>
+                          <Ionicons
+                            name='arrow-undo'
+                            size={18}
+                            color='#ffffff'
+                          />
+                          <Text style={styles.revertButtonText}>
+                            Reverter Pagamento
+                          </Text>
                         </TouchableOpacity>
                       ) : (
                         <TouchableOpacity
@@ -581,8 +657,14 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
                           onPress={() => handlePayInstallment(installment)}
                           activeOpacity={0.7}
                         >
-                          <Ionicons name="checkmark-circle" size={18} color="#ffffff" />
-                          <Text style={styles.payInstallmentButtonText}>Pagar</Text>
+                          <Ionicons
+                            name='checkmark-circle'
+                            size={18}
+                            color='#ffffff'
+                          />
+                          <Text style={styles.payInstallmentButtonText}>
+                            Pagar
+                          </Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -593,7 +675,6 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
           )}
         </ScrollView>
 
-
         <View style={styles.actionsContainer}>
           <View style={styles.actionsRow}>
             <TouchableOpacity
@@ -601,18 +682,18 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
               onPress={handleEditSale}
               activeOpacity={0.8}
             >
-              <Ionicons name="pencil" size={18} color="#ffffff" />
+              <Ionicons name='pencil' size={18} color='#ffffff' />
               <Text style={styles.actionButtonText}>Editar</Text>
             </TouchableOpacity>
 
-            {sale.payment_method !== 'installment' && (
-              saleStatus === 'pending' ? (
+            {sale.payment_method !== 'installment' &&
+              (saleStatus === 'pending' ? (
                 <TouchableOpacity
                   style={[styles.actionButton, styles.payButton]}
                   onPress={handlePaySingleSale}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="checkmark-circle" size={18} color="#ffffff" />
+                  <Ionicons name='checkmark-circle' size={18} color='#ffffff' />
                   <Text style={styles.actionButtonText}>Pagar</Text>
                 </TouchableOpacity>
               ) : (
@@ -621,11 +702,12 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
                   onPress={handleRevertSingleSale}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="arrow-undo" size={18} color="#ef4444" />
-                  <Text style={styles.revertSaleButtonText}>Reverter Pagamento</Text>
+                  <Ionicons name='arrow-undo' size={18} color='#ea580c' />
+                  <Text style={styles.revertSaleButtonText}>
+                    Reverter Pagamento
+                  </Text>
                 </TouchableOpacity>
-              )
-            )}
+              ))}
           </View>
 
           {saleStatus !== 'cancelled' && (
@@ -634,7 +716,7 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
               onPress={handleCancelSale}
               activeOpacity={0.8}
             >
-              <Ionicons name="close-circle-outline" size={16} color="#dc2626" />
+              <Ionicons name='close-circle-outline' size={16} color='#dc2626' />
               <Text style={styles.cancelSaleButtonText}>Cancelar Venda</Text>
             </TouchableOpacity>
           )}
@@ -649,12 +731,14 @@ export default function SalePreview({ sale, saleId, onPaymentUpdate }: SalePrevi
           setShowPaymentDateModal(false);
           setPaymentAction(null);
         }}
-        title="Selecionar Data de Pagamento"
-        message={paymentAction?.type === 'all'
-          ? `Escolha a data de pagamento para ${installments.filter(i => i.status === 'pending').length} parcela(s) pendente(s):`
-          : paymentAction?.type === 'installment' && paymentAction.data
-            ? `Escolha a data de pagamento da parcela ${paymentAction.data.number}:`
-            : 'Escolha a data em que o pagamento foi ou será realizado:'}
+        title='Selecionar Data de Pagamento'
+        message={
+          paymentAction?.type === 'all'
+            ? `Escolha a data de pagamento para ${installments.filter(i => i.status === 'pending').length} parcela(s) pendente(s):`
+            : paymentAction?.type === 'installment' && paymentAction.data
+              ? `Escolha a data de pagamento da parcela ${paymentAction.data.number}:`
+              : 'Escolha a data em que o pagamento foi ou será realizado:'
+        }
       />
 
       <CustomDialog
