@@ -310,7 +310,6 @@ export default function SearchableSelect({
 
 const styles = StyleSheet.create({
   container: {
-    // marginBottom removido para permitir controle pelo componente pai
   },
   containerWithLabel: {
     marginBottom: 12,

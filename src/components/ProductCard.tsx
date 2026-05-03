@@ -12,7 +12,7 @@ interface ProductCardProps {
     barcode?: string;
     category_name?: string;
     active?: number;
-    [key: string]: any; // Permite propriedades adicionais
+    [key: string]: any;
   };
   onPress?: (product: ProductCardProps['product']) => void;
   onStockAdjust?: (product: ProductCardProps['product']) => void;

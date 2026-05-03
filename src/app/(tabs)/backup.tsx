@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   ScrollView,
   ActivityIndicator,
   RefreshControl,
@@ -23,20 +22,22 @@ import {
 } from '@/database/backup';
 import { DateTime } from 'luxon';
 import * as Updates from 'expo-updates';
+import { useCustomDialog } from '@/hooks/useCustomDialog';
+import CustomDialog from '@/components/modals/CustomDialog';
 
-async function reloadApp() {
+async function reloadApp(dialog: any) {
   try {
     await Updates.reloadAsync();
   } catch (error) {
-    Alert.alert(
+    dialog.showAlert(
       'Reinicie o app',
-      'O backup foi importado com sucesso! Por favor, feche e abra o app manualmente para aplicar as alterações.',
-      [{ text: 'OK' }]
+      'O backup foi importado com sucesso! Por favor, feche e abra o app manualmente para aplicar as alterações.'
     );
   }
 }
 
 export default function BackupScreen() {
+  const dialog = useCustomDialog();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [backups, setBackups] = useState<
@@ -73,82 +74,68 @@ export default function BackupScreen() {
       setLoading(true);
       const backupPath = await exportDatabase();
 
-      Alert.alert(
+      dialog.showConfirm(
         'Backup Criado',
         'Deseja compartilhar o arquivo de backup?',
-        [
-          {
-            text: 'Não',
-            style: 'cancel',
-            onPress: async () => {
-              await loadBackups();
-            },
-          },
-          {
-            text: 'Sim',
-            onPress: async () => {
-              try {
-                await shareBackup(backupPath);
-                await loadBackups();
-              } catch (error: any) {
-                Alert.alert('Erro', error.message || 'Erro ao compartilhar backup');
-              }
-            },
-          },
-        ]
+        async () => {
+          try {
+            await shareBackup(backupPath);
+            await loadBackups();
+          } catch (error: any) {
+            dialog.showError('Erro', error.message || 'Erro ao compartilhar backup');
+          }
+        },
+        async () => {
+          await loadBackups();
+        },
+        'Sim',
+        'Não'
       );
     } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Erro ao criar backup');
+      dialog.showError('Erro', error.message || 'Erro ao criar backup');
     } finally {
       setLoading(false);
     }
   };
 
   const handleImport = async () => {
-    Alert.alert(
+    dialog.showDestructive(
       'Atenção',
       'Ao importar um backup, todos os dados atuais serão substituídos. Deseja continuar?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Continuar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              const fileUri = await pickBackupFile();
+      async () => {
+        try {
+          setLoading(true);
+          const fileUri = await pickBackupFile();
 
-              if (!fileUri) {
-                setLoading(false);
-                return;
-              }
-              const isValid = await validateBackupFile(fileUri);
-              if (!isValid) {
-                Alert.alert('Erro', 'O arquivo selecionado não é um backup válido');
-                setLoading(false);
-                return;
-              }
+          if (!fileUri) {
+            setLoading(false);
+            return;
+          }
+          const isValid = await validateBackupFile(fileUri);
+          if (!isValid) {
+            dialog.showError('Erro', 'O arquivo selecionado não é um backup válido');
+            setLoading(false);
+            return;
+          }
 
-              await importDatabase(fileUri);
+          await importDatabase(fileUri);
 
-              Alert.alert(
-                'Sucesso',
-                'Backup importado com sucesso! O app será reiniciado.',
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => reloadApp(),
-                  },
-                ]
-              );
-            } catch (error: any) {
-              Alert.alert('Erro', error.message || 'Erro ao importar backup');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
+          dialog.showConfirm(
+            'Sucesso',
+            'Backup importado com sucesso! O app será reiniciado.',
+            () => reloadApp(dialog),
+            undefined,
+            'OK'
+          );
+        } catch (error: any) {
+          dialog.showError('Erro', error.message || 'Erro ao importar backup');
+        } finally {
+          setLoading(false);
+        }
+      },
+      undefined,
+      'Continuar',
+      'Cancelar'
     );
   };
 
@@ -157,70 +144,59 @@ export default function BackupScreen() {
       setLoading(true);
       await shareBackup(path);
     } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Erro ao compartilhar backup');
+      dialog.showError('Erro', error.message || 'Erro ao compartilhar backup');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteBackup = async (path: string, name: string) => {
-    Alert.alert(
+    dialog.showDestructive(
       'Confirmar exclusão',
       `Deseja excluir o backup "${name}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              await deleteBackup(path);
-              await loadBackups();
-              Alert.alert('Sucesso', 'Backup excluído com sucesso');
-            } catch (error: any) {
-              Alert.alert('Erro', error.message || 'Erro ao excluir backup');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
+      async () => {
+        try {
+          setLoading(true);
+          await deleteBackup(path);
+          await loadBackups();
+          dialog.showSuccess('Sucesso', 'Backup excluído com sucesso');
+        } catch (error: any) {
+          dialog.showError('Erro', error.message || 'Erro ao excluir backup');
+        } finally {
+          setLoading(false);
+        }
+      },
+      undefined,
+      'Excluir',
+      'Cancelar'
     );
   };
 
   const handleRestoreBackup = async (path: string, name: string) => {
-    Alert.alert(
+    dialog.showDestructive(
       'Atenção',
       `Ao restaurar o backup "${name}", todos os dados atuais serão substituídos. Deseja continuar?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Restaurar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              await importDatabase(path);
+      async () => {
+        try {
+          setLoading(true);
+          await importDatabase(path);
 
-              Alert.alert(
-                'Sucesso',
-                'Backup restaurado com sucesso! O app será reiniciado.',
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => reloadApp(),
-                  },
-                ]
-              );
-            } catch (error: any) {
-              Alert.alert('Erro', error.message || 'Erro ao restaurar backup');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
+          dialog.showConfirm(
+            'Sucesso',
+            'Backup restaurado com sucesso! O app será reiniciado.',
+            () => reloadApp(dialog),
+            undefined,
+            'OK'
+          );
+        } catch (error: any) {
+          dialog.showError('Erro', error.message || 'Erro ao restaurar backup');
+        } finally {
+          setLoading(false);
+        }
+      },
+      undefined,
+      'Restaurar',
+      'Cancelar'
     );
   };
 
@@ -351,6 +327,16 @@ export default function BackupScreen() {
           </View>
         </View>
       )}
+
+      <CustomDialog
+        visible={dialog.config.visible}
+        title={dialog.config.title}
+        message={dialog.config.message}
+        icon={dialog.config.icon}
+        iconColor={dialog.config.iconColor}
+        buttons={dialog.config.buttons}
+        onClose={dialog.hideDialog}
+      />
     </View>
   );
 }

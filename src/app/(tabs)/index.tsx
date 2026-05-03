@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import StatCard from '@/components/StatCard';
 import BarChart from '@/components/BarChart';
 import ReportCard from '@/components/ReportCard';
-import DueNotifications from '@/components/DueNotifications';
-import LowStockNotifications from '@/components/LowStockNotifications';
 import { useReportDatabase } from '@/database/models/Report';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from 'expo-router';
 
 export default function Index() {
   const reportDatabase = useReportDatabase();
@@ -88,6 +87,31 @@ export default function Index() {
     fetchChartData();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadRevenueVisibility();
+
+      async function fetchReportData() {
+        try {
+          const reportData = await reportDatabase.index();
+          setStats(prevStats => [
+            { ...prevStats[0], value: reportData.totalProducts },
+            { ...prevStats[1], value: reportData.salesToday },
+            { ...prevStats[2], value: reportData.totalCustomers },
+            {
+              ...prevStats[3],
+              value: reportData.revenueToday,
+            },
+          ]);
+        } catch (error) {
+          console.error('Failed to fetch report data:', error);
+        }
+      }
+
+      fetchReportData();
+    }, [])
+  );
+
   const loadRevenueVisibility = async () => {
     try {
       const hidden = await AsyncStorage.getItem('@revenue_hidden');
@@ -108,121 +132,117 @@ export default function Index() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <DueNotifications />
-      <LowStockNotifications />
-      <View style={styles.container}>
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <LinearGradient
-            colors={['#667eea', '#764ba2']}
-            style={styles.welcomeSection}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+    <View style={styles.container}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          style={styles.welcomeSection}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Text style={styles.welcomeTitle}>Bem-vindo de volta!</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Aqui está um resumo do seu negócio hoje
+          </Text>
+        </LinearGradient>
+
+        <View style={styles.headerRow}>
+          <View style={styles.sectionTitleContainer}>
+            <Ionicons name="stats-chart" size={20} color="#667eea" />
+            <Text style={styles.sectionTitle}>Estatísticas</Text>
+          </View>
+          <TouchableOpacity
+            onPress={toggleRevenueVisibility}
+            style={styles.toggleButton}
+            activeOpacity={0.7}
           >
-            <Text style={styles.welcomeTitle}>Bem-vindo de volta!</Text>
-            <Text style={styles.welcomeSubtitle}>
-              Aqui está um resumo do seu negócio hoje
+            <Ionicons
+              name={isRevenueHidden ? 'eye-off-outline' : 'eye-outline'}
+              size={20}
+              color="#64748b"
+            />
+            <Text style={styles.toggleButtonText}>
+              {isRevenueHidden ? 'Mostrar' : 'Ocultar'} receita
             </Text>
-          </LinearGradient>
+          </TouchableOpacity>
+        </View>
 
-          <View style={styles.headerRow}>
-            <View style={styles.sectionTitleContainer}>
-              <Ionicons name="stats-chart" size={20} color="#667eea" />
-              <Text style={styles.sectionTitle}>Estatísticas</Text>
-            </View>
-            <TouchableOpacity
-              onPress={toggleRevenueVisibility}
-              style={styles.toggleButton}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name={isRevenueHidden ? 'eye-off-outline' : 'eye-outline'}
-                size={20}
-                color="#64748b"
-              />
-              <Text style={styles.toggleButtonText}>
-                {isRevenueHidden ? 'Mostrar' : 'Ocultar'} receita
-              </Text>
-            </TouchableOpacity>
+        <View style={styles.statsGrid}>
+          {stats.map((stat, index) => (
+            <StatCard
+              key={index}
+              {...stat}
+              value={
+                stat.title === 'Receita'
+                  ? isRevenueHidden
+                    ? '••••••'
+                    : `R$ ${Number(stat.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                  : String(stat.value)
+              }
+              route={stat.route}
+            />
+          ))}
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionTitleContainer}>
+            <Ionicons name="trending-up" size={20} color="#667eea" />
+            <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>
+              Vendas dos Últimos 7 Dias
+            </Text>
           </View>
-
-          <View style={styles.statsGrid}>
-            {stats.map((stat, index) => (
-              <StatCard
-                key={index}
-                {...stat}
-                value={
-                  stat.title === 'Receita'
-                    ? isRevenueHidden
-                      ? '••••••'
-                      : `R$ ${Number(stat.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                    : String(stat.value)
-                }
-                route={stat.route}
-              />
-            ))}
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionTitleContainer}>
-              <Ionicons name="trending-up" size={20} color="#667eea" />
-              <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>
-                Vendas dos Últimos 7 Dias
-              </Text>
+          {isLoadingChart ? (
+            <View style={styles.chartPlaceholder}>
+              <ActivityIndicator size='large' color='#667eea' />
+              <Text style={styles.chartText}>Carregando dados...</Text>
             </View>
-            {isLoadingChart ? (
-              <View style={styles.chartPlaceholder}>
-                <ActivityIndicator size='large' color='#667eea' />
-                <Text style={styles.chartText}>Carregando dados...</Text>
-              </View>
-            ) : (
-              <BarChart data={chartData} />
-            )}
+          ) : (
+            <BarChart data={chartData} />
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionTitleContainer}>
+            <Ionicons name="document-text" size={20} color="#667eea" />
+            <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>
+              Relatórios
+            </Text>
           </View>
+          <View style={styles.reportsGrid}>
 
-          <View style={styles.section}>
-            <View style={styles.sectionTitleContainer}>
-              <Ionicons name="document-text" size={20} color="#667eea" />
-              <Text style={[styles.sectionTitle, styles.sectionTitleWithMargin]}>
-                Relatórios
-              </Text>
-            </View>
-            <View style={styles.reportsGrid}>
-
-              <ReportCard
-                title='Vendas por Período'
-                icon='calendar-outline'
-                color='#3b82f6'
-                backgroundColor='#eff6ff'
-                route='/reports/sales-by-period'
-              />
-              <ReportCard
-                title='Por Cliente'
-                icon='person-outline'
-                color='#22c55e'
-                backgroundColor='#f0fdf4'
-                route='/reports/sales-by-customer'
-              />
-              <ReportCard
-                title='Top Produtos'
-                icon='pie-chart-outline'
-                color='#f59e0b'
-                backgroundColor='#fef3c7'
-                route='/reports/top-products'
-              />
-              <ReportCard
-                title='Top Categorias'
-                icon='stats-chart-outline'
-                color='#ec4899'
-                backgroundColor='#fce7f3'
-                route='/reports/top-categories'
-              />
-            </View>
+            <ReportCard
+              title='Vendas por Período'
+              icon='calendar-outline'
+              color='#3b82f6'
+              backgroundColor='#eff6ff'
+              route='/reports/sales-by-period'
+            />
+            <ReportCard
+              title='Por Cliente'
+              icon='person-outline'
+              color='#22c55e'
+              backgroundColor='#f0fdf4'
+              route='/reports/sales-by-customer'
+            />
+            <ReportCard
+              title='Top Produtos'
+              icon='pie-chart-outline'
+              color='#f59e0b'
+              backgroundColor='#fef3c7'
+              route='/reports/top-products'
+            />
+            <ReportCard
+              title='Top Categorias'
+              icon='stats-chart-outline'
+              color='#ec4899'
+              backgroundColor='#fce7f3'
+              route='/reports/top-categories'
+            />
           </View>
+        </View>
 
-          <View style={styles.bottomSpacing} />
-        </ScrollView>
-      </View>
+        <View style={styles.bottomSpacing} />
+      </ScrollView>
     </View>
   );
 }

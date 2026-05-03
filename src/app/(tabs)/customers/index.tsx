@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Alert,
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
@@ -18,8 +17,11 @@ import { FloatingActionButton } from '@/components/FloatingActionButton';
 import CustomerCard from '@/components/CustomerCard';
 import { SearchBar } from '@/components/SearchBar';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCustomDialog } from '@/hooks/useCustomDialog';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 export default function CustomersList() {
+  const dialog = useCustomDialog();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchText, setSearchText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -119,7 +121,7 @@ export default function CustomersList() {
       setHasMoreData(page < totalPages);
     } catch (error) {
       console.error('Error loading customers:', error);
-      Alert.alert('Erro', 'Falha ao carregar clientes');
+      dialog.showError('Erro', 'Falha ao carregar clientes');
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -150,46 +152,39 @@ export default function CustomersList() {
     const customer = customers.find(c => c.id === id);
     const customerName = customer?.name || 'este cliente';
 
-    Alert.alert(
+    dialog.showDestructive(
       'Confirmar exclusão',
       `Tem certeza que deseja excluir "${customerName}"? Esta ação não pode ser desfeita.`,
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await customerDatabase.remove(id);
-              setCustomers(prev => prev.filter(c => c.id !== id));
-              setTotalCount(prev => prev - 1);
+      async () => {
+        try {
+          await customerDatabase.remove(id);
+          setCustomers(prev => prev.filter(c => c.id !== id));
+          setTotalCount(prev => prev - 1);
 
-              Alert.alert('Sucesso', 'Cliente excluído com sucesso!');
-            } catch (error) {
-              console.error('Error deleting customer:', error);
-              loadCustomers(1, false);
-              const errorMessage = error instanceof Error ? error.message : '';
-              if (
-                errorMessage.includes('vendas') ||
-                errorMessage.includes('FOREIGN KEY')
-              ) {
-                Alert.alert(
-                  'Não é possível excluir',
-                  'Este cliente possui vendas associadas. Para excluir o cliente, remova todas as vendas primeiro.'
-                );
-              } else {
-                Alert.alert(
-                  'Erro',
-                  'Falha ao excluir cliente. Tente novamente.'
-                );
-              }
-            }
-          },
-        },
-      ]
+          dialog.showSuccess('Sucesso', 'Cliente excluído com sucesso!');
+        } catch (error) {
+          console.error('Error deleting customer:', error);
+          loadCustomers(1, false);
+          const errorMessage = error instanceof Error ? error.message : '';
+          if (
+            errorMessage.includes('vendas') ||
+            errorMessage.includes('FOREIGN KEY')
+          ) {
+            dialog.showError(
+              'Não é possível excluir',
+              'Este cliente possui vendas associadas. Para excluir o cliente, remova todas as vendas primeiro.'
+            );
+          } else {
+            dialog.showError(
+              'Erro',
+              'Falha ao excluir cliente. Tente novamente.'
+            );
+          }
+        }
+      },
+      undefined,
+      'Excluir',
+      'Cancelar'
     );
   };
 
@@ -269,6 +264,16 @@ export default function CustomersList() {
 
         <FloatingActionButton route='/customers/create' />
       </View>
+
+      <CustomDialog
+        visible={dialog.config.visible}
+        title={dialog.config.title}
+        message={dialog.config.message}
+        icon={dialog.config.icon}
+        iconColor={dialog.config.iconColor}
+        buttons={dialog.config.buttons}
+        onClose={dialog.hideDialog}
+      />
     </View>
   );
 }

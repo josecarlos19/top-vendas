@@ -46,10 +46,10 @@ export default function StatCard({
 
 const styles = StyleSheet.create({
   statCard: {
-    width: (width - 72) / 2, // menor largura
+    width: (width - 72) / 2,
     backgroundColor: '#ffffff',
-    borderRadius: 12, // menor borda
-    padding: 12, // menos padding
+    borderRadius: 12,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -59,10 +59,10 @@ const styles = StyleSheet.create({
   statRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8, // menos espaço
+    marginBottom: 8,
   },
   statIcon: {
-    width: 28, // menor ícone
+    width: 28,
     height: 28,
     borderRadius: 7,
     alignItems: 'center',
@@ -70,13 +70,13 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   statValue: {
-    fontSize: 18, // menor fonte
+    fontSize: 18,
     fontWeight: '700',
     color: '#1e293b',
     marginBottom: 0,
   },
   statLabel: {
-    fontSize: 10, // menor fonte
+    fontSize: 10,
     color: '#64748b',
     fontWeight: '500',
     marginTop: 2,

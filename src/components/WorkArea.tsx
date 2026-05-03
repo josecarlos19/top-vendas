@@ -57,7 +57,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 20,
-    // paddingBottom removido daqui, agora é dinâmico
   },
   keyboard: {
     flex: 1,

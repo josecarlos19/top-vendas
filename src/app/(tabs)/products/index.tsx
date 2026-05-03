@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Alert,
   RefreshControl,
   TextInput,
   ActivityIndicator,
@@ -22,6 +21,8 @@ import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { SearchBar } from '@/components/SearchBar';
 import StockAdjustmentModal, { StockAdjustmentType } from '@/components/modals/StockAdjustmentModal';
 import { useSQLiteContext } from 'expo-sqlite';
+import { useCustomDialog } from '@/hooks/useCustomDialog';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 interface Product {
   id: number;
@@ -44,6 +45,7 @@ interface Product {
 }
 
 export default function ProductsList() {
+  const dialog = useCustomDialog();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [searchText, setSearchText] = useState('');
@@ -61,8 +63,6 @@ export default function ProductsList() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreData, setHasMoreData] = useState(true);
   const perPage = 10;
-
-  // Estado para ajuste rápido de estoque
   const [showStockAdjustModal, setShowStockAdjustModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
@@ -197,7 +197,7 @@ export default function ProductsList() {
       setHasMoreData(page < totalPages);
     } catch (error) {
       console.error('Error loading products:', error);
-      Alert.alert('Erro', 'Falha ao carregar produtos');
+      dialog.showError('Erro', 'Falha ao carregar produtos');
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -263,13 +263,13 @@ export default function ProductsList() {
         [null, selectedProduct.id, type, quantity, selectedProduct.sale_price, 0, notes]
       );
 
-      Alert.alert('Sucesso', 'Estoque ajustado com sucesso!');
+      dialog.showSuccess('Sucesso', 'Estoque ajustado com sucesso!');
       setShowStockAdjustModal(false);
       setSelectedProduct(null);
       handleRefresh();
     } catch (error) {
       console.error('Error adjusting stock:', error);
-      Alert.alert('Erro', 'Falha ao ajustar estoque. Tente novamente.');
+      dialog.showError('Erro', 'Falha ao ajustar estoque. Tente novamente.');
     }
   };
 
@@ -557,6 +557,16 @@ export default function ProductsList() {
             setSelectedProduct(null);
           }}
           onConfirm={handleStockAdjustConfirm}
+        />
+
+        <CustomDialog
+          visible={dialog.config.visible}
+          title={dialog.config.title}
+          message={dialog.config.message}
+          icon={dialog.config.icon}
+          iconColor={dialog.config.iconColor}
+          buttons={dialog.config.buttons}
+          onClose={dialog.hideDialog}
         />
       </View>
     </View >

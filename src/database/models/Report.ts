@@ -49,6 +49,7 @@ export function useReportDatabase() {
           DATE(i.payment_date, 'localtime') = DATE('now', 'localtime')
           AND i.status = 'completed'
           AND s.deleted_at IS NULL
+          AND s.status <> 'completed'
         ORDER BY i.payment_date, i.sale_id, i.number
         `
       );

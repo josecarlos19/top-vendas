@@ -4,7 +4,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,8 +11,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { useCustomDialog } from '@/hooks/useCustomDialog';
+import CustomDialog from '@/components/modals/CustomDialog';
 
 export default function ProfileScreen() {
+  const dialog = useCustomDialog();
   const [userName, setUserName] = useState('Usuário');
   const [editing, setEditing] = useState(false);
   const [tempName, setTempName] = useState('');
@@ -36,7 +38,7 @@ export default function ProfileScreen() {
 
   const saveName = async () => {
     if (!tempName.trim()) {
-      Alert.alert('Atenção', 'Por favor, insira um nome válido');
+      dialog.showAlert('Atenção', 'Por favor, insira um nome válido');
       return;
     }
     try {
@@ -45,7 +47,7 @@ export default function ProfileScreen() {
       setEditing(false);
       setTempName('');
     } catch {
-      Alert.alert('Erro', 'Não foi possível salvar o nome');
+      dialog.showError('Erro', 'Não foi possível salvar o nome');
     }
   };
 
@@ -127,6 +129,16 @@ export default function ProfileScreen() {
         </View>
 
       </ScrollView>
+
+      <CustomDialog
+        visible={dialog.config.visible}
+        title={dialog.config.title}
+        message={dialog.config.message}
+        icon={dialog.config.icon}
+        iconColor={dialog.config.iconColor}
+        buttons={dialog.config.buttons}
+        onClose={dialog.hideDialog}
+      />
     </View>
   );
 }
