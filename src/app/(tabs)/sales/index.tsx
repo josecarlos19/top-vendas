@@ -54,8 +54,23 @@ export default function SalesList() {
   const perPage = 10;
   const saleDatabase = useSaleDatabase();
   const customerDatabase = useCustomerDatabase();
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+
+  // Configurar data padrão para os últimos 30 dias
+  const getDefaultStartDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  };
+
+  const getDefaultEndDate = () => {
+    const date = new Date();
+    date.setHours(23, 59, 59, 999);
+    return date;
+  };
+
+  const [startDate, setStartDate] = useState<Date | null>(getDefaultStartDate());
+  const [endDate, setEndDate] = useState<Date | null>(getDefaultEndDate());
   const [dueDateStart, setDueDateStart] = useState<Date | null>(null);
   const [dueDateEnd, setDueDateEnd] = useState<Date | null>(null);
   const [showDateFilter, setShowDateFilter] = useState(false);
@@ -401,13 +416,13 @@ export default function SalesList() {
           paymentMethodOptions={paymentMethodOptions}
           customers={customers}
           onClear={() => {
-            setStartDate(null);
-            setEndDate(null);
+            setStartDate(getDefaultStartDate());
+            setEndDate(getDefaultEndDate());
             setDueDateStart(null);
             setDueDateEnd(null);
             setPaymentDateStart(null);
             setPaymentDateEnd(null);
-            setSelectedStatus([]);
+            setSelectedStatus(['pending', 'completed']);
             setSelectedPaymentMethod([]);
             setSelectedCustomerId(null);
             setCurrentPage(1);
