@@ -126,6 +126,22 @@ export default function SalesList() {
     }
   };
 
+  // Função para verificar se há algum filtro ativo
+  const hasActiveFilters = () => {
+    return (
+      searchText ||
+      startDate ||
+      endDate ||
+      dueDateStart ||
+      dueDateEnd ||
+      paymentDateStart ||
+      paymentDateEnd ||
+      selectedPaymentMethod.length > 0 ||
+      selectedCustomerId !== null ||
+      (selectedStatus.length !== 2 || !selectedStatus.includes('pending') || !selectedStatus.includes('completed'))
+    );
+  };
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchText !== undefined) {
@@ -335,47 +351,62 @@ export default function SalesList() {
     );
   };
 
-  const renderEmpty = () => (
-    <View style={styles.emptyState}>
-      <Ionicons name='receipt-outline' size={64} color='#cbd5e1' />
-      <Text style={styles.emptyTitle}>Nenhuma venda encontrada</Text>
-      <Text style={styles.emptySubtitle}>
-        {searchText
-          ? 'Tente ajustar os termos de busca ou limpar o filtro'
-          : 'Comece registrando sua primeira venda'}
-      </Text>
-      {!searchText && (
-        <TouchableOpacity
-          style={styles.createFirstButton}
-          onPress={() => router.push('/sales/create-wizard')}
-        >
-          <Ionicons
-            name='add-outline'
-            size={16}
-            color='#ffffff'
-            style={styles.buttonIcon}
-          />
-          <Text style={styles.createFirstButtonText}>
-            Registrar primeira venda
-          </Text>
-        </TouchableOpacity>
-      )}
-      {searchText && (
-        <TouchableOpacity
-          style={styles.clearSearchButton}
-          onPress={() => handleSearch('')}
-        >
-          <Ionicons
-            name='refresh-outline'
-            size={16}
-            color='#FF6B35'
-            style={styles.buttonIcon}
-          />
-          <Text style={styles.clearSearchButtonText}>Limpar busca</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+  const renderEmpty = () => {
+    const hasFilters = hasActiveFilters();
+
+    return (
+      <View style={styles.emptyState}>
+        <Ionicons name='receipt-outline' size={64} color='#cbd5e1' />
+        <Text style={styles.emptyTitle}>Nenhuma venda encontrada</Text>
+        <Text style={styles.emptySubtitle}>
+          {hasFilters
+            ? 'Tente ajustar os filtros ou limpar a busca'
+            : 'Comece registrando sua primeira venda'}
+        </Text>
+        {!hasFilters && (
+          <TouchableOpacity
+            style={styles.createFirstButton}
+            onPress={() => router.push('/sales/create-wizard')}
+          >
+            <Ionicons
+              name='add-outline'
+              size={16}
+              color='#ffffff'
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.createFirstButtonText}>
+              Registrar primeira venda
+            </Text>
+          </TouchableOpacity>
+        )}
+        {hasFilters && (
+          <TouchableOpacity
+            style={styles.clearSearchButton}
+            onPress={() => {
+              setSearchText('');
+              setStartDate(null);
+              setEndDate(null);
+              setDueDateStart(null);
+              setDueDateEnd(null);
+              setPaymentDateStart(null);
+              setPaymentDateEnd(null);
+              setSelectedPaymentMethod([]);
+              setSelectedCustomerId(null);
+              setSelectedStatus(['pending', 'completed']);
+            }}
+          >
+            <Ionicons
+              name='refresh-outline'
+              size={16}
+              color='#FF6B35'
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.clearSearchButtonText}>Limpar filtros</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   const totalPages = Math.ceil(totalCount / perPage);
 
