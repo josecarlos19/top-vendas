@@ -34,23 +34,26 @@ export function useReportDatabase() {
       const revenueRows = await database.getAllAsync(
         `
         SELECT
-          i.id            AS installment_id,
-          i.sale_id       AS sale_id,
-          i.number        AS installment_number,
-          i.amount        AS amount,
-          i.status        AS installment_status,
-          i.payment_date  AS payment_date,
-          s.payment_method,
-          s.status        AS sale_status,
-          s.sale_date
-        FROM installments i
-        INNER JOIN sales s ON s.id = i.sale_id
+         	i.id            AS installment_id,
+         	i.sale_id       AS sale_id,
+         	i.number        AS installment_number,
+         	i.amount        AS amount,
+         	i.status        AS installment_status,
+         	i.payment_date  AS payment_date,
+         	s.payment_method,
+         	s.status        AS sale_status,
+         	s.sale_date
+        FROM
+       	installments i
+       	INNER JOIN sales s ON s.id = i.sale_id
         WHERE
-          DATE(i.payment_date, 'localtime') = DATE('now', 'localtime')
-          AND i.status = 'completed'
-          AND s.deleted_at IS NULL
-          AND s.status <> 'completed'
-        ORDER BY i.payment_date, i.sale_id, i.number
+         	DATE(i.payment_date) = DATE('now')
+         	AND i.status = 'completed'
+         	AND s.deleted_at IS NULL
+        ORDER BY
+          i.payment_date,
+         	i.sale_id,
+         	i.number
         `
       );
 
