@@ -718,7 +718,10 @@ export default function EditProduct() {
               <View style={styles.movementsContainer}>
                 {stockMovements.map((movement, index) => {
                   const isPositive = movement.quantity > 0;
+
                   const movementDate = new Date(movement.created_at);
+                  movementDate.setHours(movementDate.getHours() - 3)
+
                   const formattedDate = movementDate.toLocaleDateString('pt-BR', {
                     day: '2-digit',
                     month: '2-digit',
