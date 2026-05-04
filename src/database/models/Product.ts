@@ -344,6 +344,51 @@ export function useProductDatabase() {
     }
   }
 
+  async function countStockMovements(productId: number) {
+    try {
+      const result = await database.getFirstAsync<{ total: number }>(
+        `SELECT COUNT(*) as total FROM stock_movements
+         WHERE product_id = ?
+         AND deleted_at IS NULL
+         AND NOT (type = 'sale' AND notes = 'Migração venda')
+         AND NOT (type = 'stock_in' AND notes = 'Estoque inicial migração')`,
+        [productId]
+      );
+      return result?.total || 0;
+    } catch (error) {
+      console.error('Error counting stock movements:', error);
+      throw new Error('Failed to count stock movements');
+    }
+  }
+
+  async function getStockMovements(productId: number, page: number = 1, perPage: number = 20) {
+    try {
+      const offset = (page - 1) * perPage;
+      const result = await database.getAllAsync<{
+        id: number;
+        product_id: number;
+        type: string;
+        quantity: number;
+        notes: string | null;
+        created_at: string;
+      }>(
+        `SELECT id, product_id, type, quantity, notes, created_at
+         FROM stock_movements
+         WHERE product_id = ?
+         AND deleted_at IS NULL
+         AND NOT (type = 'sale' AND notes = 'Migração venda')
+         AND NOT (type = 'stock_in' AND notes = 'Estoque inicial migração')
+         ORDER BY created_at DESC
+         LIMIT ? OFFSET ?`,
+        [productId, perPage, offset]
+      );
+      return result;
+    } catch (error) {
+      console.error('Error fetching stock movements:', error);
+      throw new Error('Failed to fetch stock movements');
+    }
+  }
+
   return {
     store,
     index,
@@ -356,5 +401,7 @@ export function useProductDatabase() {
     findByReference,
     updateStock,
     getLowStockProducts,
+    countStockMovements,
+    getStockMovements,
   };
 }

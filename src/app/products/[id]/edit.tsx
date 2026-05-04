@@ -48,6 +48,15 @@ interface Product {
   updated_at: string;
 }
 
+interface StockMovement {
+  id: number;
+  product_id: number;
+  type: string;
+  quantity: number;
+  notes: string | null;
+  created_at: string;
+}
+
 export default function EditProduct() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
@@ -63,6 +72,11 @@ export default function EditProduct() {
   const [categoryId, setCategoryId] = useState<number | undefined>();
   const [supplier, setSupplier] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
+  const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);
+  const [isLoadingMovements, setIsLoadingMovements] = useState(false);
+  const [movementsPage, setMovementsPage] = useState(1);
+  const [totalMovements, setTotalMovements] = useState(0);
+  const ITEMS_PER_PAGE = 10;
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isActive, setIsActive] = useState(true);
@@ -93,6 +107,7 @@ export default function EditProduct() {
   useEffect(() => {
     loadProduct();
     loadCategories();
+    loadStockMovements();
   }, [id]);
 
   const loadProduct = async () => {
@@ -161,13 +176,34 @@ export default function EditProduct() {
     try {
       const categoriesData = await categoryDatabase.index();
       setCategories(
-        categoriesData.map(cat => ({
-          id: cat.id!,
-          name: cat.name!,
-        }))
+        categoriesData
+          .filter((item) => item.id !== undefined && item.name !== undefined)
+          .map((item) => ({
+            id: item.id!,
+            name: item.name!,
+          }))
       );
     } catch (error) {
       console.error('Error loading categories:', error);
+    }
+  };
+
+  const loadStockMovements = async (page: number = 1) => {
+    if (!id) return;
+
+    try {
+      setIsLoadingMovements(true);
+
+      const total = await productDatabase.countStockMovements(+id);
+      setTotalMovements(total);
+
+      const result = await productDatabase.getStockMovements(+id, page, ITEMS_PER_PAGE);
+      setStockMovements(result);
+      setMovementsPage(page);
+    } catch (error) {
+      console.error('Error loading stock movements:', error);
+    } finally {
+      setIsLoadingMovements(false);
     }
   };
 
@@ -225,6 +261,7 @@ export default function EditProduct() {
       setDialogVisible(true);
 
       await loadProduct();
+      await loadStockMovements();
     } catch (error) {
       console.error('Error adjusting stock:', error);
       setDialogTitle('Erro');
@@ -660,6 +697,155 @@ export default function EditProduct() {
             />
           </CollapsibleSection>
 
+          <CollapsibleSection
+            title='Histórico de Movimentações'
+            icon='time-outline'
+            iconColor='#8b5cf6'
+            defaultCollapsed={true}
+            badge={totalMovements > 0 ? totalMovements.toString() : undefined}
+          >
+            {isLoadingMovements ? (
+              <View style={styles.loadingMovementsContainer}>
+                <ActivityIndicator size='small' color='#8b5cf6' />
+                <Text style={styles.loadingMovementsText}>Carregando...</Text>
+              </View>
+            ) : stockMovements.length === 0 ? (
+              <View style={styles.emptyMovementsContainer}>
+                <Ionicons name='file-tray-outline' size={48} color='#cbd5e1' />
+                <Text style={styles.emptyMovementsText}>Nenhuma movimentação registrada</Text>
+              </View>
+            ) : (
+              <View style={styles.movementsContainer}>
+                {stockMovements.map((movement, index) => {
+                  const isPositive = movement.quantity > 0;
+                  const movementDate = new Date(movement.created_at);
+                  const formattedDate = movementDate.toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  });
+                  const formattedTime = movementDate.toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+
+                  let typeLabel = 'Movimentação';
+                  let typeIcon: any = 'swap-horizontal';
+                  let typeColor = '#64748b';
+
+                  if (movement.type === 'stock_in') {
+                    typeLabel = 'Entrada';
+                    typeIcon = 'arrow-down-circle';
+                    typeColor = '#22c55e';
+                  } else if (movement.type === 'sale') {
+                    typeLabel = 'Venda';
+                    typeIcon = 'cart';
+                    typeColor = '#ef4444';
+                  } else if (movement.type === 'return') {
+                    typeLabel = 'Devolução';
+                    typeIcon = 'return-up-back';
+                    typeColor = '#3b82f6';
+                  } else if (movement.type === 'adjustment') {
+                    typeLabel = 'Ajuste';
+                    typeIcon = 'create';
+                    typeColor = '#f59e0b';
+                  }
+
+                  return (
+                    <View
+                      key={movement.id}
+                      style={[
+                        styles.movementItem,
+                        index !== stockMovements.length - 1 && styles.movementItemBorder,
+                      ]}
+                    >
+                      <View style={styles.movementHeader}>
+                        <View style={[styles.movementTypeIcon, { backgroundColor: typeColor + '20' }]}>
+                          <Ionicons name={typeIcon} size={20} color={typeColor} />
+                        </View>
+                        <View style={styles.movementHeaderInfo}>
+                          <Text style={styles.movementType}>{typeLabel}</Text>
+                          <Text style={styles.movementDate}>
+                            {formattedDate} às {formattedTime}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.movementQuantityBadge,
+                            { backgroundColor: isPositive ? '#dcfce7' : '#fee2e2' },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.movementQuantity,
+                              { color: isPositive ? '#16a34a' : '#dc2626' },
+                            ]}
+                          >
+                            {isPositive ? '+' : ''}{movement.quantity}
+                          </Text>
+                        </View>
+                      </View>
+                      {movement.notes && (
+                        <Text style={styles.movementNotes}>{movement.notes}</Text>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {totalMovements > ITEMS_PER_PAGE && (
+              <View style={styles.paginationContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.paginationButton,
+                    movementsPage === 1 && styles.paginationButtonDisabled,
+                  ]}
+                  onPress={() => loadStockMovements(movementsPage - 1)}
+                  disabled={movementsPage === 1 || isLoadingMovements}
+                >
+                  <Ionicons
+                    name='chevron-back'
+                    size={20}
+                    color={movementsPage === 1 ? '#cbd5e1' : '#64748b'}
+                  />
+                </TouchableOpacity>
+
+                <View style={styles.paginationInfo}>
+                  <Text style={styles.paginationText}>
+                    Página {movementsPage} de {Math.ceil(totalMovements / ITEMS_PER_PAGE)}
+                  </Text>
+                  <Text style={styles.paginationSubtext}>
+                    {totalMovements} {totalMovements === 1 ? 'registro' : 'registros'}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.paginationButton,
+                    movementsPage >= Math.ceil(totalMovements / ITEMS_PER_PAGE) &&
+                    styles.paginationButtonDisabled,
+                  ]}
+                  onPress={() => loadStockMovements(movementsPage + 1)}
+                  disabled={
+                    movementsPage >= Math.ceil(totalMovements / ITEMS_PER_PAGE) ||
+                    isLoadingMovements
+                  }
+                >
+                  <Ionicons
+                    name='chevron-forward'
+                    size={20}
+                    color={
+                      movementsPage >= Math.ceil(totalMovements / ITEMS_PER_PAGE)
+                        ? '#cbd5e1'
+                        : '#64748b'
+                    }
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+          </CollapsibleSection>
+
           <InfoCard variant='warning' icon='warning-outline'>
             Não é possível excluir produtos que possuem vendas ou movimentações
             de estoque.
@@ -922,5 +1108,114 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  loadingMovementsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    gap: 10,
+  },
+  loadingMovementsText: {
+    fontSize: 14,
+    color: '#64748b',
+  },
+  emptyMovementsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 30,
+  },
+  emptyMovementsText: {
+    fontSize: 14,
+    color: '#94a3b8',
+    marginTop: 10,
+  },
+  movementsContainer: {
+    gap: 0,
+  },
+  movementItem: {
+    paddingVertical: 12,
+  },
+  movementItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  movementHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  movementTypeIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  movementHeaderInfo: {
+    flex: 1,
+  },
+  movementType: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 2,
+  },
+  movementDate: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  movementQuantityBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  movementQuantity: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  movementNotes: {
+    fontSize: 13,
+    color: '#475569',
+    marginTop: 6,
+    marginLeft: 46,
+    lineHeight: 18,
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 16,
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+  },
+  paginationButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#f8fafc',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  paginationButtonDisabled: {
+    backgroundColor: '#ffffff',
+    borderColor: '#f1f5f9',
+  },
+  paginationInfo: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  paginationText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 2,
+  },
+  paginationSubtext: {
+    fontSize: 12,
+    color: '#64748b',
   },
 });
