@@ -70,6 +70,18 @@ export default function SalesByPeriod() {
     }
   };
 
+  const handleStartDateChange = (date: Date | null) => {
+    if (date) {
+      setStartDate(date);
+    }
+  };
+
+  const handleEndDateChange = (date: Date | null) => {
+    if (date) {
+      setEndDate(date);
+    }
+  };
+
   const pushToSale = (sale: { id: number }) => {
     router.push(`/sales/${sale.id}/edit`);
   };
@@ -117,8 +129,8 @@ export default function SalesByPeriod() {
             <PeriodFilter
               startDate={startDate}
               endDate={endDate}
-              onStartDateChange={setStartDate}
-              onEndDateChange={setEndDate}
+              onStartDateChange={handleStartDateChange}
+              onEndDateChange={handleEndDateChange}
             />
 
             <TouchableOpacity
