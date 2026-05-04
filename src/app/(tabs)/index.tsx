@@ -47,7 +47,7 @@ export default function Index() {
       icon: 'cash-outline' as keyof typeof Ionicons.glyphMap,
       color: '#ec4899',
       backgroundColor: '#ffffff',
-      route: '/reports/sales-by-period',
+      route: '/reports/sales-by-period?filterToday=true',
     },
   ]);
 

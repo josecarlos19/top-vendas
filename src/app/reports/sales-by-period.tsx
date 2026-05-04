@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useReportDatabase } from '@/database/models/Report';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PeriodFilter from '@/components/PeriodFilter';
@@ -30,9 +30,15 @@ interface Sale {
 }
 
 export default function SalesByPeriod() {
+  const params = useLocalSearchParams<{ filterToday?: string }>();
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [startDate, setStartDate] = useState(() => {
+
+    if (params.filterToday === 'true') {
+      return new Date();
+    }
+
     const date = new Date();
     date.setDate(1);
     return date;
@@ -40,6 +46,12 @@ export default function SalesByPeriod() {
   const [endDate, setEndDate] = useState(new Date());
 
   const reportDatabase = useReportDatabase();
+
+  useEffect(() => {
+    if (params.filterToday === 'true') {
+      loadSales();
+    }
+  }, [params.filterToday]);
 
   const loadSales = async () => {
     try {
