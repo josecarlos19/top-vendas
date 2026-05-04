@@ -19,7 +19,7 @@ import { useCategoryDatabase } from '@/database/models/Category';
 import { ProductSearchInterface } from '@/interfaces/models/productInterface';
 import ProductCard from '@/components/ProductCard';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { FloatingActionButton, ActionButton } from '@/components/FloatingActionButton';
 import { SearchBar } from '@/components/SearchBar';
 import StockAdjustmentModal, { StockAdjustmentType } from '@/components/modals/StockAdjustmentModal';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -495,6 +495,11 @@ export default function ProductsList() {
           onFilterPress={() => setShowFilters(true)}
         />
 
+        <ActionButton
+          route="/products/create"
+          label="Novo Produto"
+        />
+
         <View style={styles.resultsContainer}>
           <TouchableOpacity
             style={{
@@ -545,34 +550,32 @@ export default function ProductsList() {
           onEndReached={loadMore}
           onEndReachedThreshold={0.1}
         />
-
-        <FloatingActionButton route='/products/create' />
-
-        {renderFiltersModal()}
-
-        {/* Modal de Ajuste Rápido de Estoque */}
-        <StockAdjustmentModal
-          visible={showStockAdjustModal}
-          productName={selectedProduct?.name || ''}
-          currentStock={selectedProduct?.current_stock || 0}
-          onClose={() => {
-            setShowStockAdjustModal(false);
-            setSelectedProduct(null);
-          }}
-          onConfirm={handleStockAdjustConfirm}
-        />
-
-        <CustomDialog
-          visible={dialog.config.visible}
-          title={dialog.config.title}
-          message={dialog.config.message}
-          icon={dialog.config.icon}
-          iconColor={dialog.config.iconColor}
-          buttons={dialog.config.buttons}
-          onClose={dialog.hideDialog}
-        />
       </View>
-    </View >
+
+      {renderFiltersModal()}
+
+      {/* Modal de Ajuste Rápido de Estoque */}
+      <StockAdjustmentModal
+        visible={showStockAdjustModal}
+        productName={selectedProduct?.name || ''}
+        currentStock={selectedProduct?.current_stock || 0}
+        onClose={() => {
+          setShowStockAdjustModal(false);
+          setSelectedProduct(null);
+        }}
+        onConfirm={handleStockAdjustConfirm}
+      />
+
+      <CustomDialog
+        visible={dialog.config.visible}
+        title={dialog.config.title}
+        message={dialog.config.message}
+        icon={dialog.config.icon}
+        iconColor={dialog.config.iconColor}
+        buttons={dialog.config.buttons}
+        onClose={dialog.hideDialog}
+      />
+    </View>
   );
 }
 
@@ -699,22 +702,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FF6B35',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
   },
   modalContainer: {
     flex: 1,

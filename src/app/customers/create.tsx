@@ -25,8 +25,6 @@ export default function CreateCustomer() {
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
-
-  // CustomDialog state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogMessage, setDialogMessage] = useState('');

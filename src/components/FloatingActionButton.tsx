@@ -1,33 +1,23 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
-interface FloatingActionButtonProps {
+interface ActionButtonProps {
   route: string;
+  label: string;
   icon?: keyof typeof Ionicons.glyphMap;
   iconSize?: number;
-  iconColor?: string;
-  backgroundColor?: string;
-  bottom?: number;
-  right?: number;
-  activeOpacity?: number;
   onPress?: () => void;
-  style?: ViewStyle;
 }
 
-export function FloatingActionButton({
+export function ActionButton({
   route,
-  icon = 'add',
+  label,
+  icon = 'add-circle',
   iconSize = 24,
-  iconColor = '#ffffff',
-  backgroundColor = '#FF6B35',
-  bottom = 20,
-  right = 20,
-  activeOpacity = 0.8,
   onPress,
-  style,
-}: FloatingActionButtonProps) {
+}: ActionButtonProps) {
   const handlePress = () => {
     if (onPress) {
       onPress();
@@ -37,36 +27,46 @@ export function FloatingActionButton({
   };
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.fab,
-        {
-          backgroundColor,
-          bottom,
-          right,
-        },
-        style,
-      ]}
-      onPress={handlePress}
-      activeOpacity={activeOpacity}
-    >
-      <Ionicons name={icon} size={iconSize} color={iconColor} />
-    </TouchableOpacity>
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handlePress}
+        activeOpacity={0.8}
+      >
+        <Ionicons name={icon} size={iconSize} color="#ffffff" />
+        <Text style={styles.buttonText}>{label}</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fab: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: 0,
+    paddingBottom: 8,
+    backgroundColor: '#f8fafc',
+  },
+  button: {
+    backgroundColor: '#FF6B35',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    gap: 10,
+    shadowColor: '#FF6B35',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });
+export const FloatingActionButton = ActionButton;

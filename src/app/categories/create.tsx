@@ -19,8 +19,6 @@ export default function CreateCategory() {
   const [isLoading, setIsLoading] = useState(false);
 
   const categoryDatabase = useCategoryDatabase();
-
-  // CustomDialog state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogMessage, setDialogMessage] = useState('');

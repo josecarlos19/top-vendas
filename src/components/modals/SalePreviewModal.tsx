@@ -39,7 +39,6 @@ export default function SalePreviewModal({ visible, sale, onClose, onPaymentUpda
       setIsLoadingInstallments(false);
     }
 
-    // Incrementar a key para forçar re-montagem do SalePreview
     if (visible) {
       setMountKey(prev => prev + 1);
     }

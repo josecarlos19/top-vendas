@@ -51,7 +51,7 @@ interface SalePreviewProps {
   };
   saleId: string;
   onPaymentUpdate?: () => void;
-  refreshTrigger?: number; // Quando este valor muda, força reload do status
+  refreshTrigger?: number;
 }
 
 const PAYMENT_METHOD_LABELS: { [key: string]: string } = {
@@ -117,7 +117,6 @@ export default function SalePreview({
     }
   }, [sale.payment_method, saleId]);
 
-  // Recarregar status da venda do banco de dados ao montar o componente
   useEffect(() => {
     const loadSaleStatus = async () => {
       try {

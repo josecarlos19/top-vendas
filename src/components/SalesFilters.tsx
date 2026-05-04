@@ -53,7 +53,6 @@ export default function SalesFilters({
   paymentMethodOptions,
   customers,
 }: SalesFiltersProps) {
-  // Detectar automaticamente qual tipo de filtro está ativo baseado nos valores
   const getInitialFilterType = (): 'sale' | 'due' | 'payment' => {
     if (dueDateStart || dueDateEnd) {
       return 'due';
@@ -61,12 +60,11 @@ export default function SalesFilters({
     if (paymentDateStart || paymentDateEnd) {
       return 'payment';
     }
-    return 'sale'; // Padrão
+    return 'sale';
   };
 
   const [dateFilterType, setDateFilterType] = useState<'sale' | 'due' | 'payment'>(getInitialFilterType());
 
-  // Sincronizar o tipo de filtro quando as props mudarem (ex: ao limpar filtros)
   useEffect(() => {
     const newType = getInitialFilterType();
     if (newType !== dateFilterType) {
@@ -76,7 +74,6 @@ export default function SalesFilters({
 
   const handleDateFilterTypeChange = (type: 'sale' | 'due' | 'payment') => {
     setDateFilterType(type);
-    // Limpar os filtros dos tipos não selecionados
     if (type === 'sale') {
       onDueDateStartChange(null);
       onDueDateEndChange(null);
@@ -95,7 +92,6 @@ export default function SalesFilters({
     }
   };
 
-  // Usar data atual como fallback apenas para exibição do PeriodFilter
   const getSafeDate = (date: Date | null): Date => {
     return date || new Date();
   };

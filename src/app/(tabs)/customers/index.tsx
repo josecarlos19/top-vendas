@@ -13,7 +13,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCustomerDatabase } from '@/database/models/Customer';
 import { CustomerSearchInterface } from '@/interfaces/models/customerInterface';
 import { Customer } from '@/components/Customer/CustomerItem';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { FloatingActionButton, ActionButton } from '@/components/FloatingActionButton';
 import CustomerCard from '@/components/CustomerCard';
 import { SearchBar } from '@/components/SearchBar';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -230,6 +230,11 @@ export default function CustomersList() {
           placeholder='Buscar clientes...'
         />
 
+        <ActionButton
+          route="/customers/create"
+          label="Novo Cliente"
+        />
+
         <View style={styles.resultsContainer}>
           <Text style={styles.resultsText}>
             {totalCount} cliente{totalCount !== 1 ? 's' : ''} encontrado
@@ -261,8 +266,6 @@ export default function CustomersList() {
           onEndReached={loadMore}
           onEndReachedThreshold={0.1}
         />
-
-        <FloatingActionButton route='/customers/create' />
       </View>
 
       <CustomDialog

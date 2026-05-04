@@ -58,8 +58,6 @@ export default function EditCustomer() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
-
-  // CustomDialog state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogMessage, setDialogMessage] = useState('');

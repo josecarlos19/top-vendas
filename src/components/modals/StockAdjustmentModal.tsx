@@ -264,7 +264,13 @@ export default function StockAdjustmentModal({
                   <Text style={styles.label}>Quantidade</Text>
                   <TextInput
                     style={styles.modalInput}
-                    placeholder='0'
+                    placeholder={
+                      adjustmentType === 'add'
+                        ? 'Quantidade a ser adicionada'
+                        : adjustmentType === 'remove'
+                          ? 'Quantidade a ser removida'
+                          : 'Definir novo estoque'
+                    }
                     value={quantity}
                     onChangeText={text => setQuantity(formatNumber(text))}
                     keyboardType='numeric'

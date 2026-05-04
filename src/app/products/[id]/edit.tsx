@@ -67,8 +67,6 @@ export default function EditProduct() {
   const [isSaving, setIsSaving] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [showStockAdjustModal, setShowStockAdjustModal] = useState(false);
-
-  // Dialog state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogMessage, setDialogMessage] = useState('');

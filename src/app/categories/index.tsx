@@ -13,7 +13,7 @@ import { useCategoryDatabase } from '@/database/models/Category';
 import { CategorySearchInterface } from '@/interfaces/models/categoryInterface';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CategoryCard from '@/components/CategoryCard';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { FloatingActionButton, ActionButton } from '@/components/FloatingActionButton';
 import { SearchBar } from '@/components/SearchBar';
 import CustomDialog from '@/components/modals/CustomDialog';
 
@@ -191,6 +191,11 @@ export default function CategoriesList() {
         placeholder='Buscar categorias...'
       />
 
+      <ActionButton
+        route="/categories/create"
+        label="Nova Categoria"
+      />
+
       <FlatList
         data={categories}
         renderItem={renderCategory}
@@ -223,10 +228,6 @@ export default function CategoriesList() {
         onEndReached={loadMore}
         onEndReachedThreshold={0.1}
       />
-
-      <View>
-        <FloatingActionButton route='/categories/create' />
-      </View>
 
       <CustomDialog
         visible={dialogVisible}

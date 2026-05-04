@@ -148,8 +148,6 @@ export default function PaymentModal({
       setIsProcessing(true);
       setShowConfirmDialog(false);
       setIsLoading(true);
-
-      // Formatar data como YYYY-MM-DD para evitar problemas de timezone
       const year = paymentDate.getFullYear();
       const month = String(paymentDate.getMonth() + 1).padStart(2, '0');
       const day = String(paymentDate.getDate()).padStart(2, '0');
@@ -181,8 +179,6 @@ export default function PaymentModal({
       setIsProcessing(true);
       setShowConfirmDialog(false);
       setIsLoading(true);
-
-      // Formatar data como YYYY-MM-DD para evitar problemas de timezone
       const year = paymentDate.getFullYear();
       const month = String(paymentDate.getMonth() + 1).padStart(2, '0');
       const day = String(paymentDate.getDate()).padStart(2, '0');

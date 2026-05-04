@@ -73,8 +73,6 @@ export default function CreateSaleWizard() {
   const [paymentDate, setPaymentDate] = useState<Date | undefined>();
   const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
   const [markAsCompleted, setMarkAsCompleted] = useState(false);
-
-  // CustomDialog state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogMessage, setDialogMessage] = useState('');
@@ -162,48 +160,10 @@ export default function CreateSaleWizard() {
     const product = products.find(p => p.id === Number(productId));
     if (!product) return;
 
-    const availableStock = product.current_stock ?? 0;
-
-    if (availableStock <= 0) {
-      setDialogTitle('Estoque insuficiente');
-      setDialogMessage('Este produto não possui estoque disponível.');
-      setDialogIcon('warning');
-      setDialogIconColor('#f59e0b');
-      setDialogButtons([
-        {
-          text: 'OK',
-          onPress: () => setDialogVisible(false),
-          style: 'primary',
-        },
-      ]);
-      setDialogVisible(true);
-      return;
-    }
-
     const existingItem = items.find(item => item.product_id === product.id);
 
     if (existingItem) {
-      const newQuantity = existingItem.quantity + 1;
-
-      if (newQuantity > availableStock) {
-        setDialogTitle('Estoque insuficiente');
-        setDialogMessage(
-          `Apenas ${availableStock} unidade${availableStock > 1 ? 's' : ''} disponível${availableStock > 1 ? 'eis' : ''} para este produto.`
-        );
-        setDialogIcon('warning');
-        setDialogIconColor('#f59e0b');
-        setDialogButtons([
-          {
-            text: 'OK',
-            onPress: () => setDialogVisible(false),
-            style: 'primary',
-          },
-        ]);
-        setDialogVisible(true);
-        return;
-      }
-
-      updateItemQuantity(product.id, newQuantity);
+      updateItemQuantity(product.id, existingItem.quantity + 1);
     } else {
       const newItem: SaleItem = {
         product_id: product.id,
@@ -218,27 +178,6 @@ export default function CreateSaleWizard() {
 
   const updateItemQuantity = (productId: number, newQuantity: number) => {
     if (newQuantity < 0) {
-      return;
-    }
-
-    const product = products.find(p => p.id === productId);
-    const availableStock = product?.current_stock ?? 0;
-
-    if (newQuantity > availableStock) {
-      setDialogTitle('Estoque insuficiente');
-      setDialogMessage(
-        `Este produto possui apenas ${availableStock} unidade${availableStock !== 1 ? 's' : ''} em estoque.`
-      );
-      setDialogIcon('warning');
-      setDialogIconColor('#f59e0b');
-      setDialogButtons([
-        {
-          text: 'OK',
-          onPress: () => setDialogVisible(false),
-          style: 'primary',
-        },
-      ]);
-      setDialogVisible(true);
       return;
     }
 
@@ -471,7 +410,6 @@ export default function CreateSaleWizard() {
     return {
       label: product.name,
       value: product.id,
-      disabled: isOutOfStock,
       metadata: {
         subtitle: formatCurrency(product.sale_price.toString()),
         badge: {

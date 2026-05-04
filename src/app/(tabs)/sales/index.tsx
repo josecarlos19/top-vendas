@@ -14,7 +14,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useSaleDatabase } from '@/database/models/Sale';
 import { useCustomerDatabase } from '@/database/models/Customer';
 import { SaleSearchInterface } from '@/interfaces/models/saleInterface';
-import { FloatingActionButton } from '@/components/FloatingActionButton';
+import { ActionButton } from '@/components/FloatingActionButton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SearchBar } from '@/components/SearchBar';
 import SaleCard from '@/components/SaleCard';
@@ -69,8 +69,6 @@ export default function SalesList() {
   const [filterJustOpened, setFilterJustOpened] = useState(false);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
   const [selectedSaleForPreview, setSelectedSaleForPreview] = useState<Sale | null>(null);
-
-  // CustomDialog state
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogMessage, setDialogMessage] = useState('');
@@ -91,15 +89,11 @@ export default function SalesList() {
   ];
 
   useEffect(() => {
-    // Não fazer busca automática se:
-    // 1. Está no primeiro carregamento
-    // 2. O filtro acabou de ser aberto (inicialização das datas)
     if (!isFirstLoad && !filterJustOpened && (startDate || endDate || dueDateStart || dueDateEnd || selectedStatus || selectedPaymentMethod.length > 0 || selectedCustomerId || paymentDateStart || paymentDateEnd)) {
       setCurrentPage(1);
       setHasMoreData(true);
       loadSales(1, false);
     }
-    // Resetar a flag após a inicialização
     if (filterJustOpened) {
       setFilterJustOpened(false);
     }
@@ -126,7 +120,6 @@ export default function SalesList() {
     }
   };
 
-  // Função para verificar se há algum filtro ativo
   const hasActiveFilters = () => {
     return (
       searchText ||
@@ -419,7 +412,6 @@ export default function SalesList() {
           onToggle={() => {
             const newVisibleState = !showDateFilter;
             setShowDateFilter(newVisibleState);
-            // Marcar que o filtro acabou de ser aberto para evitar busca automática
             if (newVisibleState) {
               setFilterJustOpened(true);
             }
@@ -484,6 +476,11 @@ export default function SalesList() {
           placeholder='Buscar vendas...'
         />
 
+        <ActionButton
+          route="/sales/create-wizard"
+          label="Nova Venda"
+        />
+
         <View style={styles.resultsContainer}>
           <Text style={styles.resultsText}>
             {totalCount} venda{totalCount !== 1 ? 's' : ''} encontrada
@@ -527,8 +524,6 @@ export default function SalesList() {
             <Text style={styles.loadingOverlayText}>Carregando vendas...</Text>
           </View>
         )}
-
-        <FloatingActionButton route='/sales/create-wizard' />
       </View>
 
       <SalePreviewModal
@@ -574,6 +569,7 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontWeight: '500',
     flex: 1,
+    paddingBottom: 10,
   },
   searchIndicator: {
     fontWeight: '400',
@@ -679,21 +675,5 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginRight: 4,
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 50,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FF6B35',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
   },
 });
